@@ -1,0 +1,72 @@
+name: Docs
+
+# Keeps TRIMR_KNOWLEDGE_BASE.md and TRIMR_BACKLOG_README.md consistent.
+#
+# The split matters:
+#   - PRs only VALIDATE the ticket graph. They never touch sections 8 and 9.
+#   - main REGENERATES sections 8 and 9 after merge.
+#
+# That is deliberate. If branches regenerated the indexes, every PR would conflict in
+# those two sections — which is the one real cost of keeping the backlog in a single
+# file. Regenerating on main only means nobody hand-edits them and nobody conflicts.
+
+on:
+  pull_request:
+    paths:
+      - 'TRIMR_*.md'
+      - 'scripts/jira/**'
+      - '.github/workflows/docs.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'TRIMR_*.md'
+      - 'scripts/jira/**'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate ticket graph
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # Catches: dangling dependsOn/affects, dependency cycles, later-phase
+      # dependencies, owners that aren't exactly Tony or Andrew, knowledgeBase
+      # citations of rules that don't exist, and tickets citing a reserved rule
+      # without depending on the decision ticket that writes it.
+      - name: Validate
+        run: node scripts/jira/generate-indexes.mjs --check
+
+  regenerate:
+    name: Regenerate indexes
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Regenerate sections 8 and 9
+        run: node scripts/jira/generate-indexes.mjs
+
+      # No-op when nothing changed, so this does not loop: the bot's own push
+      # regenerates identical output and commits nothing.
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- TRIMR_BACKLOG_README.md; then
+            echo "Indexes already current."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TRIMR_BACKLOG_README.md
+          git commit -m "chore: regenerate backlog indexes [skip ci]"
+          git push
