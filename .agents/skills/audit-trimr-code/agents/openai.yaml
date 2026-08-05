@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit TRIMR Code"
+  short_description: "Audit code, architecture, and technical decisions to the highest engineering bar"
+  default_prompt: "Use $audit-trimr-code to audit the current change."

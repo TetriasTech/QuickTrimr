@@ -6,13 +6,14 @@ someone's door at a stated time. Built by two engineers, Tony and Andrew, at Tet
 **The product does not exist yet.** This repo currently holds the specification and the tooling
 that keeps it honest. Phase 0 has not started.
 
-## The four files
+## The core files
 
 | File | Role |
 |---|---|
 | `TRIMR_KNOWLEDGE_BASE.md` | **Upstream source of truth.** Product rules, architecture decisions, open decisions. |
 | `TRIMR_BACKLOG_README.md` | The 106 tickets implementing it. Source of truth for tickets; Jira is a projection. |
 | `TRIMR_TICKET_PROMPT.md` | The prompt for handing a ticket to an agent. |
+| `TRIMR_AUDIT_PROMPT.md` | The prompt for auditing code, architecture, and decisions. Source of truth for the audit skill. |
 | `scripts/jira/generate-indexes.mjs` | Generates the traceability + reverse dependency indexes, and validates the ticket graph. |
 
 ## Rules for working here
@@ -45,6 +46,23 @@ ID or Jira key. If the skill is unavailable, perform the same workflow manually:
 Do not work from a ticket pasted into chat, and do not work from Jira — read the ticket from the
 backlog, so there is one copy and it cannot drift. If asked to do something a ticket does not
 say, the ticket is wrong: fix the ticket first.
+
+**To audit code, use the repository skill:**
+
+```text
+$audit-trimr-code                   # the current change
+$audit-trimr-code P2-T12            # a delivered ticket slice
+$audit-trimr-code supabase/functions # a path
+```
+
+The skill lives at `.agents/skills/audit-trimr-code/SKILL.md` and defers to
+`TRIMR_AUDIT_PROMPT.md`. It holds code, architecture, and technical decisions to the
+brightest-engineer bar and to the non-negotiables below — plus wasted API/DB calls, dead code, and
+missed reuse of shared components/schemas/templates. Run it manually, and run it automatically as
+part of ticket work: after a slice is delivered and after any code change, before the Definition of
+Done (`TRIMR_TICKET_PROMPT.md §7`). It is advisory — ranked findings, never edits code, never
+resolves a `TBC-*` or a decision. If the skill is unavailable, read `TRIMR_AUDIT_PROMPT.md` and
+follow it manually.
 
 **Decision tickets are not build tickets.** `P0-D01`–`P0-D06` and `P0-D08` are `issueType:
 Decision` in the backlog; `P0-D07` is a `Spike`. Their deliverable is a knowledge base edit, and
