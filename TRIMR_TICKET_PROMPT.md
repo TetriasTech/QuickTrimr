@@ -370,6 +370,9 @@ If your change touches the thing on the left, the test on the right is mandatory
 - [ ] No secrets committed.
 - [ ] **Nothing in Out of scope was built.** Scope creep in a money path is how untested code ships.
 - [ ] §4's sync check passed.
+- [ ] **Code audit run** on the delivered slice — `/audit <ticket-id>` (or `$audit-trimr-code`),
+      per `TRIMR_AUDIT_PROMPT.md`. Every Critical resolved; each remaining finding resolved or
+      triaged with a reason. Findings go in §8's `AUDIT`, `NOT DONE` / `DECISIONS NEEDED`.
 
 ---
 
@@ -403,6 +406,11 @@ DRIFT                        ← the section people skip. Do not skip it.
 DECISIONS NEEDED
   <anything you stopped on. Case B and Case C land here. Do not resolve
    these yourself.>
+
+AUDIT
+  <scope audited and the verdict from TRIMR_AUDIT_PROMPT.md §5 — e.g.
+   "2 findings, 0 Critical, 1 Major fixed, 1 Minor triaged". Unresolved
+   findings also appear in NOT DONE / DECISIONS NEEDED below.>
 
 NOT DONE
   <anything incomplete, skipped, or failing. Be exact. A skipped step is
