@@ -6770,7 +6770,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-DISCOVERY-02` | `P0-D06`, `P2-T04` |
 | `RULE-DISCOVERY-03` | `P1-T06`, `P2-T04` |
 | `RULE-DISCOVERY-04` | `P0-D06`, `P1-T12`, `P2-T04`, `P2-T06`, `P2-T07`, `P2-T10` |
-| `RULE-DISCOVERY-05` | `P2-T04`, `P2-T06`, `P2-T07` |
+| `RULE-DISCOVERY-05` | `P0-D06`, `P1-T06`, `P2-T01`, `P2-T04`, `P2-T06`, `P2-T07`, `P4-T05`, `P4-T06` |
 | `RULE-DISPUTE-01` | `P4-T09`, `P4-T12`, `P4-T13`, `P5-T06` |
 | `RULE-DISPUTE-02` | `P4-T09`, `P4-T12`, `P5-T06` |
 | `RULE-DISPUTE-03` | `P4-T12`, `P4-T13` |
@@ -6786,7 +6786,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-EARN-07` | `P3-T05`, `P3-T10`, `P3-T11`, `P5-T10` |
 | `RULE-ETA-01` | `P4-T03`, `P4-T04` |
 | `RULE-ETA-02` | `P0-D06`, `P0-T03`, `P0-T18`, `P4-T05`, `P6-T09`, `P6-T10`, `P6-T11` |
-| `RULE-ETA-03` | `P4-T05`, `P4-T06` |
+| `RULE-ETA-03` | `P0-D06`, `P4-T05`, `P4-T06` |
 | `RULE-ETA-04` | `P0-D06`, `P4-T05`, `P4-T06` |
 | `RULE-ETA-05` | `P4-T04`, `P4-T05`, `P4-T06` |
 | `RULE-NOTIF-01` | `P6-T02` |
@@ -6841,6 +6841,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `CFG-COMMISSION-PCT` | `P0-D02`, `P2-T08`, `P3-T01`, `P3-T04` |
 | `CFG-COMPLETION-RESPONSE-MIN` | `P4-T07`, `P4-T10`, `P4-T11` |
 | `CFG-ETA-REFRESH-MIN` | `P0-D06`, `P4-T05`, `P4-T06` |
+| `CFG-ETA-STALE-MIN` | `P0-D06`, `P4-T06` |
 | `CFG-FINAL-DISPUTE-WINDOW-MIN` | `P4-T10`, `P4-T11` |
 | `CFG-INCONVENIENCE-FEE` | `P0-D03`, `P3-T07` |
 | `CFG-LATE-CANCEL-WINDOW-HOURS` | `P0-D03`, `P3-T07`, `P3-T08` |
@@ -6886,7 +6887,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P0-D03` | `P3-T07`, `P3-T08`, `P3-T09`, `P5-T07`, `P5-T08` | — |
 | `P0-D04` | `P2-T03`, `P3-T09`, `P3-T12`, `P5-T13` | — |
 | `P0-D05` | `P3-T05`, `P3-T10`, `P3-T11`, `P5-T10` | — |
-| `P0-D06` | `P2-T04`, `P2-T07`, `P4-T05`, `P4-T06` | — |
+| `P0-D06` | `P1-T06`, `P2-T01`, `P2-T04`, `P2-T07`, `P4-T05`, `P4-T06` | — |
 | `P0-D07` | `P2-T03`, `P2-T15`, `P3-T11`, `P3-T12`, `P4-T05`, `P4-T11`, `P6-T02` | — |
 | `P0-D08` | `P2-T08`, `P2-T09`, `P4-T14`, `P4-T15` | — |
 | `P0-T01` | `P0-T02`, `P0-T03`, `P0-T05`, `P0-T06`, `P0-T09`, `P0-T13`, `P0-T16` | — |
@@ -6913,14 +6914,14 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P1-T03` | `P1-T04`, `P1-T06`, `P1-T07` | `P0-T06`, `P0-T07`, `P0-T10`, `P0-T11`, `P1-T01` |
 | `P1-T04` | `P1-T05`, `P2-T08`, `P5-T02` | `P0-T14`, `P1-T01`, `P1-T03` |
 | `P1-T05` | `P2-T05`, `P2-T08`, `P4-T03`, `P5-T02` | `P1-T04` |
-| `P1-T06` | `P1-T08`, `P1-T11`, `P2-T01` | `P0-T14`, `P1-T01`, `P1-T03` |
+| `P1-T06` | `P1-T08`, `P1-T11`, `P2-T01` | `P0-D06`, `P0-T14`, `P1-T01`, `P1-T03` |
 | `P1-T07` | `P1-T08`, `P1-T09`, `P3-T11` | `P0-T03`, `P0-T18` |
 | `P1-T08` | `P3-T05` | `P1-T07` |
 | `P1-T09` | `P2-T04`, `P3-T03`, `P5-T03` | `P0-T18`, `P1-T07` |
 | `P1-T10` | `P1-T11`, `P1-T12`, `P5-T11` | `P0-D01` |
 | `P1-T11` | `P1-T12`, `P2-T04`, `P2-T08`, `P5-T03` | `P0-D01`, `P1-T06`, `P1-T08`, `P1-T10` |
 | `P1-T12` | `P2-T06`, `P2-T09`, `P4-T15` | `P0-D01`, `P1-T06`, `P1-T10`, `P1-T11` |
-| `P2-T01` | `P2-T02`, `P2-T03`, `P2-T04`, `P2-T12` | `P0-T06`, `P0-T10`, `P1-T06` |
+| `P2-T01` | `P2-T02`, `P2-T03`, `P2-T04`, `P2-T12` | `P0-D06`, `P0-T06`, `P0-T10`, `P1-T06` |
 | `P2-T02` | `P2-T11` | `P2-T01`, `P2-T03` |
 | `P2-T03` | `P2-T12`, `P2-T15` | `P0-D04`, `P0-D07`, `P2-T01` |
 | `P2-T04` | `P2-T05`, `P2-T06`, `P2-T07` | `P0-D01`, `P0-D06`, `P0-T18`, `P1-T06`, `P1-T09`, `P1-T10`, `P1-T11`, `P2-T01`, `P3-T12` |
