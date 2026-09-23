@@ -1,14 +1,14 @@
-# TRIMR Knowledge Base
+# QuickTrimr Knowledge Base
 
 > **The three files work together:**
 >
 > | File | Role |
 > |---|---|
-> | `TRIMR_KNOWLEDGE_BASE.md` | **This file. Upstream source of truth** — product rules, architecture decisions, open decisions, workflow. |
-> | `TRIMR_BACKLOG_README.md` | The tickets that implement what is written here. Source of truth for tickets; Jira is a projection of it. |
-> | `TRIMR_TICKET_PROMPT.md` | The prompt used to hand a ticket to an AI agent. Enforces the §1.3 sync contract at the point of work. |
+> | `QUICKTRIMR_KNOWLEDGE_BASE.md` | **This file. Upstream source of truth** — product rules, architecture decisions, open decisions, workflow. |
+> | `QUICKTRIMR_BACKLOG_README.md` | The tickets that implement what is written here. Source of truth for tickets; Jira is a projection of it. |
+> | `QUICKTRIMR_TICKET_PROMPT.md` | The prompt used to hand a ticket to an AI agent. Enforces the §1.3 sync contract at the point of work. |
 >
-> To implement a ticket, do not paste it at an agent. Paste `TRIMR_TICKET_PROMPT.md` and name the ticket id.
+> To implement a ticket, do not paste it at an agent. Paste `QUICKTRIMR_TICKET_PROMPT.md` and name the ticket id.
 
 ---
 
@@ -16,9 +16,9 @@
 
 ### 1.1 For implementation agents
 
-This document is the product and engineering source of truth for TRIMR.
+This document is the product and engineering source of truth for QuickTrimr.
 
-1. Read this knowledge base first, then read `TRIMR_BACKLOG_README.md`.
+1. Read this knowledge base first, then read `QUICKTRIMR_BACKLOG_README.md`.
 2. Do not invent product behaviour. If a rule is not written here, it is not decided.
 3. Do not implement anything marked future scope (§16) or unresolved (§14).
 4. Prefer shared types, shared validation, shared business rules, and shared UI primitives.
@@ -28,8 +28,8 @@ This document is the product and engineering source of truth for TRIMR.
 Conflict priority, highest first:
 
 1. User-confirmed decisions in this file.
-2. `TRIMR_BACKLOG_README.md`.
-3. The accepted TRIMR proposal.
+2. `QUICKTRIMR_BACKLOG_README.md`.
+3. The accepted QuickTrimr proposal.
 4. Implementation assumptions.
 
 ### 1.2 Stable IDs — how this file is referenced
@@ -63,12 +63,12 @@ This file and the backlog must never disagree. Three rules keep them honest:
 
 ## 2. Product Identity
 
-**Product name:** TRIMR
+**Product name:** QuickTrimr
 **Delivery team:** Tetrias Tech
 **Engineers:** Tony and Andrew
 **Product type:** Two-sided barber marketplace, mobile-first.
 
-TRIMR connects clients who need a haircut with barbers who travel to them. A client either requests a barber **immediately** (Available Now) or **for a future time** (Scheduled). The barber accepts or declines.
+QuickTrimr connects clients who need a haircut with barbers who travel to them. A client either requests a barber **immediately** (Available Now) or **for a future time** (Scheduled). The barber accepts or declines.
 
 **Previous proposal name: QuikTrim.** Do not use `QuikTrim` in code, comments, documentation, tickets, UI text, branch names, folders, or Jira issues, except when explicitly referring to legacy proposal context.
 
@@ -78,7 +78,7 @@ The team deliberately undercharged commercially. That is a commercial decision a
 
 ## 3. Product Components
 
-TRIMR has three deliverables.
+QuickTrimr has three deliverables.
 
 ### 3.1 Mobile app
 
@@ -183,7 +183,7 @@ Redux is not banned forever, but introducing it requires a decision recorded her
 
 ### ADR-004 — No Uber-style live tracking
 
-TRIMR does not implement continuous live tracking. It costs more, drains battery, complicates permissions, and creates a privacy surface the product does not need.
+QuickTrimr does not implement continuous live tracking. It costs more, drains battery, complicates permissions, and creates a privacy surface the product does not need.
 
 **Replacement:** controlled ETA updates that begin only when the barber taps "I'm on my way" and stop when the booking is no longer active (`RULE-ETA-*`).
 
@@ -246,7 +246,7 @@ Illegal transitions are rejected server-side, not merely hidden in the UI.
 
 ### ADR-011 — A workflow engine is required
 
-TRIMR's core rules are timers, and there are a lot of them: a 5-minute Available Now expiry, a 2-hour Scheduled expiry, a 1-hour client completion window, a 6-hour no-action warning, a further 1-hour dispute window, throttled ETA refreshes, and a batched payout run.
+QuickTrimr's core rules are timers, and there are a lot of them: a 5-minute Available Now expiry, a 2-hour Scheduled expiry, a 1-hour client completion window, a 6-hour no-action warning, a further 1-hour dispute window, throttled ETA refreshes, and a batched payout run.
 
 **No client-side timers, ever.** A device that is backgrounded, offline, or uninstalled must not be able to prevent a request expiring or an earning releasing.
 
@@ -274,11 +274,22 @@ An audit row records actor id, actor role, action, entity type, entity id, previ
 
 **Audit logs are append-only.** A correction is a new row. Never a card number, never a secret, never a raw Stripe payload.
 
+### ADR-014 — QuickTrimr is the product and repository identity
+
+The customer-facing product name is **QuickTrimr**. The GitHub repository is
+`TetriasTech/QuickTrimr`, the monorepo package scope is `@quicktrimr/*`, and new project labels use
+`quicktrimr`.
+
+The existing Jira project key remains `TRIMR`, and existing issue keys such as `TRIMR-21` remain
+unchanged. Those are stable external identifiers, not customer-facing branding. The Jira project
+display name, epic summaries, issue content, and labels use QuickTrimr. Existing issues are updated
+in place; they are never deleted or duplicated to obtain new keys.
+
 ---
 
 ## 6. Team and Workflow
 
-TRIMR is built by **Tony and Andrew** in one monorepo.
+QuickTrimr is built by **Tony and Andrew** in one monorepo.
 
 ### 6.1 Feature ownership
 
@@ -317,7 +328,7 @@ A ticket may not start until:
 ## 7. Monorepo Structure
 
 ```txt
-trimr/
+quicktrimr/
   apps/
     mobile/            Expo app — client and barber journeys
       app/             Expo Router routes
@@ -397,7 +408,7 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-SERVICE-02` — A barber selects which global categories they offer and sets their own price per category. Prices are per-barber; there is no platform price.
 - `RULE-SERVICE-03` — A category is **archived, never deleted.** Bookings reference it historically.
 - `RULE-SERVICE-04` — A barber updating a price never changes an existing booking. The booking's price snapshot governs (`ADR-009`).
-- `RULE-SERVICE-05` *(reserved — `P0-D01`)* — The service categories TRIMR launches with, and the valid price bounds per category.
+- `RULE-SERVICE-05` *(reserved — `P0-D01`)* — The service categories QuickTrimr launches with, and the valid price bounds per category.
 
 ### Discovery
 
@@ -412,7 +423,7 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-AVAIL-01` — A barber has at most **one** active Available Now session. Starting one closes any other.
 - `RULE-AVAIL-02` — A session stores location, the source of that location (GPS or manual), radius, available-until time, and status (`ENUM-AVAIL-STATUS`).
 - `RULE-AVAIL-03` — A session auto-disables when: the available-until time passes; the barber misses `CFG-MISSED-REQUEST-THRESHOLD` consecutive requests; the barber accepts an Available Now booking; or the barber toggles off.
-- `RULE-AVAIL-04` — A client has at most **one** active pending Available Now request at a time, and it goes to one barber. TRIMR does not fan a request out to several barbers at once.
+- `RULE-AVAIL-04` — A client has at most **one** active pending Available Now request at a time, and it goes to one barber. QuickTrimr does not fan a request out to several barbers at once.
 - `RULE-AVAIL-05` — A barber may hold **one** accepted, active Available Now job at a time. Accepting a second is rejected server-side, under concurrency.
 - `RULE-AVAIL-06` — An Available Now request expires after `CFG-AVAIL-EXPIRY-MIN`. On expiry the payment authorisation is cancelled.
 - `RULE-AVAIL-07` — When a barber accepts, their remaining pending Available Now requests are resolved safely — expired or declined — and each client is told.
@@ -451,7 +462,7 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-EARN-01` — An earning row is created on successful capture, with status `pending`, using the booking's snapshots. It cannot be duplicated for a booking.
 - `RULE-EARN-02` — An earning moves `pending → available` **only** on completion or auto-completion (`RULE-COMPLETE-*`).
 - `RULE-EARN-03` — An open dispute holds the earning at `pending`. It does not become available while a dispute is open.
-- `RULE-EARN-04` — **"Available" is a TRIMR balance, not money in a bank account.** Cash reaches the barber on the payout run. Every barber-facing surface must say this plainly; a barber who believes "available" means "paid" will call about a missing payout.
+- `RULE-EARN-04` — **"Available" is a QuickTrimr balance, not money in a bank account.** Cash reaches the barber on the payout run. Every barber-facing surface must say this plainly; a barber who believes "available" means "paid" will call about a missing payout.
 - `RULE-EARN-05` — Payouts are batched. Available earnings are queued into a payout batch, moving to `queued_for_payout`, then `paid_out` when the batch settles.
 - `RULE-EARN-06` — Batch creation and processing are idempotent. An earning is never in two open batches and is never paid twice.
 - `RULE-EARN-07` *(reserved — `P0-D05`)* — The payout schedule and batch cadence.
@@ -525,7 +536,7 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 
 ### Copy and claims
 
-- `RULE-COPY-01` — Client-facing and barber-facing copy must describe what the system actually does. Do not imply live tracking (`ADR-004`), do not describe a TRIMR balance as money already paid (`RULE-EARN-04`), and do not describe authorised funds as captured. This applies to the app, notifications, and the Wix site.
+- `RULE-COPY-01` — Client-facing and barber-facing copy must describe what the system actually does. Do not imply live tracking (`ADR-004`), do not describe a QuickTrimr balance as money already paid (`RULE-EARN-04`), and do not describe authorised funds as captured. This applies to the app, notifications, and the Wix site.
 
 ### Pending rules — reserved IDs, not yet decided
 
@@ -617,7 +628,7 @@ pending  available  queued_for_payout  paid_out  reversed
 | Status | Meaning |
 |---|---|
 | `pending` | Client has paid; the job is not completed or auto-completed yet |
-| `available` | Job complete; the amount sits in the barber's **TRIMR balance**, not their bank (`RULE-EARN-04`) |
+| `available` | Job complete; the amount sits in the barber's **QuickTrimr balance**, not their bank (`RULE-EARN-04`) |
 | `queued_for_payout` | Included in an open payout batch |
 | `paid_out` | The batch has settled |
 | `reversed` | Reversed by refund, dispute resolution, or chargeback |
@@ -771,9 +782,9 @@ Config stored in the database lives in a platform config table, is updatable onl
 |---|---|---|---|
 | `TBC-SERVICE-CATEGORIES` | Which service categories launch, and what price bounds are valid per category? | Catalogue, barber pricing, discovery, seed data | `P0-D01` |
 | `TBC-COMMISSION-PCT` | What is the platform commission percentage? 20% is an assumption carried from the proposal, not a decision. | Every payment, earning and payout row | `P0-D02` |
-| `TBC-STRIPE-FEES` | Who absorbs the Stripe processing fee — TRIMR, the barber, or the client? What happens to it on a full and on a partial refund? | Commission maths, refunds, barber net | `P0-D02` |
+| `TBC-STRIPE-FEES` | Who absorbs the Stripe processing fee — QuickTrimr, the barber, or the client? What happens to it on a full and on a partial refund? | Commission maths, refunds, barber net | `P0-D02` |
 | `TBC-CANCEL-SPLIT` | What percentage does a client get back on a late cancellation? | Cancellation, refunds, admin resolution | `P0-D03` |
-| `TBC-INCONVENIENCE-FEE` | How much is the barber's inconvenience payment, and **which side funds it** — the client's withheld amount, or TRIMR? | Cancellation, earnings, refund maths | `P0-D03` |
+| `TBC-INCONVENIENCE-FEE` | How much is the barber's inconvenience payment, and **which side funds it** — the client's withheld amount, or QuickTrimr? | Cancellation, earnings, refund maths | `P0-D03` |
 | `TBC-RELIABILITY-THRESHOLDS` | What counts as an offence, over what rolling window, with what cooldown, search penalty and suspension criteria? | Reliability engine, barber cancellation, admin | `P0-D04` |
 | `TBC-PAYOUT-SCHEDULE` | How often do payout batches run, on what day, with what minimum balance? | Payout batching and processing | `P0-D05` |
 | `TBC-LOCATION-PRECISION` | At what precision is a barber's location shown to a client before acceptance? | Discovery, map view, search function | `P0-D06` |
@@ -822,7 +833,7 @@ A ticket drifting into this list stops and is raised, not implemented.
 
 ## 17. Final Principle
 
-TRIMR should feel simple to a client standing in their kitchen and to a barber between jobs. Behind that, it is a payments system with a stranger's home address in it.
+QuickTrimr should feel simple to a client standing in their kitchen and to a barber between jobs. Behind that, it is a payments system with a stranger's home address in it.
 
 Optimise for trust, payment correctness, access control, unambiguous booking state, admin visibility, and auditability. Then for clean code, shared components, and parallel delivery.
 

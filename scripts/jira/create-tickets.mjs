@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Creates Jira issues from TRIMR_BACKLOG_README.md, one phase at a time.
+ * Creates Jira issues from QUICKTRIMR_BACKLOG_README.md, one phase at a time.
  *
  * The backlog file is the source of truth. Jira is a projection of it (backlog §4).
  * If they disagree, the backlog wins and Jira is corrected — never the reverse.
@@ -32,7 +32,7 @@ import { dirname, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const BACKLOG = resolve(root, 'TRIMR_BACKLOG_README.md');
+const BACKLOG = resolve(root, 'QUICKTRIMR_BACKLOG_README.md');
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
@@ -52,12 +52,12 @@ if (!whoami && (!args.includes('--phase') || phase === undefined)) {
  * Cross-project guard.
  *
  * Tony and Andrew run this same script shape in two repos against one Atlassian
- * site: TRIMR here, myClean (key MC) next door. Both .env files export the same
+ * site: QuickTrimr here, myClean (key MC) next door. Both .env files export the same
  * variable names, so a stale `set -a && source ../MyClean/scripts/jira/.env` in a
- * shell leaves JIRA_PROJECT_KEY=MC — and this script would then happily file 106
- * TRIMR tickets into the myClean board.
+ * shell leaves JIRA_PROJECT_KEY=MC — and this script would then happily file 107
+ * QuickTrimr tickets into the myClean board.
  *
- * That is not a recoverable mistake at this size. Deleting 106 issues is manual,
+ * That is not a recoverable mistake at this size. Deleting 107 issues is manual,
  * one at a time, and the myClean backlog's own jiraKey write-back would be
  * untouched, so nothing would even record what happened.
  *
@@ -65,6 +65,8 @@ if (!whoami && (!args.includes('--phase') || phase === undefined)) {
  * rather than trusted from the environment.
  */
 const EXPECTED_PROJECT_KEY = 'TRIMR';
+const EXPECTED_PROJECT_NAME = 'QuickTrimr';
+const LEGACY_PRODUCT_NAME = 'TRIMR';
 
 const cfg = {
   baseUrl: process.env.JIRA_BASE_URL,
@@ -91,7 +93,8 @@ if (cfg.projectKey && cfg.projectKey !== EXPECTED_PROJECT_KEY) {
   process.exit(1);
 }
 
-if (!dryRun) {
+// Update dry runs inspect live issue fields and properties, so they still need Jira.
+if (!dryRun || update) {
   const missing = ['baseUrl', 'email', 'token', 'projectKey'].filter((k) => !cfg[k]);
   if (missing.length) {
     console.error(`Missing env: ${missing.join(', ')}. Use --dry-run to render without them.`);
@@ -102,7 +105,7 @@ if (!dryRun) {
 /**
  * The backlog's issueType vocabulary is richer than Jira's. `Decision` and `Spike`
  * are meaningful distinctions in the backlog — a decision produces a knowledge base
- * edit, a spike produces an evaluation — but the TRIMR Jira project only has
+ * edit, a spike produces an evaluation — but the QuickTrimr Jira project only has
  * Epic/Task/Story/Bug/Subtask, so both land as Task.
  *
  * The distinction is not lost: it survives in the backlog (which is the source of
@@ -170,7 +173,7 @@ function extractAcceptanceCriteria(body) {
 /** The References block appended to every description — the KB links (backlog §4.1). */
 function referencesBlock(t) {
   const lines = ['', '---', '', '**References**', ''];
-  lines.push(`- Backlog ticket: \`${t.id}\` in \`TRIMR_BACKLOG_README.md\` (source of truth)`);
+  lines.push(`- Backlog ticket: \`${t.id}\` in \`QUICKTRIMR_BACKLOG_README.md\` (source of truth)`);
   if (t.knowledgeBase?.length) {
     lines.push(`- Knowledge base: ${t.knowledgeBase.map((k) => `\`${k}\``).join(', ')}`);
   }
@@ -184,7 +187,7 @@ function referencesBlock(t) {
     lines.push(`- Affects (revisit if this ticket's contract changes): ${t.affects.map((k) => `\`${k}\``).join(', ')}`);
   }
   lines.push('');
-  lines.push('To implement: paste `TRIMR_TICKET_PROMPT.md` into a fresh agent session and name this ticket id.');
+  lines.push('To implement: paste `QUICKTRIMR_TICKET_PROMPT.md` into a fresh agent session and name this ticket id.');
   lines.push('Do not work from this Jira description alone — it is a projection. The backlog is authoritative.');
   return lines.join('\n');
 }
@@ -265,6 +268,55 @@ async function jira(path, method = 'GET', body) {
   return text ? JSON.parse(text) : null;
 }
 
+function assertTargetProject(project) {
+  if (project.key !== EXPECTED_PROJECT_KEY) {
+    throw new Error(
+      `Jira returned project "${project.key}" (${project.name}) for key ` +
+      `"${cfg.projectKey}", expected stable key "${EXPECTED_PROJECT_KEY}".`
+    );
+  }
+  if (project.name !== EXPECTED_PROJECT_NAME) {
+    throw new Error(
+      `Jira project ${EXPECTED_PROJECT_KEY} still has display name "${project.name}". ` +
+      `Rename it to "${EXPECTED_PROJECT_NAME}" in Project settings before the live sync; ` +
+      `the stable project key must remain "${EXPECTED_PROJECT_KEY}".`
+    );
+  }
+}
+
+async function findPhaseEpic() {
+  const found = await jira(
+    `/search/jql?jql=${encodeURIComponent(
+      `project = ${cfg.projectKey} AND issuetype = Epic AND ` +
+      `(summary ~ "${EXPECTED_PROJECT_NAME} Phase ${phase}" OR ` +
+      `summary ~ "${LEGACY_PRODUCT_NAME} Phase ${phase}")`
+    )}&fields=key,summary,labels`
+  );
+  const epics = found?.issues ?? [];
+  return epics.find((e) => e.fields.summary === `${EXPECTED_PROJECT_NAME} Phase ${phase} — ${PHASE_TITLES[phase]}`)
+    ?? epics.find((e) => e.fields.summary === `${LEGACY_PRODUCT_NAME} Phase ${phase} — ${PHASE_TITLES[phase]}`)
+    ?? null;
+}
+
+async function reconcilePhaseEpic(epic) {
+  const summary = `${EXPECTED_PROJECT_NAME} Phase ${phase} — ${PHASE_TITLES[phase]}`;
+  const labels = [...new Set([
+    ...(epic.fields.labels ?? []).filter((label) => label !== 'trimr'),
+    'quicktrimr',
+    `phase-${phase}`,
+  ])];
+  const changed = epic.fields.summary !== summary ||
+    [...(epic.fields.labels ?? [])].sort().join(',') !== [...labels].sort().join(',');
+  if (!changed) return;
+
+  if (dryRun) {
+    console.log(`  ${epic.key}  WOULD UPDATE epic identity to "${summary}" labels=[${labels.join(', ')}]`);
+    return;
+  }
+  await jira(`/issue/${epic.key}`, 'PUT', { fields: { summary, labels } });
+  console.log(`  ${epic.key}  updated epic identity to "${summary}"`);
+}
+
 function buildIssue(t, epicKey) {
   const ac = extractAcceptanceCriteria(t.body);
   let description = t.body;
@@ -302,13 +354,13 @@ function buildIssue(t, epicKey) {
  *
  * Stored as a Jira issue property after each write, so --update can tell a ticket
  * that actually changed from one that did not. Without it, every update run would
- * PUT all 26 issues and stamp 26 changelog entries, and the Jira history would stop
+ * PUT every issue and stamp a changelog entry on each, and the Jira history would stop
  * being a useful record of what really changed.
  *
  * Comparing the rendered ADF against what Jira returns does not work — Jira
  * normalises the document, so identical input reads as a diff every time.
  */
-const SYNC_PROPERTY = 'trimr-backlog-sync';
+const SYNC_PROPERTY = 'quicktrimr-backlog-sync';
 
 function fingerprint(t) {
   const labels = [...new Set([...(t.labels ?? []), `phase-${t.phase}`, `owner-${t.owner.toLowerCase()}`])];
@@ -332,11 +384,12 @@ async function storedFingerprint(key) {
   try {
     const r = await jira(`/issue/${key}/properties/${SYNC_PROPERTY}`);
     return r?.value?.hash ?? null;
-  } catch {
+  } catch (error) {
     // 404 on a ticket created before fingerprinting existed, which is every ticket
     // from the first create run. Treated as "unknown", so the first --update writes
     // the baseline rather than claiming a false change.
-    return null;
+    if (error.message.includes('→ 404')) return null;
+    throw error;
   }
 }
 
@@ -427,11 +480,20 @@ if (update) {
   if (!live.length) process.exit(0);
 
   const project = await jira(`/project/${cfg.projectKey}`);
-  if (project.key !== EXPECTED_PROJECT_KEY) {
-    console.error(`\nREFUSING TO RUN — Jira returned project "${project.key}", expected "${EXPECTED_PROJECT_KEY}".`);
+  try {
+    assertTargetProject(project);
+  } catch (error) {
+    console.error(`\nREFUSING TO RUN — ${error.message}\nNothing was sent.`);
     process.exit(1);
   }
   console.log(`  target project: ${project.key} — ${project.name}\n`);
+
+  const phaseEpic = await findPhaseEpic();
+  if (phaseEpic) {
+    await reconcilePhaseEpic(phaseEpic);
+  } else {
+    console.warn(`  WARNING: no Phase ${phase} epic found under the current or former product name.`);
+  }
 
   let changed = 0;
   let unchanged = 0;
@@ -538,7 +600,7 @@ if (skipped.length) {
 
 // Blocked tickets are still created — the blocker is recorded in the description and
 // as a link. What must not happen is starting one, and that is the Readiness Gate's
-// job (TRIMR_TICKET_PROMPT.md §3), not this script's.
+// job (QUICKTRIMR_TICKET_PROMPT.md §3), not this script's.
 const blocked = todo.filter((t) => t.blockedByTbc?.length);
 if (blocked.length) {
   console.log(`  note: ${blocked.length} ticket(s) cite unresolved TBCs; created but not startable`);
@@ -546,8 +608,8 @@ if (blocked.length) {
 
 if (dryRun) {
   console.log(`\n--- DRY RUN — no API calls ---\n`);
-  console.log(`EPIC  TRIMR Phase ${phase} — ${PHASE_TITLES[phase]}`);
-  console.log(`      project=${cfg.projectKey ?? '<JIRA_PROJECT_KEY unset>'}  labels=[trimr, phase-${phase}]\n`);
+  console.log(`EPIC  ensure QuickTrimr Phase ${phase} — ${PHASE_TITLES[phase]}`);
+  console.log(`      project=${cfg.projectKey ?? '<JIRA_PROJECT_KEY unset>'}  labels=[quicktrimr, phase-${phase}]\n`);
   for (const t of todo) {
     const issue = buildIssue(t, 'EPIC-KEY');
     const ac = extractAcceptanceCriteria(t.body);
@@ -564,7 +626,7 @@ if (dryRun) {
     if (t.affects?.length) console.log(`      link "relates to":     ${t.affects.join(', ')}`);
     console.log('');
   }
-  console.log(`Would create 1 epic and ${todo.length} issues. Nothing was sent.`);
+  console.log(`Would reuse or create the Phase ${phase} epic and create ${todo.length} issue(s). Nothing was sent.`);
   process.exit(0);
 }
 
@@ -594,11 +656,10 @@ const project = await jira(`/project/${cfg.projectKey}`);
 // this catches a right key pointing at a project that is not what we think it is —
 // a renamed project, or a key reused after a delete. Confirm against what Jira
 // actually returned before creating anything.
-if (project.key !== EXPECTED_PROJECT_KEY) {
-  console.error(
-    `\nREFUSING TO RUN — Jira returned project "${project.key}" (${project.name}) ` +
-    `for key "${cfg.projectKey}", expected "${EXPECTED_PROJECT_KEY}".\nNothing was sent.`
-  );
+try {
+  assertTargetProject(project);
+} catch (error) {
+  console.error(`\nREFUSING TO RUN — ${error.message}\nNothing was sent.`);
   process.exit(1);
 }
 console.log(`Target project: ${project.key} — ${project.name}`);
@@ -618,15 +679,11 @@ if (absent.length) {
   process.exit(1);
 }
 
-const epicSummary = `TRIMR Phase ${phase} — ${PHASE_TITLES[phase]}`;
-const found = await jira(
-  `/search/jql?jql=${encodeURIComponent(
-    `project = ${cfg.projectKey} AND issuetype = Epic AND summary ~ "TRIMR Phase ${phase}"`
-  )}&fields=key,summary`
-);
-
-let epicKey = found?.issues?.[0]?.key;
+const epicSummary = `QuickTrimr Phase ${phase} — ${PHASE_TITLES[phase]}`;
+const existingEpic = await findPhaseEpic();
+let epicKey = existingEpic?.key;
 if (epicKey) {
+  await reconcilePhaseEpic(existingEpic);
   console.log(`\nEpic exists: ${epicKey}`);
 } else {
   const epic = await jira('/issue', 'POST', {
@@ -634,7 +691,7 @@ if (epicKey) {
       project: { key: cfg.projectKey },
       summary: epicSummary,
       issuetype: { name: 'Epic' },
-      labels: ['trimr', `phase-${phase}`],
+      labels: ['quicktrimr', `phase-${phase}`],
     },
   });
   epicKey = epic.key;
@@ -651,6 +708,13 @@ for (const t of todo) {
     t.jiraKey = issue.key;
     created.push(t);
     console.log(`  ${t.id} → ${issue.key}  ${t.title}`);
+    try {
+      await jira(`/issue/${issue.key}/properties/${SYNC_PROPERTY}`, 'PUT', {
+        hash: fingerprint(t),
+      });
+    } catch (error) {
+      console.warn(`      sync fingerprint failed; run --update after creation: ${error.message.split('\n')[0]}`);
+    }
   } catch (e) {
     console.error(`  ${t.id} FAILED: ${e.message}`);
     console.error(`\nStopped. ${created.length} created and written back; re-run to continue.`);
@@ -681,4 +745,4 @@ for (const t of created) {
 }
 
 console.log(`\nCreated ${created.length} issues, ${links} links, under ${epicKey}.`);
-console.log('jiraKey written back to TRIMR_BACKLOG_README.md — commit it, or the next run duplicates.');
+console.log('jiraKey written back to QUICKTRIMR_BACKLOG_README.md — commit it, or the next run duplicates.');

@@ -1,10 +1,10 @@
-# TRIMR Product Backlog
+# QuickTrimr Product Backlog
 
-> **Companion file:** `TRIMR_KNOWLEDGE_BASE.md` — the product and engineering source of truth. Read it first.
+> **Companion file:** `QUICKTRIMR_KNOWLEDGE_BASE.md` — the product and engineering source of truth. Read it first.
 >
 > This file is the **source of truth for tickets**. Jira is a projection of it (§4).
 >
-> **To implement a ticket:** paste `TRIMR_TICKET_PROMPT.md` into a fresh agent session and name the ticket id. Do not paste the ticket body — the agent reads it from here, so there is one copy and it cannot drift.
+> **To implement a ticket:** paste `QUICKTRIMR_TICKET_PROMPT.md` into a fresh agent session and name the ticket id. Do not paste the ticket body — the agent reads it from here, so there is one copy and it cannot drift.
 >
 > Never store Jira API tokens, Supabase service-role keys, Stripe secrets, webhook secrets, Google API keys, Expo credentials, Sentry tokens, or PostHog keys in this file or anywhere in source control.
 
@@ -26,7 +26,7 @@
 
 ## 1. Project Summary
 
-**Product:** TRIMR — a two-sided barber marketplace, mobile-first.
+**Product:** QuickTrimr — a two-sided barber marketplace, mobile-first.
 **Team:** Tetrias Tech — Tony and Andrew, one monorepo.
 **Quality bar:** Production-quality, with secure backend-controlled marketplace logic.
 
@@ -114,7 +114,7 @@ The old backlog's `P2-E04-T01` — "validate, enforce one active job, capture pa
 
    `--update` re-pushes only tickets whose backlog entry actually changed, tracked by a content fingerprint stored on each Jira issue, so a no-op run writes nothing and Jira's history stays a record of real changes. It also backfills links that could not be made at creation time — a Phase 0 ticket's `affects` edge into Phase 1 is skipped when Phase 1 does not exist yet, and creating Phase 1 later does not go back for it.
 
-**Both scripts refuse to run against any project except `TRIMR`.** The expected key is pinned in `create-tickets.mjs`, checked against `JIRA_PROJECT_KEY` and again against what Jira returns. myClean (key `MC`) is a different project on the same Atlassian site and both repos export identical variable names, so a stale `source` in your shell would otherwise file TRIMR tickets onto the myClean board.
+**Both scripts refuse to run against any project key except `TRIMR`.** The stable key is pinned in `create-tickets.mjs`, checked against `JIRA_PROJECT_KEY` and again against what Jira returns. The Jira project display name is QuickTrimr. myClean (key `MC`) is a different project on the same Atlassian site and both repos export identical variable names, so a stale `source` in your shell would otherwise file QuickTrimr tickets onto the myClean board.
 
 ### 4.1 Field mapping
 
@@ -131,7 +131,7 @@ The old backlog's `P2-E04-T01` — "validate, enforce one active job, capture pa
 | `affects` | "relates to" links |
 | `knowledgeBase`, `blockedByTbc` | Appended to the description as a **References** block |
 
-Epics: one Jira epic per phase, named `TRIMR Phase N — <phase title>`.
+Epics: one Jira epic per phase, named `QuickTrimr Phase N — <phase title>`.
 
 **`Decision` and `Spike` do not survive the projection.** The Jira project has neither issue type, so both land as `Task` carrying a `decision` label. The distinction is not lost — it lives in this file, which is authoritative. Do not "fix" this by adding issue types to Jira, and never classify a ticket from Jira's issue type.
 
@@ -194,7 +194,7 @@ The previous backlog broke this in two places, both around payment. `P2-E04-T01`
 
 **What is deliberately *not* here.** No booking logic, no pricing logic, no cancellation maths, no reliability engine. Every one of those requires answers we do not have — commission, refund split, inconvenience fee funding, reliability thresholds, payout cadence and launch categories are all unresolved (`KB §14`).
 
-The schema *is* here (`P0-T10`), because TRIMR's enums and table shapes are decided (`KB §10`, `KB §11`) and both engineers are blocked without them. What is not here is seeding it with categories nobody has chosen — that is why `P0-T12` waits on `P0-D01`.
+The schema *is* here (`P0-T10`), because QuickTrimr's enums and table shapes are decided (`KB §10`, `KB §11`) and both engineers are blocked without them. What is not here is seeding it with categories nobody has chosen — that is why `P0-T12` waits on `P0-D01`.
 
 The bar for a Phase 0 ticket: **doable today without inventing an answer to a TBC, and it unblocks both engineers.**
 
@@ -220,7 +220,7 @@ dependsOn: []
 affects: [P0-T12, P1-T10, P1-T11, P1-T12, P2-T04, P2-T08]
 knowledgeBase: [RULE-SERVICE-01, RULE-SERVICE-02, RULE-SERVICE-03]
 blockedByTbc: []
-labels: [trimr, phase-0, decision, product]
+labels: [quicktrimr, phase-0, decision, product]
 ```
 
 **Context**
@@ -271,16 +271,16 @@ dependsOn: []
 affects: [P2-T08, P3-T01, P3-T02, P3-T04, P3-T07, P3-T10, P5-T09]
 knowledgeBase: [ADR-009, RULE-PAY-01, RULE-PAY-08, RULE-EARN-01, CFG-COMMISSION-PCT]
 blockedByTbc: []
-labels: [trimr, phase-0, decision, product, stripe]
+labels: [quicktrimr, phase-0, decision, product, stripe]
 ```
 
 **Context**
 
-**This is the highest-stakes decision in the backlog.** The commission percentage is snapshotted onto every booking (`ADR-009`) and every earning derives from it. Changing it later does not change history — it changes only new bookings, which is correct, but it means the number chosen now is baked into every financial record TRIMR ever produces. Getting it wrong is not a config edit; it is a conversation with every barber on the platform.
+**This is the highest-stakes decision in the backlog.** The commission percentage is snapshotted onto every booking (`ADR-009`) and every earning derives from it. Changing it later does not change history — it changes only new bookings, which is correct, but it means the number chosen now is baked into every financial record QuickTrimr ever produces. Getting it wrong is not a config edit; it is a conversation with every barber on the platform.
 
 `TBC-COMMISSION-PCT` — the knowledge base carries 20% as an **assumption inherited from the proposal**, explicitly not a decision. An agent that reads "assume 20%" and ships it has decided the business model.
 
-`TBC-STRIPE-FEES` is the part that is usually missed, and it is the part that makes the ledger not balance. Stripe takes its cut of the gross before anything reaches TRIMR. If commission is 20% of gross and the barber gets 80% of gross, TRIMR has paid Stripe's fee out of its own 20% — which may be intended, but nobody has said so. On a **partial refund** it gets worse: Stripe does not return its processing fee, so a 50% refund does not cost TRIMR 50%.
+`TBC-STRIPE-FEES` is the part that is usually missed, and it is the part that makes the ledger not balance. Stripe takes its cut of the gross before anything reaches QuickTrimr. If commission is 20% of gross and the barber gets 80% of gross, QuickTrimr has paid Stripe's fee out of its own 20% — which may be intended, but nobody has said so. On a **partial refund** it gets worse: Stripe does not return its processing fee, so a 50% refund does not cost QuickTrimr 50%.
 
 **Scope**
 
@@ -288,10 +288,10 @@ Decide, and record in `KB §9` as `RULE-PAY-11`, with `CFG-COMMISSION-PCT` given
 
 - The commission percentage.
 - Whether commission is charged on the service price only, or on the total the client pays.
-- **Who absorbs the Stripe processing fee** — TRIMR out of commission, the barber out of net, or the client as a surcharge.
+- **Who absorbs the Stripe processing fee** — QuickTrimr out of commission, the barber out of net, or the client as a surcharge.
 - What happens to the Stripe fee on a **full refund** and on a **partial refund** (`RULE-CANCEL-03`).
 - Whether commission is refunded proportionally when a booking is refunded.
-- The rounding rule, in integer cents, when a percentage does not divide evenly. Name the direction explicitly — "round down to the barber" or "round down to TRIMR" — because unspecified rounding is where a ledger drifts by a cent per booking.
+- The rounding rule, in integer cents, when a percentage does not divide evenly. Name the direction explicitly — "round down to the barber" or "round down to QuickTrimr" — because unspecified rounding is where a ledger drifts by a cent per booking.
 
 Work each of these as a **numbered example**: a $45 haircut, full refund; a $45 haircut, partial refund; a $45 haircut, disputed and resolved barber-paid. If the three examples do not reconcile against what Stripe actually captured, the decision is not finished.
 
@@ -324,14 +324,14 @@ dependsOn: [P0-D02]
 affects: [P3-T07, P3-T08, P3-T09, P5-T07, P5-T08]
 knowledgeBase: [RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
 blockedByTbc: []
-labels: [trimr, phase-0, decision, product, stripe]
+labels: [quicktrimr, phase-0, decision, product, stripe]
 ```
 
 **Context**
 
 The knowledge base says a late client cancellation produces "a partial refund to the client and an inconvenience payment to the barber" (`RULE-CANCEL-03`). **There is no number anywhere, and no statement of who funds the barber's payment.** That is two unresolved decisions wearing one sentence.
 
-The funding question is the one that breaks reconciliation. If the client is refunded 50% and the barber receives an inconvenience fee, that fee comes from somewhere: the withheld 50%, or TRIMR's own money. If nobody decides, an implementer picks one, and TRIMR discovers which at the end of a month when the numbers do not add up.
+The funding question is the one that breaks reconciliation. If the client is refunded 50% and the barber receives an inconvenience fee, that fee comes from somewhere: the withheld 50%, or QuickTrimr's own money. If nobody decides, an implementer picks one, and QuickTrimr discovers which at the end of a month when the numbers do not add up.
 
 This depends on `P0-D02` because the answer has to net against commission and the Stripe fee. A 50% refund on a $45 booking where Stripe kept its fee on the full $45 does not leave 50% to distribute.
 
@@ -342,16 +342,16 @@ Decide, and record in `KB §9` as `RULE-CANCEL-07`, with values for `CFG-CANCEL-
 - The client's refund percentage on a late cancellation.
 - Whether the split differs between an Available Now booking (barber may already be travelling) and a Scheduled one inside `CFG-LATE-CANCEL-WINDOW-HOURS`. Recommend that it does — a barber halfway across town has incurred a real cost that a barber with a booking tomorrow has not.
 - The inconvenience fee: fixed amount, percentage, or capped percentage.
-- **Which side funds it** — the client's withheld amount, or TRIMR.
-- Whether TRIMR keeps commission on a cancelled booking.
-- What a barber cancellation costs TRIMR: the client is refunded in full (`RULE-CANCEL-04`), so state explicitly whether TRIMR absorbs the Stripe fee on that refund.
+- **Which side funds it** — the client's withheld amount, or QuickTrimr.
+- Whether QuickTrimr keeps commission on a cancelled booking.
+- What a barber cancellation costs QuickTrimr: the client is refunded in full (`RULE-CANCEL-04`), so state explicitly whether QuickTrimr absorbs the Stripe fee on that refund.
 
 **Acceptance criteria**
 
 - [ ] `RULE-CANCEL-07` written in `KB §9` covering refund percentage, inconvenience fee, funding source, and commission treatment.
 - [ ] `CFG-CANCEL-REFUND-PCT` and `CFG-INCONVENIENCE-FEE` have concrete values in `KB §13`.
 - [ ] Available Now and Scheduled are each addressed, whether or not they differ.
-- [ ] A worked example for each of: client cancels before acceptance, client cancels late, barber cancels late — showing client refund, barber receipt, TRIMR position, and Stripe fee, all in integer cents, all summing to what was captured.
+- [ ] A worked example for each of: client cancels before acceptance, client cancels late, barber cancels late — showing client refund, barber receipt, QuickTrimr position, and Stripe fee, all in integer cents, all summing to what was captured.
 - [ ] `TBC-CANCEL-SPLIT` and `TBC-INCONVENIENCE-FEE` in `KB §14` rewritten as `RESOLVED → RULE-CANCEL-07`. Not deleted.
 - [ ] `RULE-CANCEL-07` removed from `KB §9`'s *Pending rules* table.
 
@@ -375,7 +375,7 @@ dependsOn: []
 affects: [P2-T03, P3-T09, P3-T12, P5-T03, P5-T13]
 knowledgeBase: [RULE-RELY-01, RULE-RELY-02, RULE-RELY-03, RULE-RELY-04, RULE-RELY-05, CFG-RELIABILITY-WINDOW-DAYS, CFG-RELIABILITY-RESET-DAYS, CFG-RELIABILITY-COOLDOWN-MIN, CFG-MISSED-REQUEST-THRESHOLD]
 blockedByTbc: []
-labels: [trimr, phase-0, decision, product]
+labels: [quicktrimr, phase-0, decision, product]
 ```
 
 **Context**
@@ -384,7 +384,7 @@ labels: [trimr, phase-0, decision, product]
 
 This is a livelihood decision, not a config value. A barber who is suspended stops earning. Set the window too tight and one bad week ends someone's income; too loose and a client is stood up by the same barber twice with no consequence.
 
-`RULE-RELY-02` already commits TRIMR to recoverability, so the decision is bounded: this is about numbers and thresholds, not about whether to forgive.
+`RULE-RELY-02` already commits QuickTrimr to recoverability, so the decision is bounded: this is about numbers and thresholds, not about whether to forgive.
 
 **Scope**
 
@@ -429,7 +429,7 @@ dependsOn: [P0-D02]
 affects: [P3-T05, P3-T10, P3-T11, P5-T10]
 knowledgeBase: [RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, CFG-PAYOUT-SCHEDULE]
 blockedByTbc: []
-labels: [trimr, phase-0, decision, product, stripe]
+labels: [quicktrimr, phase-0, decision, product, stripe]
 ```
 
 **Context**
@@ -478,12 +478,12 @@ dependsOn: []
 affects: [P2-T04, P2-T06, P2-T07, P4-T05, P4-T06]
 knowledgeBase: [ADR-004, ADR-008, RULE-DISCOVERY-02, RULE-DISCOVERY-04, RULE-ETA-02, RULE-ETA-04, CFG-ETA-REFRESH-MIN]
 blockedByTbc: []
-labels: [trimr, phase-0, decision, product, maps, security]
+labels: [quicktrimr, phase-0, decision, product, maps, security]
 ```
 
 **Context**
 
-Two related unknowns, both about how much location TRIMR reveals and how often.
+Two related unknowns, both about how much location QuickTrimr reveals and how often.
 
 `TBC-LOCATION-PRECISION` — the old backlog said barber markers "do not expose private exact location where not appropriate", which decides nothing. A barber running Available Now from home has broadcast their home address to every client who searches, and self-employed barbers working from home are common. Showing an exact pin is a safety decision made by omission.
 
@@ -527,12 +527,12 @@ dependsOn: []
 affects: [P2-T03, P2-T15, P3-T11, P4-T05, P4-T11, P6-T02]
 knowledgeBase: [ADR-011]
 blockedByTbc: []
-labels: [trimr, phase-0, decision, spike, backend]
+labels: [quicktrimr, phase-0, decision, spike, backend]
 ```
 
 **Context**
 
-`TBC-WORKFLOW-ENGINE`. TRIMR is a timer product wearing a marketplace: a 5-minute Available Now expiry, a 2-hour Scheduled expiry, a session available-until, a 1-hour completion window, a 6-hour no-action warning, a further 1-hour dispute window, throttled ETA refreshes, and a payout run. Six tickets cannot be built until something runs delayed work reliably.
+`TBC-WORKFLOW-ENGINE`. QuickTrimr is a timer product wearing a marketplace: a 5-minute Available Now expiry, a 2-hour Scheduled expiry, a session available-until, a 1-hour completion window, a 6-hour no-action warning, a further 1-hour dispute window, throttled ETA refreshes, and a payout run. Six tickets cannot be built until something runs delayed work reliably.
 
 The previous backlog never decided this. `P2-E04-T04` said "cron scheduling infrastructure beyond what is required for this rule" was out of scope — which left the scheduling of every timed rule owned by nobody.
 
@@ -540,7 +540,7 @@ The previous backlog never decided this. `P2-E04-T04` said "cron scheduling infr
 
 **Scope**
 
-Evaluate the realistic options — Supabase scheduled functions / `pg_cron`, Inngest, Trigger.dev — against criteria that come from TRIMR's actual rules:
+Evaluate the realistic options — Supabase scheduled functions / `pg_cron`, Inngest, Trigger.dev — against criteria that come from QuickTrimr's actual rules:
 
 | Criterion | Why it matters here |
 |---|---|
@@ -587,7 +587,7 @@ dependsOn: []
 affects: [P2-T08, P2-T09, P4-T14, P4-T15]
 knowledgeBase: [ADR-006, RULE-SCHED-01, RULE-SCHED-02, RULE-REVIEW-01, RULE-REVIEW-02, CFG-SCHED-MIN-LEAD-MIN]
 blockedByTbc: []
-labels: [trimr, phase-0, decision, product]
+labels: [quicktrimr, phase-0, decision, product]
 ```
 
 **Context**
@@ -645,11 +645,11 @@ owner: Andrew
 phase: 0
 priority: Highest
 jiraKey: TRIMR-10
-dependsOn: []
+dependsOn: [P0-T19]
 affects: [P0-T02, P0-T04, P0-T06, P0-T13, P0-T16]
 knowledgeBase: [ADR-007]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation]
+labels: [quicktrimr, phase-0, foundation]
 ```
 
 **Context**
@@ -700,7 +700,7 @@ dependsOn: [P0-T01]
 affects: [P0-T04, P0-T05]
 knowledgeBase: [ADR-007]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation]
+labels: [quicktrimr, phase-0, foundation]
 ```
 
 **Context**
@@ -711,7 +711,7 @@ The rules that matter most here are the ones that catch the defects `KB §12` ca
 
 **Scope**
 
-`tsconfig.base.json` with `strict: true`, `noUncheckedIndexedAccess`, `noImplicitOverride`, and `exactOptionalPropertyTypes`. Per-package configs extend it. Path aliases so `@trimr/shared` resolves everywhere.
+`tsconfig.base.json` with `strict: true`, `noUncheckedIndexedAccess`, `noImplicitOverride`, and `exactOptionalPropertyTypes`. Per-package configs extend it. Path aliases so `@quicktrimr/shared` resolves everywhere.
 
 ESLint flat config covering TypeScript, React, React Hooks, and import ordering. Rules that are errors, not warnings:
 
@@ -756,14 +756,14 @@ dependsOn: [P0-T01]
 affects: [P0-T04, P0-T09, P0-T18, P1-T07, P4-T05, P6-T03, P6-T04, P6-T09]
 knowledgeBase: [ADR-001, ADR-008, RULE-PAY-10, RULE-ETA-02]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, security]
+labels: [quicktrimr, phase-0, foundation, security]
 ```
 
 **Context**
 
-TRIMR holds four categories of secret that must never reach a client bundle: the Supabase service-role key, the Stripe secret and webhook secret (`RULE-PAY-10`), and the Google server API key used for Routes (`RULE-ETA-02`, `ADR-008`).
+QuickTrimr holds four categories of secret that must never reach a client bundle: the Supabase service-role key, the Stripe secret and webhook secret (`RULE-PAY-10`), and the Google server API key used for Routes (`RULE-ETA-02`, `ADR-008`).
 
-A mobile bundle is not a secure environment. Anything shipped in an Expo build is extractable from the app, and a Google server key found in a bundle is billed to TRIMR until someone notices. This ticket makes the public/private split structural instead of a thing each engineer remembers.
+A mobile bundle is not a secure environment. Anything shipped in an Expo build is extractable from the app, and a Google server key found in a bundle is billed to QuickTrimr until someone notices. This ticket makes the public/private split structural instead of a thing each engineer remembers.
 
 **Scope**
 
@@ -814,7 +814,7 @@ dependsOn: [P0-T02, P0-T03]
 affects: [P0-T05, P6-T08]
 knowledgeBase: [ADR-007]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation]
+labels: [quicktrimr, phase-0, foundation]
 ```
 
 **Context**
@@ -861,7 +861,7 @@ dependsOn: [P0-T01]
 affects: []
 knowledgeBase: [ADR-012, ADR-013, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation]
+labels: [quicktrimr, phase-0, foundation]
 ```
 
 **Context**
@@ -910,7 +910,7 @@ dependsOn: [P0-T01]
 affects: [P0-T07, P0-T10, P0-T14, P0-T17, P1-T03, P2-T01, P2-T08, P3-T01, P3-T04, P4-T07]
 knowledgeBase: [ADR-007, ADR-010, ENUM-USER-ROLE, ENUM-VERIFICATION-STATUS, ENUM-BOOKING-TYPE, ENUM-BOOKING-STATUS, ENUM-REQUEST-STATUS, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, ENUM-AVAIL-STATUS, ENUM-DISPUTE-STATUS, ENUM-RELIABILITY-LEVEL]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, database]
+labels: [quicktrimr, phase-0, foundation, database]
 ```
 
 **Context**
@@ -965,7 +965,7 @@ dependsOn: [P0-T06]
 affects: [P0-T08, P1-T03, P2-T08, P2-T12, P3-T01, P4-T07, P4-T09, P4-T14]
 knowledgeBase: [ADR-007, RULE-PAY-01, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, backend]
+labels: [quicktrimr, phase-0, foundation, backend]
 ```
 
 **Context**
@@ -1016,7 +1016,7 @@ dependsOn: [P0-T07]
 affects: []
 knowledgeBase: [ADR-002, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, backend]
+labels: [quicktrimr, phase-0, foundation, backend]
 ```
 
 **Context**
@@ -1064,7 +1064,7 @@ dependsOn: [P0-T01, P0-T03]
 affects: [P0-T10, P0-T11, P0-T12]
 knowledgeBase: [ADR-001, ADR-002, KB-NONE]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, database, supabase]
+labels: [quicktrimr, phase-0, foundation, database, supabase]
 ```
 
 **Context**
@@ -1115,7 +1115,7 @@ dependsOn: [P0-T06, P0-T09]
 affects: [P0-T11, P0-T12, P1-T03, P2-T01, P2-T08, P3-T01, P3-T04, P4-T12, P4-T14]
 knowledgeBase: [ADR-001, ADR-008, ADR-009, ADR-010, ADR-013, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS, ENUM-AVAIL-STATUS, ENUM-DISPUTE-STATUS, ENUM-RELIABILITY-LEVEL]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, database, supabase]
+labels: [quicktrimr, phase-0, foundation, database, supabase]
 ```
 
 **Context**
@@ -1182,7 +1182,7 @@ dependsOn: [P0-T10]
 affects: [P0-T12, P1-T01, P1-T02, P1-T03, P2-T10, P4-T01, P4-T02, P5-T02]
 knowledgeBase: [ADR-001, ROLE-CLIENT, ROLE-BARBER, ROLE-ADMIN, RULE-ADMIN-01, RULE-ONBOARD-05]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, database, security]
+labels: [quicktrimr, phase-0, foundation, database, security]
 ```
 
 **Context**
@@ -1244,7 +1244,7 @@ dependsOn: [P0-D01, P0-T10, P0-T11]
 affects: [P0-T17, P5-T01, P5-T04]
 knowledgeBase: [RULE-SERVICE-05, ENUM-BOOKING-STATUS, ENUM-DISPUTE-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, database]
+labels: [quicktrimr, phase-0, foundation, database]
 ```
 
 **Context**
@@ -1295,7 +1295,7 @@ dependsOn: [P0-T01]
 affects: [P0-T14, P0-T15, P1-T01, P6-T01, P6-T10]
 knowledgeBase: [ADR-003, ADR-007]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, mobile]
+labels: [quicktrimr, phase-0, foundation, mobile]
 ```
 
 **Context**
@@ -1310,7 +1310,7 @@ A root layout that routes on auth state and role, with a defined state for authe
 
 Feature folder structure under `src/features` per `KB §7`.
 
-Verify that `@trimr/shared`, `@trimr/validation` and `@trimr/ui` all resolve inside the Expo bundler, which is the integration most likely to need Metro configuration.
+Verify that `@quicktrimr/shared`, `@quicktrimr/validation` and `@quicktrimr/ui` all resolve inside the Expo bundler, which is the integration most likely to need Metro configuration.
 
 **Acceptance criteria**
 
@@ -1342,7 +1342,7 @@ dependsOn: [P0-T06, P0-T13]
 affects: [P1-T04, P1-T06, P2-T05, P2-T09, P2-T11, P3-T05, P4-T01, P4-T10]
 knowledgeBase: [ADR-007, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, mobile]
+labels: [quicktrimr, phase-0, foundation, mobile]
 ```
 
 **Context**
@@ -1393,7 +1393,7 @@ dependsOn: [P0-T07, P0-T13]
 affects: [P2-T05, P2-T06, P2-T09, P4-T01, P4-T06]
 knowledgeBase: [ADR-003]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, mobile]
+labels: [quicktrimr, phase-0, foundation, mobile]
 ```
 
 **Context**
@@ -1446,12 +1446,12 @@ dependsOn: [P0-T01]
 affects: [P0-T17, P1-T02, P5-T01]
 knowledgeBase: [ADR-007, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, admin]
+labels: [quicktrimr, phase-0, foundation, admin]
 ```
 
 **Context**
 
-Admin is web-only (`KB §3.2`) and is the most sensitive surface in TRIMR: it can refund money, resolve disputes and override booking statuses.
+Admin is web-only (`KB §3.2`) and is the most sensitive surface in QuickTrimr: it can refund money, resolve disputes and override booking statuses.
 
 The structural decision made here is that **admin data is fetched server-side after the role is verified** (`RULE-ADMIN-01`). A client-side fetch that a guard hides is not access control — the data has already crossed the network to a browser that was never entitled to it.
 
@@ -1497,7 +1497,7 @@ dependsOn: [P0-T06, P0-T16]
 affects: [P5-T01, P5-T02, P5-T03, P5-T04, P5-T06, P5-T09, P5-T11, P5-T12]
 knowledgeBase: [ADR-007, ADR-013, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, ENUM-DISPUTE-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, admin]
+labels: [quicktrimr, phase-0, foundation, admin]
 ```
 
 **Context**
@@ -1549,7 +1549,7 @@ dependsOn: [P0-T03]
 affects: [P1-T07, P1-T09, P2-T04, P3-T01, P3-T03, P3-T11, P4-T05, P6-T09]
 knowledgeBase: [ADR-006, ADR-008, RULE-PAY-10, RULE-ETA-02, RULE-ONBOARD-04]
 blockedByTbc: []
-labels: [trimr, phase-0, foundation, stripe, maps, security]
+labels: [quicktrimr, phase-0, foundation, stripe, maps, security]
 ```
 
 **Context**
@@ -1562,7 +1562,7 @@ These have lead time. Stripe Connect requires platform settings and a completed 
 
 **Stripe test mode:**
 
-- Enable Connect and choose the account type, informed by `ADR-006` and `RULE-EARN-05` — TRIMR captures payment and later pays barbers from its balance, which constrains the choice.
+- Enable Connect and choose the account type, informed by `ADR-006` and `RULE-EARN-05` — QuickTrimr captures payment and later pays barbers from its balance, which constrains the choice.
 - Confirm manual-capture PaymentIntents are available, since `ADR-006` depends on them.
 - Configure the Connect onboarding branding and return/refresh URLs.
 - Create a webhook endpoint for local development and note the signing secret handling (`RULE-PAY-07`).
@@ -1595,6 +1595,62 @@ Record every variable name in `P0-T03`'s `.env.example`. **No key value is commi
 **Sync notes** — eight tickets consume these credentials. The authorisation hold period discovered here feeds directly into `P0-D08`'s maximum booking horizon.
 
 ---
+
+#### P0-T19 — Rename the product and repository to QuickTrimr
+
+```yaml
+id: P0-T19
+title: "Rename the product and repository to QuickTrimr"
+issueType: Task
+owner: Andrew
+phase: 0
+priority: Highest
+jiraKey: null
+dependsOn: []
+affects: []
+knowledgeBase: [ADR-014]
+blockedByTbc: []
+labels: [quicktrimr, phase-0, foundation, product]
+```
+
+**Context**
+
+The customer changed the product from its former name to QuickTrimr before implementation began. The
+repository, source-of-truth documents, automation, package namespace, agent instructions and Jira
+projection must agree before more tickets are created or implementation starts.
+
+Jira is the one deliberate exception to a blind string replacement: the existing project key
+`TRIMR` and issue keys such as `TRIMR-21` are stable external identifiers. Recreating issues to
+change those keys would lose history and create duplicates.
+
+**Scope**
+
+Rename the canonical documents, product copy, GitHub repository, repo layout examples, package
+scope, skills, labels, Jira epic summaries, and sync metadata to QuickTrimr. Update local Git remotes
+after the GitHub repository rename. Update existing Jira issues in place and migrate legacy sync
+metadata without forcing duplicate issue creation.
+
+**Acceptance criteria**
+
+- [ ] The knowledge base records QuickTrimr as the product name under `ADR-014`.
+- [ ] Canonical document filenames and every internal reference use `QUICKTRIMR_*`.
+- [ ] The GitHub repository is `TetriasTech/QuickTrimr`, and the local `origin` points to it.
+- [ ] New package names use `@quicktrimr/*`, the repo layout uses `quicktrimr/`, and labels use `quicktrimr`.
+- [ ] The Jira project key and every existing `TRIMR-*` issue key remain unchanged.
+- [ ] The Jira project display name, epic summaries, issue content, and labels use QuickTrimr.
+- [ ] Existing Jira tickets are updated in place; no existing ticket is recreated or duplicated.
+- [ ] Repository search finds no stale former-brand use outside documented stable Jira identifiers and legacy migration compatibility.
+- [ ] `node scripts/jira/generate-indexes.mjs --check` passes.
+- [ ] Phase 0 create and update dry runs are reviewed before any Jira write.
+
+**Tests** — ticket-graph validation; Phase 0 create dry run; Phase 0 update dry run with Jira credentials; repository-wide stale-brand search; Git remote verification.
+
+**Out of scope** — changing the Jira project key or existing issue keys; implementing the mobile app, admin dashboard, backend, or Wix site.
+
+**Sync notes** — this ticket changes the projection text for every existing Jira ticket. Run the
+Phase 0 update in place before creating later phases, then update each later phase as it is created.
+
+---
 ## Phase 1 — Auth, Profiles, Onboarding & Services
 
 **Goal:** a barber can be created, Connect-verified, priced and made discoverable; a client can sign up and save an address. No bookings yet.
@@ -1617,7 +1673,7 @@ dependsOn: [P0-T11, P0-T13, P0-T14, P0-T15]
 affects: [P1-T03, P1-T04, P1-T06, P6-T01]
 knowledgeBase: [ADR-001, ROLE-CLIENT, ROLE-BARBER, RULE-ONBOARD-01]
 blockedByTbc: []
-labels: [trimr, phase-1, mobile, security]
+labels: [quicktrimr, phase-1, mobile, security]
 ```
 
 **Context**
@@ -1685,7 +1741,7 @@ dependsOn: [P0-T11, P0-T16]
 affects: [P5-T01, P5-T02, P5-T03, P5-T04, P5-T06, P5-T09, P5-T11, P5-T12, P5-T13]
 knowledgeBase: [ROLE-ADMIN, RULE-ADMIN-01, ADR-013]
 blockedByTbc: []
-labels: [trimr, phase-1, admin, security]
+labels: [quicktrimr, phase-1, admin, security]
 ```
 
 **Context**
@@ -1748,7 +1804,7 @@ dependsOn: [P0-T07, P0-T10, P0-T11, P1-T01]
 affects: [P1-T04, P1-T06, P5-T02, P5-T03]
 knowledgeBase: [ADR-002, ADR-013, RULE-ONBOARD-01, ROLE-CLIENT, ROLE-BARBER, ENUM-USER-ROLE, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-1, backend, security]
+labels: [quicktrimr, phase-1, backend, security]
 ```
 
 **Context**
@@ -1830,7 +1886,7 @@ dependsOn: [P0-T14, P1-T03]
 affects: [P1-T05, P2-T08, P5-T02]
 knowledgeBase: [ADR-005, RULE-ONBOARD-02, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-1, mobile]
+labels: [quicktrimr, phase-1, mobile]
 ```
 
 **Context**
@@ -1900,12 +1956,12 @@ dependsOn: [P0-T18, P1-T04]
 affects: [P2-T05, P2-T08, P4-T03, P5-T02]
 knowledgeBase: [ADR-008, RULE-ONBOARD-02, ROLE-CLIENT]
 blockedByTbc: []
-labels: [trimr, phase-1, mobile, maps, security]
+labels: [quicktrimr, phase-1, mobile, maps, security]
 ```
 
 **Context**
 
-A client address is where a stranger is sent. It is the most sensitive data TRIMR holds, and every downstream ticket that displays it does so under a narrow rule: a barber sees it only for an accepted, active booking (`ROLE-BARBER`).
+A client address is where a stranger is sent. It is the most sensitive data QuickTrimr holds, and every downstream ticket that displays it does so under a narrow rule: a barber sees it only for an accepted, active booking (`ROLE-BARBER`).
 
 Addresses need coordinates, because discovery is a PostGIS distance query from the service address (`ADR-008`, `RULE-DISCOVERY-01`). An address without a resolved point cannot be booked against, so geocoding is part of saving, not a later enrichment.
 
@@ -1983,7 +2039,7 @@ dependsOn: [P0-T14, P1-T03]
 affects: [P1-T11, P1-T12, P2-T01, P2-T04, P5-T03]
 knowledgeBase: [ADR-008, RULE-ONBOARD-03, RULE-ONBOARD-05, RULE-DISCOVERY-03]
 blockedByTbc: []
-labels: [trimr, phase-1, mobile]
+labels: [quicktrimr, phase-1, mobile]
 ```
 
 **Context**
@@ -2059,7 +2115,7 @@ dependsOn: [P0-T03, P0-T18, P1-T03]
 affects: [P1-T08, P1-T09, P3-T11, P5-T03]
 knowledgeBase: [ADR-002, ADR-013, RULE-ONBOARD-04, RULE-PAY-10, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-1, backend, stripe, security]
+labels: [quicktrimr, phase-1, backend, stripe, security]
 ```
 
 **Context**
@@ -2140,7 +2196,7 @@ dependsOn: [P1-T06, P1-T07]
 affects: [P1-T11, P3-T05]
 knowledgeBase: [RULE-ONBOARD-04, RULE-COPY-01, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-1, mobile, stripe]
+labels: [quicktrimr, phase-1, mobile, stripe]
 ```
 
 **Context**
@@ -2194,12 +2250,12 @@ dependsOn: [P0-T18, P1-T07]
 affects: [P2-T04, P3-T03, P3-T11, P5-T03]
 knowledgeBase: [ADR-013, RULE-ONBOARD-04, RULE-PAY-07, RULE-PAY-10, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-1, backend, stripe, security]
+labels: [quicktrimr, phase-1, backend, stripe, security]
 ```
 
 **Context**
 
-Connect status changes without the barber doing anything: Stripe re-verifies, requests documents, or restricts an account days after onboarding. Polling on app open is not enough — a barber restricted overnight would keep receiving bookings TRIMR cannot pay out.
+Connect status changes without the barber doing anything: Stripe re-verifies, requests documents, or restricts an account days after onboarding. Polling on app open is not enough — a barber restricted overnight would keep receiving bookings QuickTrimr cannot pay out.
 
 This ticket establishes the **webhook pattern** the whole payment phase inherits: signature verification, idempotent handling of duplicate deliveries, and a stored event id. `P3-T03` extends the same handler rather than writing a second one.
 
@@ -2262,7 +2318,7 @@ dependsOn: [P0-D01, P0-T10, P0-T11]
 affects: [P1-T11, P1-T12, P2-T04, P5-T11]
 knowledgeBase: [ADR-013, RULE-SERVICE-01, RULE-SERVICE-03, RULE-SERVICE-05, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-1, backend, admin]
+labels: [quicktrimr, phase-1, backend, admin]
 ```
 
 **Context**
@@ -2345,7 +2401,7 @@ dependsOn: [P0-D01, P1-T06, P1-T10]
 affects: [P1-T12, P2-T04, P2-T08, P5-T03]
 knowledgeBase: [ADR-009, RULE-SERVICE-02, RULE-SERVICE-04, RULE-SERVICE-05, RULE-ONBOARD-04]
 blockedByTbc: []
-labels: [trimr, phase-1, mobile, database]
+labels: [quicktrimr, phase-1, mobile, database]
 ```
 
 **Context**
@@ -2425,7 +2481,7 @@ dependsOn: [P0-D01, P1-T10, P1-T11]
 affects: [P2-T06, P2-T09, P4-T15]
 knowledgeBase: [RULE-ONBOARD-05, RULE-DISCOVERY-04, RULE-REVIEW-04]
 blockedByTbc: []
-labels: [trimr, phase-1, mobile]
+labels: [quicktrimr, phase-1, mobile]
 ```
 
 **Context**
@@ -2487,7 +2543,7 @@ dependsOn: [P0-T06, P0-T10, P1-T06]
 affects: [P2-T02, P2-T03, P2-T04, P2-T12]
 knowledgeBase: [ADR-008, RULE-AVAIL-01, RULE-AVAIL-02, ENUM-AVAIL-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-2, backend, database, maps]
+labels: [quicktrimr, phase-2, backend, database, maps]
 ```
 
 **Context**
@@ -2565,7 +2621,7 @@ dependsOn: [P0-T14, P2-T01]
 affects: [P2-T11]
 knowledgeBase: [RULE-AVAIL-01, RULE-AVAIL-02, RULE-AVAIL-03, RULE-COPY-01, ENUM-AVAIL-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-2, mobile, maps]
+labels: [quicktrimr, phase-2, mobile, maps]
 ```
 
 **Context**
@@ -2584,7 +2640,7 @@ Show the active session state: how long remains, current radius, and how the loc
 
 When a session auto-disables (`RULE-AVAIL-03`), the barber is told **why** — time elapsed, missed requests, or a job accepted. A toggle that silently flips off reads as a bug and gets reported as one.
 
-Copy must not promise TRIMR notifies the barber of every nearby client (`RULE-COPY-01`).
+Copy must not promise QuickTrimr notifies the barber of every nearby client (`RULE-COPY-01`).
 
 **Acceptance criteria**
 
@@ -2619,7 +2675,7 @@ dependsOn: [P0-D04, P0-D07, P2-T01]
 affects: [P2-T02, P2-T12, P3-T12]
 knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-03, RULE-AVAIL-05, ENUM-AVAIL-STATUS, CFG-MISSED-REQUEST-THRESHOLD]
 blockedByTbc: []
-labels: [trimr, phase-2, backend]
+labels: [quicktrimr, phase-2, backend]
 ```
 
 **Context**
@@ -2680,14 +2736,14 @@ dependsOn: [P0-D01, P0-D06, P1-T09, P1-T11, P2-T01]
 affects: [P2-T05, P2-T06, P2-T07, P2-T09]
 knowledgeBase: [ADR-008, RULE-DISCOVERY-01, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-04, RULE-SERVICE-05]
 blockedByTbc: []
-labels: [trimr, phase-2, backend, maps, security]
+labels: [quicktrimr, phase-2, backend, maps, security]
 ```
 
 **Context**
 
 The query the whole client journey starts from, and the one place where **two different geographies** must not be confused: Available Now searches the live session location (`RULE-DISCOVERY-02`), Scheduled searches the configured service area (`RULE-DISCOVERY-03`).
 
-It is also the highest-volume privacy surface in TRIMR. Every client who searches receives barber data, so a private field in this response is exposed broadly rather than to one booking counterparty. `RULE-DISCOVERY-05` from `P0-D06` decides the location precision this may return — which is why this ticket cannot start before that decision.
+It is also the highest-volume privacy surface in QuickTrimr. Every client who searches receives barber data, so a private field in this response is exposed broadly rather than to one booking counterparty. `RULE-DISCOVERY-05` from `P0-D06` decides the location precision this may return — which is why this ticket cannot start before that decision.
 
 **Scope**
 
@@ -2759,7 +2815,7 @@ dependsOn: [P0-T15, P1-T05, P2-T04]
 affects: [P2-T06, P2-T07, P2-T09]
 knowledgeBase: [ADR-003, RULE-DISCOVERY-01, ENUM-BOOKING-TYPE]
 blockedByTbc: []
-labels: [trimr, phase-2, mobile]
+labels: [quicktrimr, phase-2, mobile]
 ```
 
 **Context**
@@ -2813,7 +2869,7 @@ dependsOn: [P0-T15, P1-T12, P2-T04, P2-T05]
 affects: [P2-T09]
 knowledgeBase: [RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-05]
 blockedByTbc: []
-labels: [trimr, phase-2, mobile]
+labels: [quicktrimr, phase-2, mobile]
 ```
 
 **Context**
@@ -2865,7 +2921,7 @@ dependsOn: [P0-D06, P2-T04, P2-T05]
 affects: []
 knowledgeBase: [ADR-004, ADR-008, RULE-DISCOVERY-04, RULE-DISCOVERY-05]
 blockedByTbc: []
-labels: [trimr, phase-2, mobile, maps, security]
+labels: [quicktrimr, phase-2, mobile, maps, security]
 ```
 
 **Context**
@@ -2923,7 +2979,7 @@ dependsOn: [P0-D01, P0-D02, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11]
 affects: [P2-T09, P2-T10, P2-T12, P2-T13, P2-T15, P3-T01, P3-T06, P4-T01]
 knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-SERVICE-05, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-COMMISSION-PCT]
 blockedByTbc: []
-labels: [trimr, phase-2, backend, database]
+labels: [quicktrimr, phase-2, backend, database]
 ```
 
 **Context**
@@ -3018,7 +3074,7 @@ dependsOn: [P0-D08, P0-T14, P1-T12, P2-T05, P2-T08]
 affects: [P3-T08, P4-T01]
 knowledgeBase: [ADR-006, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-06, RULE-SCHED-02, RULE-COPY-01, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS]
 blockedByTbc: []
-labels: [trimr, phase-2, mobile]
+labels: [quicktrimr, phase-2, mobile]
 ```
 
 **Context**
@@ -3071,7 +3127,7 @@ dependsOn: [P0-T11, P2-T08]
 affects: [P2-T11, P2-T12, P2-T13]
 knowledgeBase: [ROLE-BARBER, RULE-DISCOVERY-04, ENUM-REQUEST-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-2, backend, security]
+labels: [quicktrimr, phase-2, backend, security]
 ```
 
 **Context**
@@ -3139,7 +3195,7 @@ dependsOn: [P0-T14, P2-T02, P2-T10]
 affects: [P2-T14]
 knowledgeBase: [RULE-AVAIL-05, RULE-AVAIL-06, RULE-SCHED-02, ENUM-REQUEST-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-2, mobile]
+labels: [quicktrimr, phase-2, mobile]
 ```
 
 **Context**
@@ -3194,7 +3250,7 @@ dependsOn: [P0-T07, P2-T01, P2-T03, P2-T08, P2-T10]
 affects: [P2-T14, P3-T02, P3-T06, P4-T01, P4-T02]
 knowledgeBase: [ADR-010, ADR-013, RULE-REQUEST-05, RULE-AVAIL-05, RULE-AVAIL-07, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-2, backend, security]
+labels: [quicktrimr, phase-2, backend, security]
 ```
 
 **Context**
@@ -3270,7 +3326,7 @@ dependsOn: [P2-T08, P2-T10]
 affects: [P2-T14, P2-T15, P3-T06]
 knowledgeBase: [ADR-013, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-2, backend]
+labels: [quicktrimr, phase-2, backend]
 ```
 
 **Context**
@@ -3343,7 +3399,7 @@ dependsOn: [P2-T11, P2-T12, P2-T13]
 affects: [P4-T02]
 knowledgeBase: [RULE-REQUEST-05, RULE-AVAIL-05, RULE-COPY-01, ENUM-REQUEST-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-2, mobile]
+labels: [quicktrimr, phase-2, mobile]
 ```
 
 **Context**
@@ -3395,7 +3451,7 @@ dependsOn: [P0-D07, P2-T03, P2-T08]
 affects: [P3-T06, P4-T01]
 knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-06, RULE-SCHED-02, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS]
 blockedByTbc: []
-labels: [trimr, phase-2, backend]
+labels: [quicktrimr, phase-2, backend]
 ```
 
 **Context**
@@ -3463,7 +3519,7 @@ dependsOn: [P0-D02, P0-T18, P2-T08]
 affects: [P3-T02, P3-T03, P3-T06, P3-T07]
 knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-PAY-01, RULE-PAY-02, RULE-PAY-08, RULE-PAY-10, RULE-PAY-11, ENUM-PAYMENT-STATUS, CFG-COMMISSION-PCT]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, stripe, security]
+labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
 
 **Context**
@@ -3482,7 +3538,7 @@ Read the amount from the booking request snapshot. Create a **manual-capture** P
 
 A `payments` row keyed to the request, statuses through `ENUM-PAYMENT-STATUS`, all amounts integer cents (`ADR-009`).
 
-Payment method collection via Stripe's SDK — TRIMR never handles card numbers, and no card data reaches a TRIMR server or log.
+Payment method collection via Stripe's SDK — QuickTrimr never handles card numbers, and no card data reaches a QuickTrimr server or log.
 
 **A deterministic, server-derived idempotency key** — derived from the request id, never client-supplied (`RULE-PAY-04`). A client-chosen key can be varied and defeats the guard entirely.
 
@@ -3550,7 +3606,7 @@ dependsOn: [P0-D02, P2-T12, P3-T01]
 affects: [P3-T04, P3-T06, P5-T04, P5-T09]
 knowledgeBase: [ADR-006, ADR-009, ADR-010, ADR-013, RULE-PAY-03, RULE-PAY-04, RULE-PAY-05, RULE-PAY-06, RULE-PAY-09, RULE-PAY-11, ENUM-PAYMENT-STATUS, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, stripe, security]
+labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
 
 **Context**
@@ -3636,12 +3692,12 @@ dependsOn: [P0-T18, P1-T09, P3-T01]
 affects: [P3-T04, P3-T07, P3-T11, P5-T09]
 knowledgeBase: [ADR-013, RULE-PAY-06, RULE-PAY-07, RULE-PAY-10, ENUM-PAYMENT-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, stripe, security]
+labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
 
 **Context**
 
-`RULE-PAY-06` — Stripe is the source of truth. The webhook is how TRIMR learns about anything that happens outside a request it made: an asynchronous capture result, a dispute, a payout failure, a refund settling.
+`RULE-PAY-06` — Stripe is the source of truth. The webhook is how QuickTrimr learns about anything that happens outside a request it made: an asynchronous capture result, a dispute, a payout failure, a refund settling.
 
 This **extends the handler from `P1-T09`** rather than creating a second endpoint. That handler already established signature verification and event deduplication; adding a second endpoint means two places to get verification wrong.
 
@@ -3659,7 +3715,7 @@ Deduplicate on the Stripe event id, persisted. A replayed event is a no-op.
 
 Fast acknowledgement, with slow work deferred — a handler that exceeds Stripe's timeout triggers a retry storm.
 
-Unrecognised event types acknowledged and logged, never errored: a 500 on an event TRIMR does not care about causes Stripe to retry it indefinitely.
+Unrecognised event types acknowledged and logged, never errored: a 500 on an event QuickTrimr does not care about causes Stripe to retry it indefinitely.
 
 Safe logging: event type and id only (`RULE-PAY-10`).
 
@@ -3697,7 +3753,7 @@ dependsOn: [P0-D02, P0-T10, P3-T02, P3-T03]
 affects: [P3-T05, P3-T10, P4-T09, P4-T11, P5-T09]
 knowledgeBase: [ADR-009, ADR-013, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-PAY-08, RULE-PAY-11, ENUM-EARNING-STATUS, CFG-COMMISSION-PCT]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, database]
+labels: [quicktrimr, phase-3, backend, database]
 ```
 
 **Context**
@@ -3772,12 +3828,12 @@ dependsOn: [P0-D05, P0-T14, P1-T08, P3-T04]
 affects: []
 knowledgeBase: [RULE-EARN-02, RULE-EARN-04, RULE-EARN-05, RULE-EARN-07, RULE-COPY-01, ENUM-EARNING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-3, mobile]
+labels: [quicktrimr, phase-3, mobile]
 ```
 
 **Context**
 
-**`RULE-EARN-04` is the whole point of this screen.** "Available" is a TRIMR balance, not money in a bank account, and the gap between them is the most likely support complaint on the platform. A barber who reads "available: $340" and checks their bank on Tuesday concludes TRIMR has not paid them.
+**`RULE-EARN-04` is the whole point of this screen.** "Available" is a QuickTrimr balance, not money in a bank account, and the gap between them is the most likely support complaint on the platform. A barber who reads "available: $340" and checks their bank on Tuesday concludes QuickTrimr has not paid them.
 
 `RULE-COPY-01` binds the copy here. This screen must state, without the barber having to look for it, when money actually arrives — which is why it depends on `P0-D05`.
 
@@ -3785,7 +3841,7 @@ labels: [trimr, phase-3, mobile]
 
 An earnings screen in the barber journey: pending, available, queued for payout, and paid-out totals, plus a list of recent earnings with per-booking detail.
 
-**Explicit copy** distinguishing a TRIMR balance from a bank balance, and the **next payout date** from `RULE-EARN-07`.
+**Explicit copy** distinguishing a QuickTrimr balance from a bank balance, and the **next payout date** from `RULE-EARN-07`.
 
 Each earning links to its booking, showing gross, commission and net — a barber who cannot see the commission on a specific job will ask, and the answer should be on the screen.
 
@@ -3798,7 +3854,7 @@ RLS: a barber sees only their own earnings.
 **Acceptance criteria**
 
 - [ ] The barber sees pending, available, queued and paid-out totals, and a recent earnings list.
-- [ ] **The screen states plainly that "available" is a TRIMR balance, not money in the bank** (`RULE-EARN-04`, `RULE-COPY-01`).
+- [ ] **The screen states plainly that "available" is a QuickTrimr balance, not money in the bank** (`RULE-EARN-04`, `RULE-COPY-01`).
 - [ ] **The next payout date is shown** (`RULE-EARN-07`).
 - [ ] Each earning shows gross, commission and net for its booking.
 - [ ] Amounts are formatted from integer cents by a single formatter; no ad-hoc formatting.
@@ -3829,7 +3885,7 @@ dependsOn: [P2-T08, P2-T09, P2-T12, P2-T13, P2-T15, P3-T01, P3-T02]
 affects: [P4-T01, P4-T02, P5-T04]
 knowledgeBase: [ADR-006, ADR-010, RULE-PAY-02, RULE-PAY-03, RULE-PAY-05, RULE-REQUEST-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, stripe]
+labels: [quicktrimr, phase-3, backend, stripe]
 ```
 
 **Context**
@@ -3894,7 +3950,7 @@ dependsOn: [P0-D02, P0-D03, P3-T02, P3-T03, P3-T06]
 affects: [P3-T08, P3-T09, P3-T12, P5-T07, P5-T09]
 knowledgeBase: [ADR-009, ADR-013, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-PAY-11, RULE-EARN-01, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, stripe, security]
+labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
 
 **Context**
@@ -3918,7 +3974,7 @@ Four cases (`RULE-CANCEL-01`–`RULE-CANCEL-04`):
 | Client, inside the window or Available Now after acceptance | Partial refund plus barber inconvenience payment, per `RULE-CANCEL-07` |
 | Barber, inside the window or Available Now after acceptance | Full client refund plus a reliability event |
 
-Pure functions in `packages/domain` taking the booking snapshot, the actor, and the time, returning the refund, the barber amount and the TRIMR position — all integer cents, summing to what was captured.
+Pure functions in `packages/domain` taking the booking snapshot, the actor, and the time, returning the refund, the barber amount and the QuickTrimr position — all integer cents, summing to what was captured.
 
 Refunds are idempotent on a server-derived key. A double-tapped cancel refunds once.
 
@@ -3952,7 +4008,7 @@ Audit log with the calculated amounts and the rule applied.
 
 - [ ] All four cancellation cases are implemented per `RULE-CANCEL-01`–`RULE-CANCEL-04` and `RULE-CANCEL-07`.
 - [ ] **Every calculation lives in `packages/domain` as a pure function** with no I/O, unit-tested without a database or network.
-- [ ] **In every case the amounts reconcile against what Stripe captured** — refund plus barber amount plus TRIMR position plus unreturned Stripe fee equals the captured total, asserted in integer cents.
+- [ ] **In every case the amounts reconcile against what Stripe captured** — refund plus barber amount plus QuickTrimr position plus unreturned Stripe fee equals the captured total, asserted in integer cents.
 - [ ] Timing is evaluated against `CFG-LATE-CANCEL-WINDOW-HOURS` on the server clock, at the exact boundary.
 - [ ] **A duplicate cancel refunds once** — proven against the Stripe test dashboard.
 - [ ] Cancelling before acceptance cancels the authorisation and captures nothing.
@@ -3983,7 +4039,7 @@ dependsOn: [P0-D03, P0-T14, P2-T09, P3-T07]
 affects: []
 knowledgeBase: [RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-06, RULE-CANCEL-07, RULE-COPY-01, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT]
 blockedByTbc: []
-labels: [trimr, phase-3, mobile]
+labels: [quicktrimr, phase-3, mobile]
 ```
 
 **Context**
@@ -4038,14 +4094,14 @@ dependsOn: [P0-D03, P0-D04, P0-T14, P3-T07, P3-T12]
 affects: []
 knowledgeBase: [RULE-CANCEL-04, RULE-CANCEL-06, RULE-CANCEL-07, RULE-RELY-01, RULE-RELY-03, RULE-RELY-06, RULE-COPY-01]
 blockedByTbc: []
-labels: [trimr, phase-3, mobile]
+labels: [quicktrimr, phase-3, mobile]
 ```
 
 **Context**
 
 A barber cancelling an accepted job refunds the client in full and incurs a reliability consequence (`RULE-CANCEL-04`). The consequence must be shown **before** they confirm — a barber who cancels once and finds themselves in `limited` without warning has been penalised by a system they could not see.
 
-`RULE-RELY-02` commits TRIMR to recoverability, so the screen should also say how the consequence lifts. A penalty with no stated path back reads as permanent.
+`RULE-RELY-02` commits QuickTrimr to recoverability, so the screen should also say how the consequence lifts. A penalty with no stated path back reads as permanent.
 
 **Scope**
 
@@ -4092,7 +4148,7 @@ dependsOn: [P0-D02, P0-D05, P3-T04]
 affects: [P3-T11, P5-T10]
 knowledgeBase: [ADR-009, ADR-013, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, database]
+labels: [quicktrimr, phase-3, backend, database]
 ```
 
 **Context**
@@ -4148,7 +4204,7 @@ dependsOn: [P0-D05, P0-D07, P0-T18, P1-T07, P3-T03, P3-T10]
 affects: [P5-T10]
 knowledgeBase: [ADR-011, ADR-013, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-PAY-04, RULE-PAY-09, RULE-ONBOARD-04, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, stripe, security]
+labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
 
 **Context**
@@ -4191,7 +4247,7 @@ Audit log per item, with the Stripe transfer id.
 
 **Out of scope** — batch creation (`P3-T10`); admin payout views (`P5-T10`); live-mode payouts (`P6-T11`).
 
-**Sync notes** — the last ticket before money leaves TRIMR. Any change here is reviewed against the double-payout guarantee first and everything else second.
+**Sync notes** — the last ticket before money leaves QuickTrimr. Any change here is reviewed against the double-payout guarantee first and everything else second.
 
 ---
 
@@ -4209,7 +4265,7 @@ dependsOn: [P0-D04, P0-D07, P0-T10, P3-T07]
 affects: [P2-T04, P3-T09, P5-T03, P5-T13]
 knowledgeBase: [ADR-011, ADR-013, RULE-RELY-01, RULE-RELY-02, RULE-RELY-03, RULE-RELY-04, RULE-RELY-05, RULE-RELY-06, ENUM-RELIABILITY-LEVEL, CFG-RELIABILITY-WINDOW-DAYS, CFG-RELIABILITY-RESET-DAYS, CFG-RELIABILITY-COOLDOWN-MIN]
 blockedByTbc: []
-labels: [trimr, phase-3, backend, database]
+labels: [quicktrimr, phase-3, backend, database]
 ```
 
 **Context**
@@ -4278,7 +4334,7 @@ dependsOn: [P0-T14, P0-T15, P2-T09, P2-T15, P3-T06]
 affects: [P4-T06, P4-T10, P4-T15]
 knowledgeBase: [ADR-010, RULE-COPY-01, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-4, mobile]
+labels: [quicktrimr, phase-4, mobile]
 ```
 
 **Context**
@@ -4332,7 +4388,7 @@ dependsOn: [P0-T14, P2-T12, P2-T14, P3-T06]
 affects: [P4-T03, P4-T04, P4-T08]
 knowledgeBase: [ADR-010, ROLE-BARBER, RULE-COPY-01, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-4, mobile, security]
+labels: [quicktrimr, phase-4, mobile, security]
 ```
 
 **Context**
@@ -4386,7 +4442,7 @@ dependsOn: [P1-T05, P4-T02]
 affects: [P4-T04, P4-T05, P4-T06]
 knowledgeBase: [ADR-004, ADR-010, ADR-013, RULE-ETA-01, ROLE-BARBER, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-4, backend, maps]
+labels: [quicktrimr, phase-4, backend, maps]
 ```
 
 **Context**
@@ -4465,7 +4521,7 @@ dependsOn: [P4-T02, P4-T03]
 affects: []
 knowledgeBase: [ADR-004, RULE-ETA-01, RULE-ETA-05, RULE-COPY-01]
 blockedByTbc: []
-labels: [trimr, phase-4, mobile, maps]
+labels: [quicktrimr, phase-4, mobile, maps]
 ```
 
 **Context**
@@ -4514,12 +4570,12 @@ dependsOn: [P0-D06, P0-D07, P0-T18, P4-T03]
 affects: [P4-T06]
 knowledgeBase: [ADR-004, ADR-008, ADR-011, RULE-ETA-02, RULE-ETA-03, RULE-ETA-04, RULE-ETA-05, CFG-ETA-REFRESH-MIN]
 blockedByTbc: []
-labels: [trimr, phase-4, backend, maps, security]
+labels: [quicktrimr, phase-4, backend, maps, security]
 ```
 
 **Context**
 
-Google Routes is called **from the server only** (`RULE-ETA-02`, `ADR-008`). The server key never reaches the mobile bundle, and a leaked key is billed to TRIMR until someone notices.
+Google Routes is called **from the server only** (`RULE-ETA-02`, `ADR-008`). The server key never reaches the mobile bundle, and a leaked key is billed to QuickTrimr until someone notices.
 
 Throttling is both a cost control and a privacy control: each refresh is a Routes call and a location read. `CFG-ETA-REFRESH-MIN` comes from `P0-D06`, which is why this ticket waits on it.
 
@@ -4576,7 +4632,7 @@ dependsOn: [P0-D06, P0-T15, P4-T01, P4-T05]
 affects: []
 knowledgeBase: [ADR-004, RULE-ETA-03, RULE-ETA-04, RULE-ETA-05, RULE-COPY-01, CFG-ETA-REFRESH-MIN]
 blockedByTbc: []
-labels: [trimr, phase-4, mobile, maps]
+labels: [quicktrimr, phase-4, mobile, maps]
 ```
 
 **Context**
@@ -4630,7 +4686,7 @@ dependsOn: [P0-T06, P0-T07, P3-T04, P4-T02]
 affects: [P4-T08, P4-T09, P4-T11]
 knowledgeBase: [ADR-010, ADR-013, RULE-COMPLETE-01, RULE-COMPLETE-02, RULE-EARN-02, ENUM-BOOKING-STATUS, CFG-COMPLETION-RESPONSE-MIN]
 blockedByTbc: []
-labels: [trimr, phase-4, backend]
+labels: [quicktrimr, phase-4, backend]
 ```
 
 **Context**
@@ -4706,12 +4762,12 @@ dependsOn: [P0-T14, P4-T02, P4-T07]
 affects: []
 knowledgeBase: [RULE-COMPLETE-02, RULE-EARN-02, RULE-EARN-04, RULE-COPY-01]
 blockedByTbc: []
-labels: [trimr, phase-4, mobile]
+labels: [quicktrimr, phase-4, mobile]
 ```
 
 **Context**
 
-The barber taps this and expects to be paid. `RULE-EARN-02` and `RULE-EARN-04` mean two things must be said here: the client has a window to respond, and even after that the money moves to a TRIMR balance, not a bank account. A barber who taps complete and checks their bank an hour later needs to have already been told why it is not there.
+The barber taps this and expects to be paid. `RULE-EARN-02` and `RULE-EARN-04` mean two things must be said here: the client has a window to respond, and even after that the money moves to a QuickTrimr balance, not a bank account. A barber who taps complete and checks their bank an hour later needs to have already been told why it is not there.
 
 **Scope**
 
@@ -4719,7 +4775,7 @@ A complete action on an eligible booking, visible only in a valid status.
 
 A confirmation dialog, because completing early is a real mistake with a financial consequence.
 
-After completing, show: the client has `CFG-COMPLETION-RESPONSE-MIN` to confirm or dispute, what happens if they do nothing, and that the earning becomes available — as a TRIMR balance (`RULE-EARN-04`).
+After completing, show: the client has `CFG-COMPLETION-RESPONSE-MIN` to confirm or dispute, what happens if they do nothing, and that the earning becomes available — as a QuickTrimr balance (`RULE-EARN-04`).
 
 Handle a booking whose status changed mid-decision, including a client who completed first (`RULE-COMPLETE-03`).
 
@@ -4728,7 +4784,7 @@ Handle a booking whose status changed mid-decision, including a client who compl
 - [ ] The action appears only in a valid status.
 - [ ] A confirmation dialog is required.
 - [ ] After completing, the client response window and its outcomes are explained.
-- [ ] **The screen states the earning becomes a TRIMR balance, not a bank deposit** (`RULE-EARN-04`, `RULE-COPY-01`).
+- [ ] **The screen states the earning becomes a QuickTrimr balance, not a bank deposit** (`RULE-EARN-04`, `RULE-COPY-01`).
 - [ ] A status change mid-decision, including a client completing first, is handled with a clear message.
 - [ ] Loading and error states exist; a failed call does not leave the UI showing complete.
 
@@ -4752,7 +4808,7 @@ dependsOn: [P0-T07, P3-T04, P4-T07]
 affects: [P4-T10, P4-T11, P4-T12, P4-T14]
 knowledgeBase: [ADR-010, ADR-013, RULE-COMPLETE-02, RULE-COMPLETE-03, RULE-EARN-02, RULE-EARN-03, RULE-DISPUTE-01, RULE-DISPUTE-02, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-4, backend]
+labels: [quicktrimr, phase-4, backend]
 ```
 
 **Context**
@@ -4836,7 +4892,7 @@ dependsOn: [P0-T14, P4-T01, P4-T09]
 affects: [P4-T13]
 knowledgeBase: [RULE-COMPLETE-02, RULE-COMPLETE-03, RULE-COMPLETE-04, RULE-COPY-01, CFG-COMPLETION-RESPONSE-MIN, CFG-FINAL-DISPUTE-WINDOW-MIN]
 blockedByTbc: []
-labels: [trimr, phase-4, mobile]
+labels: [quicktrimr, phase-4, mobile]
 ```
 
 **Context**
@@ -4888,7 +4944,7 @@ dependsOn: [P0-D07, P3-T04, P4-T07, P4-T09]
 affects: [P5-T04]
 knowledgeBase: [ADR-011, ADR-013, RULE-COMPLETE-02, RULE-COMPLETE-04, RULE-COMPLETE-05, RULE-EARN-02, RULE-EARN-03, ENUM-BOOKING-STATUS, CFG-COMPLETION-RESPONSE-MIN, CFG-NO-ACTION-WARNING-HOURS, CFG-FINAL-DISPUTE-WINDOW-MIN]
 blockedByTbc: []
-labels: [trimr, phase-4, backend]
+labels: [quicktrimr, phase-4, backend]
 ```
 
 **Context**
@@ -4955,7 +5011,7 @@ dependsOn: [P0-T10, P3-T04, P4-T09]
 affects: [P4-T13, P5-T06, P5-T07]
 knowledgeBase: [ADR-010, ADR-013, RULE-DISPUTE-01, RULE-DISPUTE-02, RULE-DISPUTE-03, RULE-DISPUTE-06, RULE-EARN-03, ENUM-DISPUTE-STATUS, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-4, backend]
+labels: [quicktrimr, phase-4, backend]
 ```
 
 **Context**
@@ -5036,12 +5092,12 @@ dependsOn: [P0-T14, P4-T10, P4-T12]
 affects: []
 knowledgeBase: [RULE-DISPUTE-01, RULE-DISPUTE-03, RULE-COPY-01]
 blockedByTbc: []
-labels: [trimr, phase-4, mobile]
+labels: [quicktrimr, phase-4, mobile]
 ```
 
 **Context**
 
-A client using this is already unhappy. The form should be short, tell them what happens next, and not promise an outcome — `RULE-DISPUTE-04` puts resolution in an admin's hands, and copy suggesting an automatic refund creates an expectation TRIMR may not meet (`RULE-COPY-01`).
+A client using this is already unhappy. The form should be short, tell them what happens next, and not promise an outcome — `RULE-DISPUTE-04` puts resolution in an admin's hands, and copy suggesting an automatic refund creates an expectation QuickTrimr may not meet (`RULE-COPY-01`).
 
 **Scope**
 
@@ -5083,7 +5139,7 @@ dependsOn: [P0-D08, P0-T10, P4-T09]
 affects: [P4-T15, P5-T12]
 knowledgeBase: [ADR-013, RULE-REVIEW-01, RULE-REVIEW-02, RULE-REVIEW-03, RULE-REVIEW-04, RULE-REVIEW-05, RULE-REVIEW-06]
 blockedByTbc: []
-labels: [trimr, phase-4, backend]
+labels: [quicktrimr, phase-4, backend]
 ```
 
 **Context**
@@ -5159,7 +5215,7 @@ dependsOn: [P0-D08, P0-T14, P1-T12, P4-T01, P4-T14]
 affects: []
 knowledgeBase: [RULE-REVIEW-01, RULE-REVIEW-02, RULE-REVIEW-03, RULE-REVIEW-06]
 blockedByTbc: []
-labels: [trimr, phase-4, mobile]
+labels: [quicktrimr, phase-4, mobile]
 ```
 
 **Context**
@@ -5217,7 +5273,7 @@ dependsOn: [P0-T12, P0-T17, P1-T02]
 affects: []
 knowledgeBase: [RULE-ADMIN-01, RULE-ADMIN-04, ENUM-BOOKING-STATUS, ENUM-DISPUTE-STATUS, ENUM-PAYMENT-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-5, admin]
+labels: [quicktrimr, phase-5, admin]
 ```
 
 **Context**
@@ -5263,7 +5319,7 @@ dependsOn: [P0-T17, P1-T02, P1-T04, P1-T05]
 affects: []
 knowledgeBase: [ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, ADR-013]
 blockedByTbc: []
-labels: [trimr, phase-5, admin, security]
+labels: [quicktrimr, phase-5, admin, security]
 ```
 
 **Context**
@@ -5311,7 +5367,7 @@ dependsOn: [P0-T17, P1-T02, P1-T09, P1-T11, P3-T12]
 affects: [P5-T13]
 knowledgeBase: [ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, RULE-ONBOARD-04, RULE-RELY-01, RULE-RELY-06, ENUM-VERIFICATION-STATUS, ENUM-RELIABILITY-LEVEL]
 blockedByTbc: []
-labels: [trimr, phase-5, admin]
+labels: [quicktrimr, phase-5, admin]
 ```
 
 **Context**
@@ -5361,7 +5417,7 @@ dependsOn: [P0-T17, P1-T02, P3-T02, P3-T06, P4-T01, P4-T02, P4-T11]
 affects: [P5-T05]
 knowledgeBase: [ADR-010, ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, RULE-PAY-05, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-5, admin]
+labels: [quicktrimr, phase-5, admin]
 ```
 
 **Context**
@@ -5417,7 +5473,7 @@ dependsOn: [P4-T11, P5-T04]
 affects: []
 knowledgeBase: [ADR-010, ADR-013, RULE-ADMIN-01, RULE-ADMIN-02, RULE-EARN-02, ENUM-BOOKING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-5, admin, backend, security]
+labels: [quicktrimr, phase-5, admin, backend, security]
 ```
 
 **Context**
@@ -5495,7 +5551,7 @@ dependsOn: [P0-T17, P1-T02, P4-T12]
 affects: [P5-T08]
 knowledgeBase: [ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, RULE-DISPUTE-01, RULE-DISPUTE-02, RULE-EARN-03, ENUM-DISPUTE-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-5, admin]
+labels: [quicktrimr, phase-5, admin]
 ```
 
 **Context**
@@ -5542,7 +5598,7 @@ dependsOn: [P0-D02, P0-D03, P3-T07, P4-T12, P5-T06]
 affects: [P5-T08]
 knowledgeBase: [ADR-009, ADR-013, RULE-ADMIN-01, RULE-ADMIN-03, RULE-DISPUTE-04, RULE-DISPUTE-05, RULE-DISPUTE-06, RULE-CANCEL-05, RULE-CANCEL-07, RULE-EARN-03, RULE-PAY-04, RULE-PAY-11, ENUM-DISPUTE-STATUS, ENUM-EARNING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-5, admin, backend, stripe, security]
+labels: [quicktrimr, phase-5, admin, backend, stripe, security]
 ```
 
 **Context**
@@ -5626,7 +5682,7 @@ dependsOn: [P0-D03, P0-T17, P5-T06, P5-T07]
 affects: []
 knowledgeBase: [ADR-009, RULE-DISPUTE-04, RULE-DISPUTE-05, RULE-ADMIN-03, RULE-CANCEL-07]
 blockedByTbc: []
-labels: [trimr, phase-5, admin]
+labels: [quicktrimr, phase-5, admin]
 ```
 
 **Context**
@@ -5677,12 +5733,12 @@ dependsOn: [P0-D02, P0-T17, P1-T02, P3-T03, P3-T04]
 affects: [P5-T10]
 knowledgeBase: [ADR-009, ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, RULE-PAY-08, RULE-PAY-10, RULE-PAY-11, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-5, admin, security]
+labels: [quicktrimr, phase-5, admin, security]
 ```
 
 **Context**
 
-The reconciliation surface. When TRIMR's Stripe balance does not match what the database says, this is where the difference is found — which means every row needs its Stripe reference, and the totals need to be derived from the rows rather than stored separately.
+The reconciliation surface. When QuickTrimr's Stripe balance does not match what the database says, this is where the difference is found — which means every row needs its Stripe reference, and the totals need to be derived from the rows rather than stored separately.
 
 `RULE-PAY-10` still applies: an admin needs the Stripe payment intent id to look a record up, not the full payment method or any card data.
 
@@ -5730,7 +5786,7 @@ dependsOn: [P0-D05, P0-T17, P3-T10, P3-T11, P5-T09]
 affects: []
 knowledgeBase: [ADR-009, ROLE-ADMIN, RULE-ADMIN-01, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-PAY-10, ENUM-PAYOUT-STATUS, ENUM-EARNING-STATUS]
 blockedByTbc: []
-labels: [trimr, phase-5, admin, stripe]
+labels: [quicktrimr, phase-5, admin, stripe]
 ```
 
 **Context**
@@ -5783,7 +5839,7 @@ dependsOn: [P0-T17, P1-T02, P1-T10]
 affects: []
 knowledgeBase: [ADR-013, RULE-SERVICE-01, RULE-SERVICE-03, RULE-SERVICE-05, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-5, admin]
+labels: [quicktrimr, phase-5, admin]
 ```
 
 **Context**
@@ -5839,7 +5895,7 @@ dependsOn: [P0-T17, P1-T02, P4-T14]
 affects: []
 knowledgeBase: [ADR-013, RULE-REVIEW-04, RULE-REVIEW-05, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-5, admin]
+labels: [quicktrimr, phase-5, admin]
 ```
 
 **Context**
@@ -5887,7 +5943,7 @@ dependsOn: [P0-D04, P1-T02, P3-T12, P5-T03]
 affects: []
 knowledgeBase: [ADR-013, RULE-ADMIN-01, RULE-RELY-01, RULE-RELY-02, RULE-RELY-05, RULE-RELY-06, ENUM-RELIABILITY-LEVEL, CFG-RELIABILITY-WINDOW-DAYS]
 blockedByTbc: []
-labels: [trimr, phase-5, admin, backend, security]
+labels: [quicktrimr, phase-5, admin, backend, security]
 ```
 
 **Context**
@@ -5949,7 +6005,7 @@ Audit log with the admin, the reason, and the before and after.
 ---
 ## Phase 6 — Notifications, Analytics, QA & Release
 
-**Goal:** both sides are told what happened, TRIMR can see what happened, the critical paths have tests, and the thing is releasable.
+**Goal:** both sides are told what happened, QuickTrimr can see what happened, the critical paths have tests, and the thing is releasable.
 
 **Gate:** every notification in `RULE-NOTIF-01` fires, the money and access-control paths have automated coverage, and a staging environment runs the whole product end to end.
 
@@ -5969,7 +6025,7 @@ dependsOn: [P0-T13, P1-T01]
 affects: [P6-T02]
 knowledgeBase: [RULE-NOTIF-02, RULE-NOTIF-03]
 blockedByTbc: []
-labels: [trimr, phase-6, mobile, notifications]
+labels: [quicktrimr, phase-6, mobile, notifications]
 ```
 
 **Context**
@@ -6018,12 +6074,12 @@ dependsOn: [P0-D07, P2-T08, P2-T12, P3-T06, P4-T11, P6-T01]
 affects: []
 knowledgeBase: [ADR-011, RULE-NOTIF-01, RULE-NOTIF-02, RULE-NOTIF-03, RULE-NOTIF-04, RULE-COPY-01]
 blockedByTbc: []
-labels: [trimr, phase-6, backend, notifications]
+labels: [quicktrimr, phase-6, backend, notifications]
 ```
 
 **Context**
 
-Notifications carry TRIMR's state changes to people who are not looking at the app, and two of them are load-bearing: the barber's incoming request — which expires in five minutes and is worthless if it arrives late — and the client's final completion prompt, which `RULE-COMPLETE-04` requires **before** money moves automatically.
+Notifications carry QuickTrimr's state changes to people who are not looking at the app, and two of them are load-bearing: the barber's incoming request — which expires in five minutes and is worthless if it arrives late — and the client's final completion prompt, which `RULE-COMPLETE-04` requires **before** money moves automatically.
 
 `RULE-NOTIF-03` — a failed push must never block or reverse the state change that triggered it. A booking that fails to confirm because a notification failed is a far worse outcome than a missed notification.
 
@@ -6041,7 +6097,7 @@ Notification records stored, so "the barber says they never got it" has an answe
 
 Deduplication where a trigger can fire twice, since `ADR-011`'s idempotent jobs may attempt a send more than once.
 
-Copy compliant with `RULE-COPY-01` — nothing implying a charge that is only a hold, or money in a bank that is a TRIMR balance.
+Copy compliant with `RULE-COPY-01` — nothing implying a charge that is only a hold, or money in a bank that is a QuickTrimr balance.
 
 **Acceptance criteria**
 
@@ -6076,12 +6132,12 @@ dependsOn: [P0-T03, P0-T13, P0-T16]
 affects: []
 knowledgeBase: [RULE-NOTIF-02, RULE-PAY-10]
 blockedByTbc: []
-labels: [trimr, phase-6, mobile, admin, security]
+labels: [quicktrimr, phase-6, mobile, admin, security]
 ```
 
 **Context**
 
-Error monitoring on a product holding addresses and payment references. **The default configuration sends more than TRIMR should**: request bodies, breadcrumbs and local scope routinely contain exactly the data `RULE-PAY-10` and `RULE-NOTIF-02` prohibit leaving the system.
+Error monitoring on a product holding addresses and payment references. **The default configuration sends more than QuickTrimr should**: request bodies, breadcrumbs and local scope routinely contain exactly the data `RULE-PAY-10` and `RULE-NOTIF-02` prohibit leaving the system.
 
 Scrubbing has to be configured deliberately, before the first real error.
 
@@ -6129,7 +6185,7 @@ dependsOn: [P0-T03, P0-T13, P0-T16]
 affects: []
 knowledgeBase: [RULE-NOTIF-02, RULE-COPY-01]
 blockedByTbc: []
-labels: [trimr, phase-6, mobile, admin]
+labels: [quicktrimr, phase-6, mobile, admin]
 ```
 
 **Context**
@@ -6182,7 +6238,7 @@ dependsOn: [P0-T09]
 affects: [P6-T07]
 knowledgeBase: [ADR-002, ADR-013, RULE-PAY-10, RULE-NOTIF-02]
 blockedByTbc: []
-labels: [trimr, phase-6, backend, security]
+labels: [quicktrimr, phase-6, backend, security]
 ```
 
 **Context**
@@ -6233,7 +6289,7 @@ dependsOn: [P3-T07, P4-T11, P5-T07]
 affects: [P6-T11]
 knowledgeBase: [RULE-ADMIN-01, RULE-COMPLETE-04, RULE-CANCEL-07, RULE-EARN-04]
 blockedByTbc: []
-labels: [trimr, phase-6, qa]
+labels: [quicktrimr, phase-6, qa]
 ```
 
 **Context**
@@ -6278,7 +6334,7 @@ dependsOn: [P2-T12, P3-T02, P3-T07, P3-T11, P4-T11, P5-T07, P6-T05]
 affects: []
 knowledgeBase: [RULE-PAY-04, RULE-PAY-05, RULE-REQUEST-05, RULE-AVAIL-05, RULE-CANCEL-07, RULE-COMPLETE-04, RULE-EARN-03, RULE-EARN-06, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-6, backend, qa, security]
+labels: [quicktrimr, phase-6, backend, qa, security]
 ```
 
 **Context**
@@ -6338,7 +6394,7 @@ dependsOn: [P0-T04, P5-T04, P5-T06, P5-T08]
 affects: []
 knowledgeBase: [RULE-ADMIN-01, RULE-ADMIN-02, RULE-DISPUTE-04]
 blockedByTbc: []
-labels: [trimr, phase-6, admin, qa, security]
+labels: [quicktrimr, phase-6, admin, qa, security]
 ```
 
 **Context**
@@ -6385,7 +6441,7 @@ dependsOn: [P0-T03, P0-T09, P0-T18]
 affects: [P6-T10, P6-T11]
 knowledgeBase: [ADR-001, RULE-PAY-07, RULE-PAY-10, RULE-ETA-02]
 blockedByTbc: []
-labels: [trimr, phase-6, security]
+labels: [quicktrimr, phase-6, security]
 ```
 
 **Context**
@@ -6438,7 +6494,7 @@ dependsOn: [P0-T13, P6-T09]
 affects: [P6-T11]
 knowledgeBase: [ADR-007, RULE-PAY-10, RULE-ETA-02]
 blockedByTbc: []
-labels: [trimr, phase-6, mobile, security]
+labels: [quicktrimr, phase-6, mobile, security]
 ```
 
 **Context**
@@ -6486,7 +6542,7 @@ dependsOn: [P0-T18, P6-T06, P6-T07, P6-T09, P6-T10]
 affects: []
 knowledgeBase: [ADR-001, ADR-013, RULE-PAY-07, RULE-PAY-10, RULE-ETA-02, RULE-ADMIN-01, RULE-COPY-01]
 blockedByTbc: []
-labels: [trimr, phase-6, qa, security]
+labels: [quicktrimr, phase-6, qa, security]
 ```
 
 **Context**
@@ -6503,7 +6559,7 @@ The last gate before real money and real addresses. Switching Stripe to live mod
 - **Secrets** — no secret in the repo or in any build artefact; a rotation procedure documented.
 - **Data** — no test data in production; seed scripts cannot run against production.
 - **Monitoring** — Sentry and PostHog on production environments with scrubbing verified against a real error.
-- **Copy** — `RULE-COPY-01` reviewed across app, notifications and the Wix site: nothing implies live tracking, a hold described as a charge, or a TRIMR balance as a bank deposit.
+- **Copy** — `RULE-COPY-01` reviewed across app, notifications and the Wix site: nothing implies live tracking, a hold described as a charge, or a QuickTrimr balance as a bank deposit.
 - **Operational readiness** — who is on call, how a stuck `accepted_pending_payment` booking is found and cleared, how a failed payout is retried, and the target response time for a dispute.
 - **Rollback** — how to revert a release; what cannot be rolled back, namely a captured payment and a completed transfer.
 - **Known limitations** — the `KB §16` out-of-scope list, stated so nobody is surprised at launch.
@@ -6542,7 +6598,7 @@ dependsOn: [P6-T11]
 affects: [P7-T02]
 knowledgeBase: [RULE-COPY-01, RULE-EARN-04, RULE-ONBOARD-04]
 blockedByTbc: []
-labels: [trimr, phase-7, wix]
+labels: [quicktrimr, phase-7, wix]
 ```
 
 **Context**
@@ -6561,7 +6617,7 @@ Particular care on:
 
 - **No implication of live tracking** (`ADR-004`, `RULE-ETA-05`). "See when your barber is on the way" is true; "track your barber live" is not.
 - **Barber earnings described honestly** (`RULE-EARN-04`) — a payout schedule, not "instant payouts".
-- **Verification described accurately** (`RULE-ONBOARD-04`) — Stripe Connect onboarding, not background checks TRIMR does not run.
+- **Verification described accurately** (`RULE-ONBOARD-04`) — Stripe Connect onboarding, not background checks QuickTrimr does not run.
 - **Pricing described as barber-set** (`RULE-SERVICE-02`), not platform-set.
 
 Basic SEO structure, and a mobile-first layout.
@@ -6573,7 +6629,7 @@ Basic SEO structure, and a mobile-first layout.
 - [ ] **Every claim is mapped to the rule or ticket that implements it**; unmapped claims are removed.
 - [ ] **No copy implies live tracking** (`ADR-004`).
 - [ ] Barber earnings and payout timing are described accurately (`RULE-EARN-04`).
-- [ ] Verification is described as Stripe Connect onboarding, not as checks TRIMR does not perform.
+- [ ] Verification is described as Stripe Connect onboarding, not as checks QuickTrimr does not perform.
 - [ ] Pricing is described as barber-set.
 - [ ] SEO structure and a mobile-first layout are documented.
 
@@ -6595,7 +6651,7 @@ dependsOn: [P7-T01]
 affects: []
 knowledgeBase: [RULE-COPY-01, RULE-ADMIN-01]
 blockedByTbc: []
-labels: [trimr, phase-7, wix, security]
+labels: [quicktrimr, phase-7, wix, security]
 ```
 
 **Context**
@@ -6654,6 +6710,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `ADR-011` | `P0-D07`, `P2-T03`, `P2-T15`, `P3-T11`, `P3-T12`, `P4-T05`, `P4-T11`, `P6-T02` |
 | `ADR-012` | `P0-T05` |
 | `ADR-013` | `P0-T05`, `P0-T10`, `P0-T17`, `P1-T02`, `P1-T03`, `P1-T07`, `P1-T09`, `P1-T10`, `P2-T03`, `P2-T08`, `P2-T12`, `P2-T13`, `P2-T15`, `P3-T01`, `P3-T02`, `P3-T03`, `P3-T04`, `P3-T07`, `P3-T10`, `P3-T11`, `P3-T12`, `P4-T03`, `P4-T07`, `P4-T09`, `P4-T11`, `P4-T12`, `P4-T14`, `P5-T02`, `P5-T05`, `P5-T07`, `P5-T11`, `P5-T12`, `P5-T13`, `P6-T05`, `P6-T11` |
+| `ADR-014` | `P0-T19` |
 | `RULE-ADMIN-01` | `P0-T05`, `P0-T07`, `P0-T08`, `P0-T11`, `P0-T16`, `P1-T02`, `P1-T10`, `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T05`, `P5-T06`, `P5-T07`, `P5-T09`, `P5-T10`, `P5-T11`, `P5-T12`, `P5-T13`, `P6-T06`, `P6-T07`, `P6-T08`, `P6-T11`, `P7-T02` |
 | `RULE-ADMIN-02` | `P5-T05`, `P6-T08` |
 | `RULE-ADMIN-03` | `P5-T07`, `P5-T08` |
@@ -6819,6 +6876,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P0-T16` | `P0-T17`, `P1-T02`, `P6-T03`, `P6-T04` | `P0-T01` |
 | `P0-T17` | `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T06`, `P5-T08`, `P5-T09`, `P5-T10`, `P5-T11`, `P5-T12` | `P0-T06`, `P0-T12`, `P0-T16` |
 | `P0-T18` | `P1-T05`, `P1-T07`, `P1-T09`, `P3-T01`, `P3-T03`, `P3-T11`, `P4-T05`, `P6-T09`, `P6-T11` | `P0-T03` |
+| `P0-T19` | `P0-T01` | — |
 | `P1-T01` | `P1-T03`, `P6-T01` | `P0-T11`, `P0-T13` |
 | `P1-T02` | `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T06`, `P5-T09`, `P5-T11`, `P5-T12`, `P5-T13` | `P0-T11`, `P0-T16` |
 | `P1-T03` | `P1-T04`, `P1-T06`, `P1-T07` | `P0-T06`, `P0-T07`, `P0-T10`, `P0-T11`, `P1-T01` |

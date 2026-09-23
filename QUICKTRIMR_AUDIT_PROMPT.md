@@ -1,12 +1,12 @@
-# TRIMR — Code Audit Prompt
+# QuickTrimr — Code Audit Prompt
 
 The bar is not "it works." The bar is: **would the brightest engineer you have ever worked with
 sign their name to this?** This audit holds code, architecture, and technical decisions to that
-standard, and it holds them to `TRIMR`'s non-negotiables — which are stricter than general good
+standard, and it holds them to `QuickTrimr`'s non-negotiables — which are stricter than general good
 taste, because this repo moves real money and sends a named stranger to a client's home address at
 a stated time.
 
-This file is the single source of truth for the audit. `/audit` (Claude) and `$audit-trimr-code`
+This file is the single source of truth for the audit. `/audit` (Claude) and `$audit-quicktrimr-code`
 (Codex) both defer to it, so there is one copy and it cannot drift. If you are running the audit
 manually or without the skill, read this file and follow it anyway.
 
@@ -19,9 +19,9 @@ expensive to find later.
 ## 1. When this runs
 
 1. **Manually** — `/audit`, `/audit <path>`, `/audit all`, or `/audit <ticket-id>`.
-2. **Automatically as part of ticket work** — after `pick-up-trimr-ticket` delivers a slice, and
+2. **Automatically as part of ticket work** — after `pick-up-quicktrimr-ticket` delivers a slice, and
    after any code change made while working a ticket, run this audit before writing the Definition
-   of Done (`TRIMR_TICKET_PROMPT.md §7`) and the completion report (`§8`). Audit findings go in the
+   of Done (`QUICKTRIMR_TICKET_PROMPT.md §7`) and the completion report (`§8`). Audit findings go in the
    report's `AUDIT` section, and anything unresolved also lands in `NOT DONE` /
    `DECISIONS NEEDED`; resolve or triage each.
 
@@ -36,14 +36,14 @@ Default scope is **the change**, not the world:
 |---|---|
 | `/audit` (no arg) | Uncommitted + staged changes: `git diff HEAD` and `git status`. If clean, the diff of the current branch against `main`. |
 | `/audit <path>` | That file or directory. |
-| `/audit <ticket-id>` | The vertical slice delivered for that ticket (its migration, RLS, function, UI, tests). Resolve the ID against `TRIMR_BACKLOG_README.md` first, same as `pick-up-trimr-ticket`. |
+| `/audit <ticket-id>` | The vertical slice delivered for that ticket (its migration, RLS, function, UI, tests). Resolve the ID against `QUICKTRIMR_BACKLOG_README.md` first, same as `pick-up-quicktrimr-ticket`. |
 | `/audit all` | Full repository sweep. Expensive — say so and confirm before a long run. |
 
 Always read enough surrounding context to judge a finding — the diff line alone rarely tells you
 whether a query is an N+1 or whether a type is already defined in a shared package. State the scope
 you audited at the top of the report.
 
-Do not report on generated sections — `TRIMR_BACKLOG_README.md §8` and `§9` are machine-written
+Do not report on generated sections — `QUICKTRIMR_BACKLOG_README.md §8` and `§9` are machine-written
 (`CLAUDE.md`). Do not report style nits a formatter/linter already owns (Prettier, ESLint) unless
 the config itself is wrong.
 
@@ -121,7 +121,7 @@ These are not preferences. A hit is a bug, not a suggestion.
 **Truthful copy**
 
 - **`RULE-COPY-01`.** Do not imply live tracking (`ADR-004`) — no moving barber marker, no "track
-  your barber". Do not describe an authorised hold as a charge. Do not describe a TRIMR balance as
+  your barber". Do not describe an authorised hold as a charge. Do not describe a QuickTrimr balance as
   money in a bank account (`RULE-EARN-04`). This applies to the app, notifications, and the Wix
   site, and it is a Critical because it is a written promise the system then breaks in front of a
   user who is already unhappy.
@@ -134,7 +134,7 @@ These are not preferences. A hit is a bug, not a suggestion.
 
 ### B. Cost — wasted API calls and database work
 
-Every unnecessary round trip is real money at scale and latency for a real user. TRIMR has two
+Every unnecessary round trip is real money at scale and latency for a real user. QuickTrimr has two
 metered externals — Google Routes and Google Places — and a geospatial database that punishes a
 missing index.
 
@@ -271,7 +271,7 @@ RLS, 1 screen, tests) against §3.A–F; no findings." Do not invent findings to
 
 - It does not edit code. It reports. (For auto-fixing quality issues, that is `/simplify`; for a
   correctness-only diff review, `/code-review`; for a security-only pass, `/security-review`. This
-  audit is broader and TRIMR-aware, and it stays advisory.)
+  audit is broader and QuickTrimr-aware, and it stays advisory.)
 - It does not resolve a `TBC-*`, pick a config value, or make a Decision ticket's call — those are
   Tony's or Andrew's (`CLAUDE.md`). If the audit surfaces an undecided value, that is a finding and
   a `TBC-*`, not something you fill in.

@@ -1,4 +1,4 @@
-# TRIMR — Ticket Pickup Prompt
+# QuickTrimr — Ticket Pickup Prompt
 
 > **How to use:** paste this entire file into a fresh agent session, then add one line:
 >
@@ -15,7 +15,7 @@
 
 ## 1. Your Role
 
-You are a senior engineer delivering a **vertical feature slice** on TRIMR — a two-sided barber
+You are a senior engineer delivering a **vertical feature slice** on QuickTrimr — a two-sided barber
 marketplace handling real money, real home addresses, and a stranger arriving at someone's door.
 
 You own the ticket end to end: migration, RLS, Edge Function, mobile or admin UI, and tests
@@ -44,7 +44,7 @@ Not a paragraph. In practice this means:
 `P0-D08`, and `Spike` on `P0-D07`.
 
 Do not check Jira for this. Jira shows every one of them as a plain `Task` with a `decision`
-label, because the TRIMR Jira project has no Decision or Spike issue type and `create-tickets.mjs`
+label, because the QuickTrimr Jira project has no Decision or Spike issue type and `create-tickets.mjs`
 maps them down. That is the projection losing information, which is exactly why the backlog is the
 source of truth and Jira is not. An agent that classifies from Jira sees `Task`, assumes build
 mode, and walks straight into the paragraph below.
@@ -52,8 +52,8 @@ mode, and walks straight into the paragraph below.
 On a `Decision` ticket everything else in this file still applies *except* that you are not
 building anything, and **you are not the one deciding.**
 
-A decision ticket's deliverable is an edit to `TRIMR_KNOWLEDGE_BASE.md`. Its subject is the
-business — what TRIMR charges, which services launch, what a client gets back when they cancel an
+A decision ticket's deliverable is an edit to `QUICKTRIMR_KNOWLEDGE_BASE.md`. Its subject is the
+business — what QuickTrimr charges, which services launch, what a client gets back when they cancel an
 hour before, what happens to a barber who cancels twice. These are Tony and Andrew's calls. They
 are not technical questions with a correct answer you can derive, and an agent that picks a
 plausible commission percentage has invented the business model and buried it in a rule file.
@@ -103,9 +103,9 @@ Everything else is recoverable. These three are not. When in doubt, be slower.
 
 Read in this order. Do not skip ahead, and do not start from the ticket.
 
-1. **`TRIMR_KNOWLEDGE_BASE.md` §1** — how the file works, stable IDs, the sync contract, and the
+1. **`QUICKTRIMR_KNOWLEDGE_BASE.md` §1** — how the file works, stable IDs, the sync contract, and the
    conflict priority you will need in §4.
-2. **The ticket itself**, in `TRIMR_BACKLOG_README.md`. Find it by its `id`. Read the whole
+2. **The ticket itself**, in `QUICKTRIMR_BACKLOG_README.md`. Find it by its `id`. Read the whole
    thing — Context first, because it carries the reasoning the acceptance criteria assume.
 3. **Every ID in the ticket's `knowledgeBase:` field**, in the knowledge base. These are the
    rules you are implementing. Read them, do not infer them from the ticket's prose.
@@ -114,7 +114,7 @@ Read in this order. Do not skip ahead, and do not start from the ticket.
    they knew you would walk into.
 5. **The ticket's `affects:` list.** These break if you change your contract. You do not need to
    read them fully now, but you must know they exist before you make a shape decision.
-6. **`TRIMR_BACKLOG_README.md` §5** — Definition of Ready and Definition of Done.
+6. **`QUICKTRIMR_BACKLOG_README.md` §5** — Definition of Ready and Definition of Done.
 7. **The actual codebase** for anything the ticket references. The ticket may be stale. The code
    is what is true. Where they disagree, see §4.
 
@@ -156,8 +156,8 @@ node scripts/jira/generate-indexes.mjs --check
 backlog.** (`KB §1.3`) Conflict priority, highest first (`KB §1.1`):
 
 1. User-confirmed decisions in the knowledge base
-2. `TRIMR_BACKLOG_README.md`
-3. The accepted TRIMR proposal
+2. `QUICKTRIMR_BACKLOG_README.md`
+3. The accepted QuickTrimr proposal
 4. Implementation assumptions ← **you are here, and you are last**
 
 Your assumptions lose to everything. That is deliberate.
@@ -299,7 +299,7 @@ go to §4 Case B.
 - Addresses and contact details are personal information. Return them to the narrowest audience
   for the shortest time.
 - Never log a secret, a card number, or a full Stripe payload.
-- `RULE-COPY-01` — do not imply live tracking (`ADR-004`), do not describe a TRIMR balance as
+- `RULE-COPY-01` — do not imply live tracking (`ADR-004`), do not describe a QuickTrimr balance as
   money already in the bank (`RULE-EARN-04`), and do not describe authorised funds as captured.
 
 ---
@@ -370,8 +370,8 @@ If your change touches the thing on the left, the test on the right is mandatory
 - [ ] No secrets committed.
 - [ ] **Nothing in Out of scope was built.** Scope creep in a money path is how untested code ships.
 - [ ] §4's sync check passed.
-- [ ] **Code audit run** on the delivered slice — `/audit <ticket-id>` (or `$audit-trimr-code`),
-      per `TRIMR_AUDIT_PROMPT.md`. Every Critical resolved; each remaining finding resolved or
+- [ ] **Code audit run** on the delivered slice — `/audit <ticket-id>` (or `$audit-quicktrimr-code`),
+      per `QUICKTRIMR_AUDIT_PROMPT.md`. Every Critical resolved; each remaining finding resolved or
       triaged with a reason. Findings go in §8's `AUDIT`, `NOT DONE` / `DECISIONS NEEDED`.
 
 ---
@@ -408,7 +408,7 @@ DECISIONS NEEDED
    these yourself.>
 
 AUDIT
-  <scope audited and the verdict from TRIMR_AUDIT_PROMPT.md §5 — e.g.
+  <scope audited and the verdict from QUICKTRIMR_AUDIT_PROMPT.md §5 — e.g.
    "2 findings, 0 Critical, 1 Major fixed, 1 Minor triaged". Unresolved
    findings also appear in NOT DONE / DECISIONS NEEDED below.>
 

@@ -1,4 +1,4 @@
-# TRIMR
+# QuickTrimr
 
 Two-sided barber marketplace. Real money, real home addresses, and a named stranger arriving at
 someone's door at a stated time. Built by two engineers, Tony and Andrew, at Tetrias Tech.
@@ -10,10 +10,10 @@ that keeps it honest. Phase 0 has not started.
 
 | File | Role |
 |---|---|
-| `TRIMR_KNOWLEDGE_BASE.md` | **Upstream source of truth.** Product rules, architecture decisions, open decisions. |
-| `TRIMR_BACKLOG_README.md` | The 106 tickets implementing it. Source of truth for tickets; Jira is a projection. |
-| `TRIMR_TICKET_PROMPT.md` | The prompt for handing a ticket to an agent. |
-| `TRIMR_AUDIT_PROMPT.md` | The prompt for auditing code, architecture, and decisions. Source of truth for the audit skill. |
+| `QUICKTRIMR_KNOWLEDGE_BASE.md` | **Upstream source of truth.** Product rules, architecture decisions, open decisions. |
+| `QUICKTRIMR_BACKLOG_README.md` | The 107 tickets implementing it. Source of truth for tickets; Jira is a projection. |
+| `QUICKTRIMR_TICKET_PROMPT.md` | The prompt for handing a ticket to an agent. |
+| `QUICKTRIMR_AUDIT_PROMPT.md` | The prompt for auditing code, architecture, and decisions. Source of truth for the audit skill. |
 | `scripts/jira/generate-indexes.mjs` | Generates the traceability + reverse dependency indexes, and validates the ticket graph. |
 
 ## Rules for working here
@@ -21,18 +21,18 @@ that keeps it honest. Phase 0 has not started.
 **To pick up a ticket, use the repository skill:**
 
 ```text
-$pick-up-trimr-ticket P2-T12
-$pick-up-trimr-ticket TRIMR-21
+$pick-up-quicktrimr-ticket P2-T12
+$pick-up-quicktrimr-ticket TRIMR-21
 ```
 
-The skill lives at `.agents/skills/pick-up-trimr-ticket/SKILL.md`. It accepts either a backlog
+The skill lives at `.agents/skills/pick-up-quicktrimr-ticket/SKILL.md`. It accepts either a backlog
 ID or Jira key. If the skill is unavailable, perform the same workflow manually:
 
 1. Resolve the identifier. Use a backlog ID directly. For a Jira key, find the ticket block in
-   `TRIMR_BACKLOG_README.md` whose `jiraKey:` exactly matches and use the `id:` from that same
+   `QUICKTRIMR_BACKLOG_README.md` whose `jiraKey:` exactly matches and use the `id:` from that same
    block. If it is absent, ambiguous, or unmatched, stop; never guess.
 2. State the resolved backlog ID before continuing.
-3. Read `TRIMR_TICKET_PROMPT.md` completely before taking any other ticket action.
+3. Read `QUICKTRIMR_TICKET_PROMPT.md` completely before taking any other ticket action.
 4. Follow its load order: knowledge-base instructions, complete backlog ticket, cited knowledge
    base IDs, dependencies, affected tickets, readiness/definition gates, then the actual code.
 5. Run the readiness gate and `node scripts/jira/generate-indexes.mjs --check`. If any gate
@@ -50,18 +50,18 @@ say, the ticket is wrong: fix the ticket first.
 **To audit code, use the repository skill:**
 
 ```text
-$audit-trimr-code                   # the current change
-$audit-trimr-code P2-T12            # a delivered ticket slice
-$audit-trimr-code supabase/functions # a path
+$audit-quicktrimr-code                   # the current change
+$audit-quicktrimr-code P2-T12            # a delivered ticket slice
+$audit-quicktrimr-code supabase/functions # a path
 ```
 
-The skill lives at `.agents/skills/audit-trimr-code/SKILL.md` and defers to
-`TRIMR_AUDIT_PROMPT.md`. It holds code, architecture, and technical decisions to the
+The skill lives at `.agents/skills/audit-quicktrimr-code/SKILL.md` and defers to
+`QUICKTRIMR_AUDIT_PROMPT.md`. It holds code, architecture, and technical decisions to the
 brightest-engineer bar and to the non-negotiables below — plus wasted API/DB calls, dead code, and
 missed reuse of shared components/schemas/templates. Run it manually, and run it automatically as
 part of ticket work: after a slice is delivered and after any code change, before the Definition of
-Done (`TRIMR_TICKET_PROMPT.md §7`). It is advisory — ranked findings, never edits code, never
-resolves a `TBC-*` or a decision. If the skill is unavailable, read `TRIMR_AUDIT_PROMPT.md` and
+Done (`QUICKTRIMR_TICKET_PROMPT.md §7`). It is advisory — ranked findings, never edits code, never
+resolves a `TBC-*` or a decision. If the skill is unavailable, read `QUICKTRIMR_AUDIT_PROMPT.md` and
 follow it manually.
 
 **Decision tickets are not build tickets.** `P0-D01`–`P0-D06` and `P0-D08` are `issueType:
@@ -71,7 +71,7 @@ and ask. Never pick the commission percentage, the refund split, the reliability
 the launch service categories yourself.
 
 Classify from the backlog, not Jira — Jira shows all of them as `Task` with a `decision` label,
-because the project has no Decision or Spike type. See `TRIMR_TICKET_PROMPT.md` §1.
+because the project has no Decision or Spike type. See `QUICKTRIMR_TICKET_PROMPT.md` §1.
 
 **The knowledge base is upstream.** Conflict priority, highest first: KB → backlog → proposal →
 your assumptions. Your assumptions lose to everything.
@@ -116,7 +116,7 @@ These are from the KB. They are not style preferences.
 - A barber sees a client's address and contact details only for an accepted, **active** booking.
 - Never log a secret, a card number, or a full Stripe payload.
 - `RULE-COPY-01` — do not imply live tracking, do not call a hold a charge, and do not describe a
-  TRIMR balance as money in a bank account.
+  QuickTrimr balance as money in a bank account.
 
 ## Ownership
 
@@ -146,10 +146,10 @@ node scripts/jira/create-tickets.mjs --update --phase 0          # re-push chang
 `--check` catches dangling references, dependency cycles, later-phase dependencies, owners that
 aren't exactly Tony or Andrew, and rules cited before the decision that writes them exists.
 
-**Jira project is `TRIMR`.** Issue keys look like `TRIMR-14`; Phase 0 is `TRIMR-1` (epic) through
-`TRIMR-27`. `create-tickets.mjs` pins that key in code and refuses to run against anything else —
+**Jira project key is `TRIMR`; its display name is QuickTrimr.** Issue keys look like `TRIMR-14`;
+the original Phase 0 set is `TRIMR-1` (epic) through `TRIMR-27`. `create-tickets.mjs` pins that key in code and refuses to run against anything else —
 myClean is `MC` on the same Atlassian site and both repos export identical variable names, so a
-stale `source` would otherwise file TRIMR tickets onto the myClean board. Never edit the constant
+stale `source` would otherwise file QuickTrimr tickets onto the myClean board. Never edit the constant
 to make a refusal go away.
 
 `--update` only touches tickets whose backlog entry actually changed, tracked by a fingerprint
@@ -158,8 +158,8 @@ before running it — otherwise you will push their decision back out.
 
 ## Current state
 
-Phase 0 is 26 tickets: 18 foundation, 8 decisions. **The 8 decision tickets gate 63 of the other
-98 tickets** — an agent handed `P3-T07` before `P0-D03` closes will correctly refuse, because it
+Phase 0 is 27 tickets: 19 foundation, 8 decisions. **The 8 decision tickets gate 63 of the other
+99 tickets** — an agent handed `P3-T07` before `P0-D03` closes will correctly refuse, because it
 cannot know the refund split. That is intended behaviour, not broken tooling.
 
 `P0-D02` (commission and Stripe fee absorption) is the highest-stakes decision: it is snapshotted

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pick Up QuickTrimr Ticket"
+  short_description: "Resolve and deliver a QuickTrimr backlog ticket"
+  default_prompt: "Use $pick-up-quicktrimr-ticket to pick up and deliver ticket TRIMR-21."

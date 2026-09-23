@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Generates sections 8 (traceability) and 9 (reverse dependency index) of
- * TRIMR_BACKLOG_README.md from the ticket YAML headers, and validates the
- * ticket graph against TRIMR_KNOWLEDGE_BASE.md.
+ * QUICKTRIMR_BACKLOG_README.md from the ticket YAML headers, and validates the
+ * ticket graph against QUICKTRIMR_KNOWLEDGE_BASE.md.
  *
  *   node scripts/jira/generate-indexes.mjs            # write the indexes
  *   node scripts/jira/generate-indexes.mjs --check    # validate only, exit 1 on error
@@ -15,8 +15,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const BACKLOG = resolve(root, 'TRIMR_BACKLOG_README.md');
-const KB = resolve(root, 'TRIMR_KNOWLEDGE_BASE.md');
+const BACKLOG = resolve(root, 'QUICKTRIMR_BACKLOG_README.md');
+const KB = resolve(root, 'QUICKTRIMR_KNOWLEDGE_BASE.md');
 
 const checkOnly = process.argv.includes('--check');
 

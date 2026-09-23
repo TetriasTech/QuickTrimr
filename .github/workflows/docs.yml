@@ -1,6 +1,6 @@
 name: Docs
 
-# Keeps TRIMR_KNOWLEDGE_BASE.md and TRIMR_BACKLOG_README.md consistent.
+# Keeps QUICKTRIMR_KNOWLEDGE_BASE.md and QUICKTRIMR_BACKLOG_README.md consistent.
 #
 # The split matters:
 #   - PRs only VALIDATE the ticket graph. They never touch sections 8 and 9.
@@ -13,13 +13,13 @@ name: Docs
 on:
   pull_request:
     paths:
-      - 'TRIMR_*.md'
+      - 'QUICKTRIMR_*.md'
       - 'scripts/jira/**'
       - '.github/workflows/docs.yml'
   push:
     branches: [main]
     paths:
-      - 'TRIMR_*.md'
+      - 'QUICKTRIMR_*.md'
       - 'scripts/jira/**'
 
 permissions:
@@ -61,12 +61,12 @@ jobs:
       # regenerates identical output and commits nothing.
       - name: Commit if changed
         run: |
-          if git diff --quiet -- TRIMR_BACKLOG_README.md; then
+          if git diff --quiet -- QUICKTRIMR_BACKLOG_README.md; then
             echo "Indexes already current."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add TRIMR_BACKLOG_README.md
+          git add QUICKTRIMR_BACKLOG_README.md
           git commit -m "chore: regenerate backlog indexes [skip ci]"
           git push
