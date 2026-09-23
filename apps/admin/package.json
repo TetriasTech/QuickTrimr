@@ -1,0 +1,12 @@
+{
+  "name": "@quicktrimr/admin",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@quicktrimr/domain": "workspace:*",
+    "@quicktrimr/shared": "workspace:*",
+    "@quicktrimr/ui": "workspace:*",
+    "@quicktrimr/validation": "workspace:*"
+  }
+}
