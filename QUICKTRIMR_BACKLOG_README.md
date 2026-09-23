@@ -586,8 +586,8 @@ phase: 0
 priority: High
 jiraKey: TRIMR-9
 dependsOn: []
-affects: [P2-T08, P2-T09, P4-T14, P4-T15]
-knowledgeBase: [ADR-006, RULE-SCHED-01, RULE-SCHED-02, RULE-REVIEW-01, RULE-REVIEW-02, CFG-SCHED-MIN-LEAD-MIN]
+affects: [P0-T06, P0-T10, P0-T18, P2-T05, P2-T08, P2-T09, P4-T14, P4-T15, P5-T07]
+knowledgeBase: [ADR-006, RULE-SCHED-01, RULE-SCHED-02, RULE-SCHED-04, RULE-REVIEW-01, RULE-REVIEW-02, RULE-REVIEW-06, ENUM-DISPUTE-STATUS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-REVIEW-DEADLINE-DAYS]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, product]
 ```
@@ -596,18 +596,18 @@ labels: [quicktrimr, phase-0, decision, product]
 
 Two smaller unknowns that both block Phase 2 and Phase 4 validation.
 
-`TBC-SCHED-LEAD-TIME` — nothing says how far ahead a Scheduled booking must be, or how far ahead it may be. Without a minimum, a client can book for "in 4 minutes" and bypass Available Now entirely, including its one-active-request rule (`RULE-AVAIL-04`) and its 5-minute expiry. Without a maximum, a client books three months out and the payment authorisation expires long before the appointment — the `ADR-006` constraint the knowledge base already flags.
+`TBC-SCHED-LEAD-TIME` — before this decision nothing said how far ahead a Scheduled booking must be, or how far ahead it may be. Without a minimum, a client can book for "in 4 minutes" and bypass Available Now entirely, including its one-active-request rule (`RULE-AVAIL-04`) and its 5-minute expiry. Without a maximum, the platform can capture payment months before service and accept plans likely to go stale. Under `ADR-006`, authorisation lifetime constrains the two-hour pending-request window, not the later appointment: payment is captured when the barber accepts.
 
-`TBC-REVIEW-ELIGIBILITY` — `RULE-REVIEW-01` allows a review on a completed booking. It does not say whether a booking that was disputed and then admin-resolved, auto-completed, or cancelled is reviewable. Auto-completion is the common case: a client who never responded still had the haircut, and blocking their review loses most of the platform's rating data.
+`TBC-REVIEW-ELIGIBILITY` — the original `RULE-REVIEW-01` allowed a review on a completed booking without defining auto-completed, admin-resolved or cancelled outcomes. `RULE-REVIEW-06` now records Andrew's approved Option A, including both auto-completion paths, outcome-specific admin resolutions, and a 14-day deadline.
 
 **Scope**
 
-Decide, and record in `KB §9` as `RULE-SCHED-04` and `RULE-REVIEW-06`, with a value for `CFG-SCHED-MIN-LEAD-MIN` in `KB §13`:
+Decide, and record in `KB §9` as `RULE-SCHED-04` and `RULE-REVIEW-06`, with values for the corresponding configuration in `KB §13`:
 
 Lead time:
 
 - The minimum lead time for a Scheduled request, and what a client sees if they pick a time inside it.
-- The maximum booking horizon, informed by how long a Stripe authorisation actually holds. If the horizon exceeds authorisation lifetime, say what happens — re-authorise closer to the date, or cap the horizon. Do not leave this to the implementer; it is `ADR-006` meeting reality.
+- The maximum booking horizon and its interaction with `ADR-006`: authorisation covers only the pending request and capture occurs on acceptance, so the horizon controls how early QuickTrimr may take payment rather than how long it holds an authorisation.
 - Whether the barber's own availability constrains it, or only these bounds.
 
 Review eligibility:
@@ -621,14 +621,20 @@ Review eligibility:
 
 - [ ] `RULE-SCHED-04` written in `KB §9` with minimum lead time, maximum horizon, and the authorisation-lifetime interaction.
 - [ ] `CFG-SCHED-MIN-LEAD-MIN` has a concrete value in `KB §13`.
+- [ ] `CFG-SCHED-MAX-HORIZON-DAYS` has a concrete value in `KB §13`.
 - [ ] `RULE-REVIEW-06` written in `KB §9` covering auto-completed, admin-resolved, and cancelled bookings, plus any review deadline.
-- [ ] Each of the four booking outcomes is explicitly reviewable or not — none left implied.
+- [ ] `CFG-REVIEW-DEADLINE-DAYS` has a concrete value in `KB §13`.
+- [ ] Every listed completion, dispute-resolution and cancellation outcome is explicitly reviewable or not — none left implied.
 - [ ] `TBC-SCHED-LEAD-TIME` and `TBC-REVIEW-ELIGIBILITY` in `KB §14` rewritten as `RESOLVED → RULE-SCHED-04` / `RULE-REVIEW-06`. Not deleted.
 - [ ] Both reserved IDs removed from `KB §9`'s *Pending rules* table.
 
+**Tests** — `node scripts/jira/generate-indexes.mjs --check`; inspect the three concrete config values, every outcome and deadline origin in `RULE-REVIEW-06`, both resolved TBC rows, and the Pending rules table. This Decision ticket changes documentation only; boundary and runtime tests belong to the affected build tickets.
+
 **Out of scope** — implementing request validation (`P2-T08`) or review creation (`P4-T14`).
 
-**Sync notes** — the lead-time bounds are validated in `P2-T08` and surfaced in `P2-T09`'s time picker; review eligibility is enforced in `P4-T14` and drives whether `P4-T15` shows a prompt at all.
+**Decision recorded** — Andrew approved Option A: minimum 240 minutes, maximum 30 days, the existing two-hour request expiry, manual barber availability checks, and the eligibility matrix and 14-day review window in `RULE-REVIEW-06`. Validation evidence: `node scripts/jira/generate-indexes.mjs --check` and the rule/config/TBC entries in the knowledge base. No application code is delivered by this Decision ticket.
+
+**Sync notes** — the lead-time bounds are surfaced in `P2-T05`'s time picker, validated in `P2-T08`, and rechecked by `P2-T09` before submission; review eligibility is enforced in `P4-T14`, drives whether `P4-T15` shows a prompt at all, and requires `P5-T07` to record the resolution outcome and time used by the review window.
 
 ---
 
@@ -1569,7 +1575,7 @@ These have lead time. Stripe Connect requires platform settings and a completed 
 - Configure the Connect onboarding branding and return/refresh URLs.
 - Create a webhook endpoint for local development and note the signing secret handling (`RULE-PAY-07`).
 - Record which test cards exercise which failure: successful auth, auth that fails at capture, and a card requiring authentication. `P3-T02` and `P6-T07` both need a capture that genuinely fails.
-- **Confirm the authorisation hold period on the account.** This is the live constraint on `ADR-006` and `P0-D08`'s booking horizon, and it is a fact to look up, not to assume.
+- **Confirm the authorisation hold period on the account for supported payment methods.** It must cover the pending-request window through acceptance under `ADR-006`. Capture occurs on acceptance, so the appointment date and maximum booking horizon do not extend this hold.
 
 **Google Cloud:**
 
@@ -1583,7 +1589,7 @@ Record every variable name in `P0-T03`'s `.env.example`. **No key value is commi
 
 - [ ] Stripe test-mode account exists with Connect enabled and the account type recorded with its reasoning.
 - [ ] A manual-capture PaymentIntent can be created and captured in test mode, demonstrated.
-- [ ] The **authorisation hold period is recorded** in `docs/architecture/`, and `P0-D08` is told, because it bounds the booking horizon.
+- [ ] The **authorisation hold period is recorded** in `docs/architecture/` and checked against the configured pending-request windows. Any mismatch is raised before payment integration; it is not solved by changing the appointment horizon.
 - [ ] Connect onboarding return and refresh URLs are configured.
 - [ ] A test webhook endpoint receives a signed event locally, with signature verification demonstrated.
 - [ ] Test cards for success, capture failure and authentication-required are documented.
@@ -1594,7 +1600,7 @@ Record every variable name in `P0-T03`'s `.env.example`. **No key value is commi
 
 **Out of scope** — implementing Connect onboarding (`P1-T07`); payment code (Phase 3); live mode (`P6-T11`); staging projects (`P6-T09`).
 
-**Sync notes** — eight tickets consume these credentials. The authorisation hold period discovered here feeds directly into `P0-D08`'s maximum booking horizon.
+**Sync notes** — eight tickets consume these credentials. The authorisation hold period discovered here informs `P3-T01`, `P3-T02` and `P3-T06`'s authorise-to-capture lifecycle; `P0-D08`'s maximum booking horizon is an operational limit on advance capture.
 
 ---
 
@@ -2832,9 +2838,9 @@ owner: Andrew
 phase: 2
 priority: High
 jiraKey: null
-dependsOn: [P0-T15, P1-T05, P2-T04]
+dependsOn: [P0-D08, P0-T15, P1-T05, P2-T04]
 affects: [P2-T06, P2-T07, P2-T09]
-knowledgeBase: [ADR-003, RULE-DISCOVERY-01, ENUM-BOOKING-TYPE]
+knowledgeBase: [ADR-003, RULE-DISCOVERY-01, RULE-SCHED-04, ENUM-BOOKING-TYPE, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
@@ -2849,7 +2855,7 @@ The mode choice changes what everything else means: Scheduled needs a date and t
 
 A filter surface: booking mode, service category, service address or current location, and radius.
 
-Scheduled mode adds a date and time picker bounded by `RULE-SCHED-04` once `P0-D08` lands — until then the picker exists without the bound and the ticket notes it.
+Scheduled mode adds a date and time picker bounded by `RULE-SCHED-04`. It loads the public minimum-lead and maximum-horizon values through a read-only server endpoint or projection backed by platform config; the mobile bundle does not hard-code them and does not receive unrelated or sensitive configuration. Those server values remain TanStack Query data rather than being mirrored into the draft store. A time inside the minimum explains that Scheduled bookings need four hours' notice and points the client to Available Now. Pre-acceptance copy calls the time **requested**, never available or booked, because QuickTrimr has no barber calendar at launch.
 
 Address selection reuses the picker from `P1-T05`. Do not build a second one.
 
@@ -2861,6 +2867,7 @@ Invalid combinations are prevented rather than submitted: no service selected, n
 
 - [ ] A client can choose booking mode, service category, address or current location, and radius.
 - [ ] Scheduled mode shows date and time; Available Now does not.
+- [ ] The Scheduled picker reads both bounds from server-backed config, enforces them, presents too-soon guidance to Available Now, and never claims an unaccepted time is available or booked.
 - [ ] Filters live in the Zustand draft store and survive navigation away and back.
 - [ ] **No server data is mirrored into the draft store** (`ADR-003`).
 - [ ] Invalid combinations cannot be submitted, with the reason shown.
@@ -2868,7 +2875,7 @@ Invalid combinations are prevented rather than submitted: no service selected, n
 - [ ] Changing a filter invalidates the search query and refetches.
 - [ ] Loading, error and empty states exist.
 
-**Tests** — draft persistence across navigation; invalid combinations blocked; query invalidation firing on each filter change.
+**Tests** — server-provided minimum-lead and maximum-horizon boundaries at, just inside and just outside; too-soon guidance; requested-time copy before acceptance; no hard-coded fallback when config loading fails; draft persistence across navigation; invalid combinations blocked; query invalidation firing on each filter change.
 
 **Out of scope** — the search function (`P2-T04`); results (`P2-T06`, `P2-T07`); submission (`P2-T09`).
 
@@ -2999,7 +3006,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P0-D01, P0-D02, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11]
 affects: [P2-T09, P2-T10, P2-T12, P2-T13, P2-T15, P3-T01, P3-T06, P4-T01]
-knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-SERVICE-05, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-COMMISSION-PCT]
+knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-SERVICE-05, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, database]
 ```
@@ -3051,9 +3058,9 @@ Audit log (`ADR-013`).
 // 409 — barber ineligible
 { "error": "barber_unavailable" }
 
-// 422 — outside RULE-SCHED-04 lead time
+// 422 — outside RULE-SCHED-04 bounds; example uses current config values
 { "error": "validation_failed",
-  "fields": { "scheduledFor": "Must be at least 30 minutes from now" } }
+  "fields": { "scheduledFor": "Must be between 4 hours and 30 days from now" } }
 
 // 401
 { "error": "unauthenticated" }
@@ -3067,6 +3074,7 @@ Audit log (`ADR-013`).
 - [ ] A second active pending Available Now request for the same client returns `409 active_request_exists` (`RULE-AVAIL-04`).
 - [ ] A duplicate Scheduled intent returns `409 duplicate_request_intent` (`RULE-SCHED-03`).
 - [ ] A Scheduled time inside the lead time or beyond the horizon is rejected per `RULE-SCHED-04`.
+- [ ] Scheduled validation applies only the global bounds at launch; it does not invent a barber calendar, working hours, service duration or overlap check.
 - [ ] A barber failing `RULE-ONBOARD-04`, or with no active price for the category, returns `409 barber_unavailable`.
 - [ ] An address belonging to another client, or archived, is rejected.
 - [ ] Expiry is set from config; **no literal 5 or 2 appears in the code.**
@@ -3074,7 +3082,7 @@ Audit log (`ADR-013`).
 - [ ] An audit log is written.
 - [ ] No Stripe call is made by this function.
 
-**Tests** — parallel double-submit producing one request; a body-supplied amount ignored; `RULE-AVAIL-04` and `RULE-SCHED-03` conflicts; lead-time boundary at, just inside and just outside; cross-client address rejected; ineligible barber rejected; snapshot values asserted exactly.
+**Tests** — parallel double-submit producing one request; a body-supplied amount ignored; `RULE-AVAIL-04` and `RULE-SCHED-03` conflicts; minimum-lead and maximum-horizon boundaries at, just inside and just outside; cross-client address rejected; ineligible barber rejected; snapshot values asserted exactly.
 
 **Out of scope** — payment authorisation (`P3-T01`, wired by `P3-T06`); the submission UI (`P2-T09`); notifications (`P6-T02`); acceptance (`P2-T12`).
 
@@ -3094,7 +3102,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P0-D08, P0-T14, P1-T12, P2-T05, P2-T08]
 affects: [P3-T08, P4-T01]
-knowledgeBase: [ADR-006, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-06, RULE-SCHED-02, RULE-COPY-01, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS]
+knowledgeBase: [ADR-006, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-06, RULE-SCHED-02, RULE-SCHED-04, RULE-COPY-01, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
@@ -3107,7 +3115,7 @@ Two things must be honest here. First, `RULE-REQUEST-04` — a request cannot be
 
 **Scope**
 
-A review screen showing barber, service, price, address, time for Scheduled, and — stated plainly — that the amount is held, not taken, until the barber accepts.
+A review screen showing barber, service, price, address, requested time for Scheduled, and — stated plainly — that the amount is held, not taken, until the barber accepts. Because time passes and config can change after selection in `P2-T05`, revalidate the draft against the current server-provided bounds before submission and surface the backend's field error without replacing it with a hard-coded limit.
 
 Submit, with the button disabled while in flight. `RULE-REQUEST-03` protects the server; this protects the client from seeing two requests.
 
@@ -3118,6 +3126,7 @@ Terminal states rendered honestly: accepted, declined, expired, cancelled — ea
 **Acceptance criteria**
 
 - [ ] The review screen shows barber, service, price, address, and time for Scheduled bookings.
+- [ ] A Scheduled draft is revalidated against the current server-provided bounds before submission; stale or newly invalid selections retain the draft and show the server's field error.
 - [ ] The screen states the amount is **held, not charged**, until acceptance (`RULE-COPY-01`, `ADR-006`).
 - [ ] The screen states the request cannot be edited after submission (`RULE-REQUEST-04`).
 - [ ] The submit button is disabled while in flight; **a double tap produces one request.**
@@ -3127,7 +3136,7 @@ Terminal states rendered honestly: accepted, declined, expired, cancelled — ea
 - [ ] `409 active_request_exists` is handled with a message pointing at the existing request, not a generic error.
 - [ ] Loading and error states exist; a failed submit does not lose the draft.
 
-**Tests** — double tap producing one request; countdown reaching zero without a client-side status change; each terminal state rendering; the `409` conflict path.
+**Tests** — a selected time aging inside the minimum before submission; a config change invalidating a draft without losing it; requested-time copy before acceptance; double tap producing one request; countdown reaching zero without a client-side status change; each terminal state rendering; the `409` conflict path.
 
 **Out of scope** — request creation (`P2-T08`); payment UI (`P3-T01`); cancellation (`P3-T08`).
 
@@ -5168,7 +5177,7 @@ priority: Medium
 jiraKey: null
 dependsOn: [P0-D08, P0-T10, P4-T09]
 affects: [P4-T15, P5-T12]
-knowledgeBase: [ADR-013, RULE-REVIEW-01, RULE-REVIEW-02, RULE-REVIEW-03, RULE-REVIEW-04, RULE-REVIEW-05, RULE-REVIEW-06]
+knowledgeBase: [ADR-013, RULE-REVIEW-01, RULE-REVIEW-02, RULE-REVIEW-03, RULE-REVIEW-04, RULE-REVIEW-05, RULE-REVIEW-06, CFG-REVIEW-DEADLINE-DAYS]
 blockedByTbc: []
 labels: [quicktrimr, phase-4, backend]
 ```
@@ -5177,13 +5186,15 @@ labels: [quicktrimr, phase-4, backend]
 
 Reviews drive the rating clients choose barbers by, so the aggregate must be computed server-side and unwritable by a client (`RULE-REVIEW-04`).
 
-`P0-D08` gates this because `RULE-REVIEW-06` decides which outcomes are reviewable — auto-completed, admin-resolved, cancelled. Auto-completion is the common case, so guessing it wrong loses most of the rating data or admits reviews on bookings that should not have them.
+`RULE-REVIEW-06` admits client-confirmed and auto-completed bookings, plus admin resolutions that pay the barber or make a partial refund. Open disputes, cancellations, full refunds and operational-only resolutions are not reviewable. The 14-day window starts at completion, or at resolution for an eligible admin-resolved dispute.
 
 **Scope**
 
 `create-review`.
 
-Eligibility per `RULE-REVIEW-01` and `RULE-REVIEW-06`: the client's own booking, in a reviewable outcome, within any deadline `P0-D08` set.
+Eligibility per `RULE-REVIEW-01` and `RULE-REVIEW-06`: the client's own booking, in a reviewable outcome, within `CFG-REVIEW-DEADLINE-DAYS` of the server-recorded completion or eligible dispute-resolution time.
+
+Use one pure eligibility calculation in `packages/domain` for submission validation and the existing owned-booking list/detail projections. Extend those projections with server-computed review eligibility and its deadline for `P4-T15`; the mobile UI must not independently reconstruct dispute outcomes or hard-code the window.
 
 One review per booking, enforced by the `P0-T10` unique constraint (`RULE-REVIEW-02`).
 
@@ -5208,6 +5219,9 @@ The barber's aggregate recomputed server-side, excluding hidden reviews (`RULE-R
 // 409 — outcome not reviewable per RULE-REVIEW-06
 { "error": "booking_not_reviewable", "bookingStatus": "cancelled" }
 
+// 409 — review window closed
+{ "error": "review_window_closed", "deadline": "2026-08-19T04:16:22Z" }
+
 // 422
 { "error": "validation_failed", "fields": { "rating": "Must be between 1 and 5" } }
 ```
@@ -5215,16 +5229,17 @@ The barber's aggregate recomputed server-side, excluding hidden reviews (`RULE-R
 **Acceptance criteria**
 
 - [ ] A client can review their own booking in a reviewable outcome per `RULE-REVIEW-06`.
+- [ ] Owned-booking list/detail projections expose review eligibility and its deadline from the same rule used by `create-review`.
 - [ ] **A non-reviewable outcome returns `409 booking_not_reviewable`** — each outcome tested against the decision.
 - [ ] **A second review for a booking is rejected by a constraint**, proven under parallel calls.
 - [ ] Another client's booking cannot be reviewed — 403.
 - [ ] Rating is validated in range; text length is validated.
 - [ ] **The aggregate is recomputed server-side and is not client-writable** — proven by attempting to set it.
 - [ ] Hidden reviews are excluded from the aggregate, and hiding one recomputes it.
-- [ ] Any review deadline from `P0-D08` is enforced.
+- [ ] The deadline is read from `CFG-REVIEW-DEADLINE-DAYS` (14 days at launch) and enforced from completion for normal and automatic completions, and from resolution for an eligible admin-resolved dispute; submission at or after the deadline returns `409 review_window_closed`.
 - [ ] Audit logs are written for creation and moderation.
 
-**Tests** — parallel creation producing one review; each booking outcome asserted reviewable or not per `RULE-REVIEW-06`; aggregate arithmetic including after hiding; a crafted aggregate write rejected; cross-client denial.
+**Tests** — parallel creation producing one review; client-confirmed, client-first and both auto-completion paths allowed; open dispute and cancellation denied; `resolved_barber_paid` and `resolved_partial_refund` allowed; `resolved_client_refund` and `resolved_operational` denied; each 14-day boundary at, just inside and just outside using the correct completion or resolution timestamp; aggregate arithmetic including after hiding; a crafted aggregate write rejected; cross-client denial.
 
 **Out of scope** — the review UI (`P4-T15`); the admin moderation UI (`P5-T12`); barber responses, out of scope.
 
@@ -5244,7 +5259,7 @@ priority: Medium
 jiraKey: null
 dependsOn: [P0-D08, P0-T14, P1-T12, P4-T01, P4-T14]
 affects: []
-knowledgeBase: [RULE-REVIEW-01, RULE-REVIEW-02, RULE-REVIEW-03, RULE-REVIEW-06]
+knowledgeBase: [RULE-REVIEW-01, RULE-REVIEW-02, RULE-REVIEW-03, RULE-REVIEW-06, CFG-REVIEW-DEADLINE-DAYS]
 blockedByTbc: []
 labels: [quicktrimr, phase-4, mobile]
 ```
@@ -5255,11 +5270,13 @@ The prompt after a completed booking. It must only appear when the booking is ge
 
 **Scope**
 
-A review prompt on the completed booking detail and in the booking list, shown only for reviewable outcomes.
+A review prompt on the completed booking detail and in the booking list, shown only for outcomes `RULE-REVIEW-06` permits and only until the 14-day deadline. Eligible admin-resolved disputes measure that window from resolution; other eligible outcomes measure it from completion.
 
 Star rating, required. Optional text with a visible character limit.
 
 Submission disabled while in flight; a `409 review_already_exists` shows the existing review rather than an error.
+
+Use server-provided eligibility and the review deadline for prompts. If eligibility changes or the deadline passes while the form is open, handle `409 booking_not_reviewable` and `409 review_window_closed` with an explanation and refresh the booking state; the backend is authoritative even if the device clock differs.
 
 The submitted review is visible on the barber's profile (`P1-T12`).
 
@@ -5268,14 +5285,16 @@ Dismissible without penalty, and re-reachable from the booking later while still
 **Acceptance criteria**
 
 - [ ] The prompt appears only for outcomes `RULE-REVIEW-06` allows.
+- [ ] The prompt disappears at the configured deadline, using completion or dispute-resolution time as `RULE-REVIEW-06` requires.
 - [ ] A client can submit a rating, with optional text within a shown limit.
 - [ ] Submission is disabled while in flight; **a double tap creates one review.**
 - [ ] `409 review_already_exists` shows the existing review.
+- [ ] A form left open past the deadline or an intervening dispute handles `409 review_window_closed` / `409 booking_not_reviewable` and refreshes eligibility.
 - [ ] The submitted review appears on the barber profile.
 - [ ] The prompt is dismissible and the review remains reachable from the booking within the deadline.
 - [ ] Loading, error and success states exist.
 
-**Tests** — prompt visibility per booking outcome; double submit producing one review; the already-exists path; the review appearing on the profile.
+**Tests** — prompt visibility per booking outcome; deadline boundaries from completion and eligible admin resolution; a form left open past expiry or an intervening dispute; double submit producing one review; the already-exists path; the review appearing on the profile.
 
 **Out of scope** — the backend (`P4-T14`); barber responses; moderation (`P5-T12`).
 
@@ -5625,9 +5644,9 @@ owner: Tony
 phase: 5
 priority: Highest
 jiraKey: null
-dependsOn: [P0-D02, P0-D03, P3-T07, P4-T12, P5-T06]
+dependsOn: [P0-D02, P0-D03, P0-D08, P3-T07, P4-T12, P5-T06]
 affects: [P5-T08]
-knowledgeBase: [ADR-009, ADR-013, RULE-ADMIN-01, RULE-ADMIN-03, RULE-DISPUTE-04, RULE-DISPUTE-05, RULE-DISPUTE-06, RULE-CANCEL-05, RULE-CANCEL-07, RULE-EARN-03, RULE-PAY-04, RULE-PAY-11, ENUM-DISPUTE-STATUS, ENUM-EARNING-STATUS]
+knowledgeBase: [ADR-009, ADR-013, RULE-ADMIN-01, RULE-ADMIN-03, RULE-DISPUTE-04, RULE-DISPUTE-05, RULE-DISPUTE-06, RULE-CANCEL-05, RULE-CANCEL-07, RULE-EARN-03, RULE-PAY-04, RULE-PAY-11, RULE-REVIEW-06, ENUM-DISPUTE-STATUS, ENUM-EARNING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-5, admin, backend, stripe, security]
 ```
@@ -5652,7 +5671,7 @@ Idempotent on a server-derived key from the dispute id (`RULE-PAY-04`).
 
 Earning updated: `reversed` on a full refund, adjusted on a partial, `available` when the barber is paid.
 
-Audit log recording the admin, the outcome, the reason, and every amount (`RULE-DISPUTE-06`).
+Audit log recording the admin, the outcome, the reason, and every amount (`RULE-DISPUTE-06`). The resolution stores its server-owned outcome and `resolved_at` time so review eligibility and its deadline can be evaluated without trusting the client (`RULE-REVIEW-06`).
 
 **Contract example** — `admin-resolve-dispute`
 
@@ -5690,8 +5709,9 @@ Audit log recording the admin, the outcome, the reason, and every amount (`RULE-
 - [ ] **A client or barber calling this receives 403** — verified at the API.
 - [ ] No lock is held across the Stripe call.
 - [ ] The audit log records the admin, outcome, reason and every amount.
+- [ ] The server persists the validated admin-selected resolution outcome and server-generated `resolved_at` time for `RULE-REVIEW-06`; a request cannot supply the timestamp or bypass admin authorization.
 
-**Tests** — a simulated Stripe failure leaving the dispute open and nothing partially applied; duplicate resolution asserted as one refund in Stripe; over-refund rejected; reconciliation asserted per outcome; role denial at the API; the earning state after each outcome.
+**Tests** — a simulated Stripe failure leaving the dispute open and nothing partially applied; duplicate resolution asserted as one refund in Stripe; over-refund rejected; reconciliation asserted per outcome; role denial at the API; the earning state after each outcome; persisted resolution outcome and server timestamp (unchanged on duplicate resolution) supporting `RULE-REVIEW-06`.
 
 **Out of scope** — the UI (`P5-T08`); Stripe-initiated chargebacks, which arrive via `P3-T03`.
 
