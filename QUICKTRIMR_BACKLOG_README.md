@@ -475,8 +475,8 @@ phase: 0
 priority: High
 jiraKey: TRIMR-7
 dependsOn: []
-affects: [P2-T04, P2-T06, P2-T07, P4-T05, P4-T06]
-knowledgeBase: [ADR-004, ADR-008, RULE-DISCOVERY-02, RULE-DISCOVERY-04, RULE-ETA-02, RULE-ETA-04, CFG-ETA-REFRESH-MIN]
+affects: [P1-T06, P2-T01, P2-T04, P2-T06, P2-T07, P4-T05, P4-T06]
+knowledgeBase: [ADR-004, ADR-008, RULE-DISCOVERY-02, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ETA-02, RULE-ETA-03, RULE-ETA-04, CFG-ETA-REFRESH-MIN, CFG-ETA-STALE-MIN]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, product, maps, security]
 ```
@@ -491,12 +491,13 @@ Two related unknowns, both about how much location QuickTrimr reveals and how of
 
 **Scope**
 
-Decide, and record in `KB §9` as `RULE-DISCOVERY-05`, with a value for `CFG-ETA-REFRESH-MIN` in `KB §13`:
+Decide, and record in `KB §9` as `RULE-DISCOVERY-05`, with values for `CFG-ETA-REFRESH-MIN` and `CFG-ETA-STALE-MIN` in `KB §13`:
 
 - The precision at which a barber's location is exposed **before** acceptance — exact point, jittered point, suburb centroid, or distance band only ("2–3 km away"). Recommend a distance band plus an approximate area: a client picking a barber needs to know how far, not where they live.
 - Whether precision increases **after** acceptance, and for whom. The client of an accepted booking arguably should see a real ETA origin; nobody else should.
 - Whether the map view (`P2-T07`) renders individual barbers at all, or an area. If markers are jittered, whether the jitter is stable per session — a marker that moves on every refetch reveals the true point by averaging, which is worse than no jitter.
 - The ETA refresh interval, and whether it is fixed or scales with remaining distance.
+- When an ETA becomes stale rather than continuing to be presented as current.
 - Whether a client sees the barber's live position during on-the-way, or only an ETA. `ADR-004` says ETA only; this ticket confirms it and states what the UI is allowed to show.
 
 **Acceptance criteria**
@@ -504,6 +505,7 @@ Decide, and record in `KB §9` as `RULE-DISCOVERY-05`, with a value for `CFG-ETA
 - [ ] `RULE-DISCOVERY-05` written in `KB §9` defining pre-acceptance precision, post-acceptance precision, and map rendering.
 - [ ] Jitter stability is addressed explicitly if jitter is chosen.
 - [ ] `CFG-ETA-REFRESH-MIN` has a single concrete value in `KB §13`, not a range.
+- [ ] `CFG-ETA-STALE-MIN` has a concrete value tied to the refresh interval.
 - [ ] `TBC-LOCATION-PRECISION` and `TBC-ETA-INTERVAL` in `KB §14` rewritten as `RESOLVED → RULE-DISCOVERY-05`. Not deleted.
 - [ ] `RULE-DISCOVERY-05` removed from `KB §9`'s *Pending rules* table.
 
@@ -2035,9 +2037,9 @@ owner: Andrew
 phase: 1
 priority: High
 jiraKey: null
-dependsOn: [P0-T14, P1-T03]
+dependsOn: [P0-D06, P0-T14, P1-T03]
 affects: [P1-T11, P1-T12, P2-T01, P2-T04, P5-T03]
-knowledgeBase: [ADR-008, RULE-ONBOARD-03, RULE-ONBOARD-05, RULE-DISCOVERY-03]
+knowledgeBase: [ADR-008, RULE-ONBOARD-03, RULE-ONBOARD-05, RULE-DISCOVERY-03, RULE-DISCOVERY-05]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, mobile]
 ```
@@ -2054,7 +2056,15 @@ Barber profile completion in `apps/mobile`: display name, bio, profile photo, ye
 
 Photo upload to Supabase Storage with a size and dimension limit, served through a signed URL rather than a public bucket.
 
-Service area as a `geography(Point, 4326)` centre plus a radius, entered via Places autocomplete or current location.
+Service area as a private `geography(Point, 4326)` centre plus a radius, entered via Places autocomplete or current location.
+
+A feature migration creates an RLS-protected `public_areas` table, and an idempotent loader imports
+the current Australian Bureau of Statistics Suburbs and Localities (SAL) boundary dataset into
+PostGIS with its source, licence attribution, checksum and dataset vintage. Each area stores its
+public code, label, boundary and a representative map point computed with `ST_PointOnSurface`,
+rather than from barber positions. On profile save, the server resolves the private service-area
+point to one SAL and stores that public-area reference. The raw Google Places label or geometry is
+not persisted as the public area projection.
 
 **An explicit public/private field split**, documented and enforced by the view or policy from `P0-T11`. Public: display name, bio, photo, experience, approximate area, ratings. Private: exact service-area centre, contact details, Stripe identifiers, verification internals.
 
@@ -2071,6 +2081,8 @@ A radius bound, so a barber cannot set 500 km and appear in every search.
 // 200 — note what comes back is the public projection
 { "id": "3b90...", "displayName": "Marcus T", "bio": "10 years, fades and beard work.",
   "yearsExperience": 10, "photoUrl": null, "serviceRadiusKm": 12,
+  "approximateArea": { "id": "sal:2021:example", "label": "Richmond",
+    "mapPoint": { "lat": -37.82, "lng": 145.00 } },
   "onboardingComplete": false, "publishable": false }
 
 // 422 — radius outside bounds
@@ -2085,6 +2097,9 @@ A radius bound, so a barber cannot set 500 km and appear in every search.
 
 - [ ] A barber can complete their profile, upload a photo, and set a service area with a radius.
 - [ ] The service area is stored as a PostGIS point with a radius, distinct from any Available Now session location.
+- [ ] The private service-area point resolves server-side to one versioned ABS SAL; the public projection returns only that area's code, label and representative map point, never the private point.
+- [ ] The SAL source, dataset vintage and required attribution are recorded; no Google Places content is persisted as the public area projection.
+- [ ] `public_areas` has RLS enabled; mobile roles cannot directly read or write its reference rows, and discovery accesses the projection only through its authorised server path.
 - [ ] The travel radius is bounded; values outside the bounds are rejected with a field-level message.
 - [ ] Photo upload enforces a size and dimension limit and is served through a signed URL, not a public bucket.
 - [ ] **Public and private barber fields are separated**, and the public projection is documented.
@@ -2093,7 +2108,7 @@ A radius bound, so a barber cannot set 500 km and appear in every search.
 - [ ] The form uses React Hook Form with a shared schema.
 - [ ] Loading and error states exist; a failed photo upload does not lose the rest of the form.
 
-**Tests** — the public projection asserted field by field for absence of private fields; cross-barber denial; radius bounds at and either side of the limits; oversized photo rejected.
+**Tests** — the public projection asserted field by field for absence of private fields; SAL resolution at both sides of a boundary; shared representative point for two barbers in the same SAL; direct mobile-role reads and writes to `public_areas` denied at the API; cross-barber denial; radius bounds at and either side of the limits; oversized photo rejected.
 
 **Out of scope** — Stripe Connect (`P1-T07`, `P1-T08`); services and pricing (`P1-T11`); Available Now sessions (`P2-T01`); publishing to discovery, which requires Connect (`RULE-ONBOARD-04`).
 
@@ -2539,9 +2554,9 @@ owner: Andrew
 phase: 2
 priority: Highest
 jiraKey: null
-dependsOn: [P0-T06, P0-T10, P1-T06]
+dependsOn: [P0-D06, P0-T06, P0-T10, P1-T06]
 affects: [P2-T02, P2-T03, P2-T04, P2-T12]
-knowledgeBase: [ADR-008, RULE-AVAIL-01, RULE-AVAIL-02, ENUM-AVAIL-STATUS]
+knowledgeBase: [ADR-008, RULE-AVAIL-01, RULE-AVAIL-02, RULE-DISCOVERY-05, ENUM-AVAIL-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, database, maps]
 ```
@@ -2556,7 +2571,7 @@ The session location is **not** the barber's service area (`P1-T06`). `RULE-DISC
 
 Edge Functions `start-available-now-session`, `update-available-now-session`, `stop-available-now-session`.
 
-Session row: barber id, `geography(Point, 4326)` location, location source (`gps` or `manual`), radius, available-until timestamp, status (`ENUM-AVAIL-STATUS`), and timestamps.
+Session row: barber id, private `geography(Point, 4326)` location, server-resolved public-area reference from `P1-T06`, location source (`gps` or `manual`), radius, available-until timestamp, status (`ENUM-AVAIL-STATUS`), and timestamps. Starting or updating a session resolves the private point against the versioned SAL polygons server-side; the client cannot choose or override the public area.
 
 The partial unique index from `P0-T10` enforces one `active` session per barber. Starting a session while one is active either replaces it or is rejected — decide, document, and make it the same answer every time.
 
@@ -2575,7 +2590,8 @@ RLS: a barber reads and writes only their own sessions; the discovery path reads
 
 // 200
 { "id": "5c22...", "status": "active", "radiusKm": 8,
-  "availableUntil": "2026-08-05T09:00:00Z", "locationSource": "gps" }
+  "availableUntil": "2026-08-05T09:00:00Z", "locationSource": "gps",
+  "approximateArea": { "id": "sal:2021:example", "label": "Melbourne" } }
 
 // 409 — a session is already active
 { "error": "session_already_active", "activeSessionId": "5c22..." }
@@ -2593,13 +2609,14 @@ RLS: a barber reads and writes only their own sessions; the discovery path reads
 - [ ] A barber can start, update and stop a session.
 - [ ] **A second active session cannot exist for a barber** — enforced by the database index and proven under real parallel start calls.
 - [ ] The session location is stored separately from the barber's service area and the two are never read interchangeably.
+- [ ] The session point resolves server-side to a public area and the client cannot supply or override that area.
 - [ ] Discovery excludes sessions that are expired, `busy`, `manually_disabled`, `auto_disabled` or `cancelled`.
 - [ ] The discovery query uses a PostGIS index — verified by an `EXPLAIN` showing an index scan, not a sequential scan.
 - [ ] Radius and available-until are bounded; out-of-bounds values are rejected with field-level errors.
 - [ ] A barber not satisfying `RULE-ONBOARD-04` cannot start a session.
 - [ ] Barber A cannot read or write barber B's session.
 
-**Tests** — parallel start calls producing one active session; `EXPLAIN` asserting index usage; each excluded status absent from discovery; bounds at and either side of the limits; onboarding-incomplete rejection.
+**Tests** — parallel start calls producing one active session; server-side public-area resolution including a boundary case; crafted public-area input ignored or rejected; `EXPLAIN` asserting index usage; each excluded status absent from discovery; bounds at and either side of the limits; onboarding-incomplete rejection.
 
 **Out of scope** — the toggle UI (`P2-T02`); auto-disable (`P2-T03`); the search function (`P2-T04`).
 
@@ -2753,7 +2770,7 @@ Filters: booking type, service category, client point, radius, and eligibility. 
 
 PostGIS distance query against the GiST index (`ADR-008`). Results bounded and paginated — never "fetch all and sort".
 
-Response carries the **public projection only** (`RULE-ONBOARD-05`), at the precision `RULE-DISCOVERY-05` allows, with the price for the requested category and the distance.
+Response carries the **public projection only** (`RULE-ONBOARD-05`), at the precision `RULE-DISCOVERY-05` allows, with the price for the requested category, a distance band, and the server-resolved approximate area. The exact distance remains server-side for filtering and ordering. The area label and representative map point come from the versioned public SAL data established by `P1-T06`, not from Google or from a barber coordinate.
 
 Ordering documented and deliberate: distance, price, rating, and any reliability search penalty from `P0-D04`.
 
@@ -2767,7 +2784,10 @@ Ordering documented and deliberate: distance, price, rating, and any reliability
 // 200 — note: distance band, not coordinates (RULE-DISCOVERY-05)
 { "results": [
     { "barberId": "3b90...", "displayName": "Marcus T", "photoUrl": "https://...",
-      "priceCents": 4500, "distanceBand": "2-5km", "rating": 4.8, "ratingCount": 37,
+      "priceCents": 4500, "distanceBand": "2-5km",
+      "approximateArea": { "id": "sal:2021:example", "label": "Richmond",
+        "mapPoint": { "lat": -37.82, "lng": 145.00 } },
+      "rating": 4.8, "ratingCount": 37,
       "availableUntil": "2026-08-05T09:00:00Z" }
   ],
   "nextCursor": "eyJvZmZ..." }
@@ -2786,14 +2806,15 @@ Ordering documented and deliberate: distance, price, rating, and any reliability
 - [ ] Results are filtered by service category and exclude barbers with no active price for it.
 - [ ] **A barber failing `RULE-ONBOARD-04` never appears** — verified with a seeded restricted barber.
 - [ ] Expired, busy and disabled sessions are excluded from Available Now results.
-- [ ] **The response contains no private barber field and no location more precise than `RULE-DISCOVERY-05` allows** — asserted field by field on the raw body.
+- [ ] Every result returns exactly one of `under-2km`, `2-5km`, `5-10km`, or `10km+`, with boundary behaviour matching `RULE-DISCOVERY-05`.
+- [ ] **The response contains no private barber field, exact distance, barber coordinate, or location more precise than `RULE-DISCOVERY-05` allows** — asserted field by field on the raw body. The only coordinate returned is the shared public-area map point.
 - [ ] Results are paginated and bounded; there is no unbounded response.
 - [ ] The query uses a PostGIS index — `EXPLAIN` shows an index scan.
 - [ ] Ordering is documented and deterministic for equal values, so pagination does not repeat or skip a barber.
 - [ ] An empty result is a 200 with an empty array, not an error.
 - [ ] The Google server key is not involved; this is a database query.
 
-**Tests** — raw response asserted for absence of private fields and excess precision; restricted barber excluded; `EXPLAIN` index assertion; pagination stability across pages with tied ordering values; Available Now versus Scheduled returning different sets for a barber whose session location and service area differ.
+**Tests** — raw response asserted for absence of private fields, exact distance and barber coordinates; distance-band boundaries at 2 km, 5 km and 10 km on both sides; two barbers in one SAL returning the same area map point; restricted barber excluded; `EXPLAIN` index assertion; pagination stability across pages with tied ordering values; Available Now versus Scheduled returning different sets and approximate areas for a barber whose session location and service area differ.
 
 **Out of scope** — filter UI (`P2-T05`); result rendering (`P2-T06`, `P2-T07`); ETA (`P4-T05`).
 
@@ -2878,7 +2899,7 @@ The list a client picks from. The empty state carries more weight than the popul
 
 **Scope**
 
-A list of result cards: photo, name, price for the selected service, distance at the allowed precision, rating, and availability.
+A list of result cards: photo, name, price for the selected service, approximate area, distance band at the allowed precision, rating, and availability.
 
 Pagination via the cursor from `P2-T04`, loading further pages on scroll.
 
@@ -2890,8 +2911,8 @@ Refetch on filter change, and pull-to-refresh for the Available Now case, where 
 
 **Acceptance criteria**
 
-- [ ] Results render with photo, name, price for the selected service, distance and rating.
-- [ ] Distance is shown at the `RULE-DISCOVERY-05` precision; no exact location is rendered.
+- [ ] Results render with photo, name, price for the selected service, approximate area, distance band and rating.
+- [ ] Distance and area are shown at the `RULE-DISCOVERY-05` precision; no exact distance or barber location is rendered.
 - [ ] Pagination loads further pages without duplicating or skipping a barber.
 - [ ] Tapping a card opens the profile with the selected service preserved and the same price.
 - [ ] **The empty state offers next actions** and is distinct from the error state.
@@ -2928,17 +2949,18 @@ labels: [quicktrimr, phase-2, mobile, maps, security]
 
 A map of nearby barbers, and the surface where `RULE-DISCOVERY-05` is most easily violated — a marker is a coordinate, and a coordinate is exactly the thing the rule limits.
 
-**The specific trap is jitter that is not stable.** If a barber's marker is randomised on every refetch, a client who pans the map a few times can average the positions and recover the true point. Unstable jitter is worse than no jitter, because it looks like privacy.
-
-**This ticket cannot start before `P0-D06`**, which decides whether individual markers are rendered at all.
+`RULE-DISCOVERY-05` deliberately forbids per-barber markers. A marker is a coordinate, and a
+randomly jittered marker still exposes a barber-shaped point that can be probed across searches.
+The map communicates supply by approximate area instead.
 
 **Scope**
 
-Google Maps rendering the client's service location and the barbers from `P2-T04`, at the precision `RULE-DISCOVERY-05` permits.
+Google Maps renders the client's service location and one shared cluster for each approximate area
+returned by `P2-T04`. The cluster uses the public SAL representative point and shows the number of
+matching barbers. It is not calculated from barber positions, and no individual barber marker or
+jitter is used.
 
-If jitter is chosen, it is **deterministic per barber per session** — the same barber renders at the same offset for the whole session.
-
-Selecting a marker opens the same card as `P2-T06`.
+Selecting an area cluster opens the matching `P2-T06` barber cards for that area.
 
 Refetch throttled on pan and zoom. An unthrottled map fires a search on every frame of a drag, which is a cost problem and a rate-limit problem.
 
@@ -2948,16 +2970,16 @@ Uses the **client** Google key from `P0-T18`, bundle-restricted. The server key 
 
 **Acceptance criteria**
 
-- [ ] The map renders the client's service location and matching barbers.
-- [ ] **Barber markers respect `RULE-DISCOVERY-05`** — no marker is more precise than the rule allows.
-- [ ] If jitter is used, it is **stable per barber per session** — panning and refetching does not move a barber's marker.
-- [ ] Selecting a marker opens the barber card.
+- [ ] The map renders the client's service location and one cluster per approximate area containing matching barbers.
+- [ ] **No individual barber marker is rendered.** Every cluster uses the shared public SAL representative point from `P2-T04`, never a point derived from barber positions.
+- [ ] No jitter is generated or accepted anywhere in the map data path.
+- [ ] Selecting a cluster opens the matching barber cards for that area.
 - [ ] Pan and zoom refetches are throttled; a drag does not fire a search per frame.
 - [ ] A denied location permission centres on the selected address rather than failing.
 - [ ] Only the bundle-restricted client key is used; no server key appears in the bundle.
 - [ ] Loading, error and empty states exist, including a map with no results.
 
-**Tests** — marker precision asserted against the rule; jitter stability across repeated fetches for the same barber; throttling asserted by counting requests during a simulated drag; permission-denied fallback.
+**Tests** — two barbers in one SAL produce one cluster at the shared public point; raw map data contains no barber coordinate or jitter; selecting a cluster shows only its matching cards; throttling asserted by counting requests during a simulated drag; permission-denied fallback.
 
 **Out of scope** — live tracking, which `ADR-004` forbids; on-the-way ETA (`P4-T06`); submission (`P2-T09`).
 
@@ -4568,7 +4590,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D06, P0-D07, P0-T18, P4-T03]
 affects: [P4-T06]
-knowledgeBase: [ADR-004, ADR-008, ADR-011, RULE-ETA-02, RULE-ETA-03, RULE-ETA-04, RULE-ETA-05, CFG-ETA-REFRESH-MIN]
+knowledgeBase: [ADR-004, ADR-008, ADR-011, RULE-DISCOVERY-05, RULE-ETA-02, RULE-ETA-03, RULE-ETA-04, RULE-ETA-05, CFG-ETA-REFRESH-MIN]
 blockedByTbc: []
 labels: [quicktrimr, phase-4, backend, maps, security]
 ```
@@ -4585,6 +4607,10 @@ Throttling is both a cost control and a privacy control: each refresh is a Route
 
 `update-eta` Edge Function calling Google Routes from the server, using the server key.
 
+The first ETA is calculated immediately when the booking enters `on_the_way`. Later scheduled
+refreshes use the fixed interval from `CFG-ETA-REFRESH-MIN`; the cadence does not scale with
+distance or remaining ETA.
+
 Store the ETA and its `updated_at` together (`RULE-ETA-03`) — an ETA without a timestamp is unusable, because a client cannot tell a fresh estimate from a ten-minute-old one.
 
 Throttle to `CFG-ETA-REFRESH-MIN`. A call inside the window returns the cached value rather than calling Routes.
@@ -4596,10 +4622,13 @@ Refresh scheduled on the engine from `P0-D07`, re-checking booking state at exec
 Routes failures are logged safely and leave the last known ETA with its timestamp, rather than clearing it.
 
 Location updates accepted only from the booking's barber, and only while the booking is active.
+The barber's origin coordinate and the route polyline stay server-side; the client response contains
+only the ETA and its last-updated timestamp.
 
 **Acceptance criteria**
 
 - [ ] ETA is calculated server-side via Google Routes using the server key.
+- [ ] The first ETA is calculated immediately on the transition to `on_the_way`; later refreshes use the fixed configured interval rather than a distance-scaled cadence.
 - [ ] **The Google server key does not appear in the mobile bundle** — asserted by `P0-T03`'s client-env check.
 - [ ] ETA and its last-updated timestamp are stored and returned together.
 - [ ] **Calls inside `CFG-ETA-REFRESH-MIN` return the cached value without calling Routes** — asserted by counting outbound calls.
@@ -4608,9 +4637,10 @@ Location updates accepted only from the booking's barber, and only while the boo
 - [ ] A Routes failure leaves the last known ETA with its timestamp and logs safely.
 - [ ] A location update from anyone other than the booking's barber is rejected.
 - [ ] A location update for an inactive booking is rejected.
+- [ ] The raw client response contains no barber coordinate, route origin or route polyline.
 - [ ] No PII or coordinate is written to logs.
 
-**Tests** — outbound Routes call counting under rapid repeat calls, asserting throttling; refreshes ceasing after each terminal transition; a foreign barber's location update rejected; Routes failure preserving the last ETA; the bundle check asserting key absence.
+**Tests** — immediate first calculation on `on_the_way`; outbound Routes call counting under rapid repeat calls, asserting the fixed three-minute throttle; refreshes ceasing after each terminal transition; raw response asserted field by field for absence of coordinates, origin and polyline; a foreign barber's location update rejected; Routes failure preserving the last ETA; the bundle check asserting key absence.
 
 **Out of scope** — the client display (`P4-T06`); live tracking, forbidden by `ADR-004`.
 
@@ -4630,7 +4660,7 @@ priority: Medium
 jiraKey: null
 dependsOn: [P0-D06, P0-T15, P4-T01, P4-T05]
 affects: []
-knowledgeBase: [ADR-004, RULE-ETA-03, RULE-ETA-04, RULE-ETA-05, RULE-COPY-01, CFG-ETA-REFRESH-MIN]
+knowledgeBase: [ADR-004, RULE-DISCOVERY-05, RULE-ETA-03, RULE-ETA-04, RULE-ETA-05, RULE-COPY-01, CFG-ETA-REFRESH-MIN, CFG-ETA-STALE-MIN]
 blockedByTbc: []
 labels: [quicktrimr, phase-4, mobile, maps]
 ```
@@ -4647,7 +4677,8 @@ An ETA surface on the client booking detail when the booking is on the way.
 
 Show the ETA **and** its last-updated time together, always.
 
-A stale state when the last update is older than a defined multiple of `CFG-ETA-REFRESH-MIN` — the number stops being presented as current and says so.
+A stale state when the last update reaches `CFG-ETA-STALE-MIN` — six minutes, or two missed
+refresh intervals. At exactly six minutes the number stops being presented as current and says so.
 
 An unavailable state when no ETA could be calculated, which is normal and not an error.
 
@@ -4659,14 +4690,14 @@ Polling aligned to the refresh interval — a client polling every second gets n
 
 - [ ] The ETA appears on the client booking detail when the booking is on the way.
 - [ ] **The ETA and its last-updated time are always shown together** (`RULE-ETA-03`).
-- [ ] A stale ETA is visibly marked stale rather than presented as current.
+- [ ] An ETA becomes visibly stale at exactly `CFG-ETA-STALE-MIN`; the boundary and both sides are covered.
 - [ ] An unavailable ETA renders a defined state, not an error.
 - [ ] **No moving barber marker and no live position** (`ADR-004`, `RULE-ETA-05`).
 - [ ] The display stops when the booking is completed, cancelled or disputed.
 - [ ] Polling is aligned to the refresh interval, not tighter.
 - [ ] Loading and error states exist.
 
-**Tests** — stale threshold rendering at and either side of the boundary; unavailable state; polling interval asserted by counting requests; no live marker present.
+**Tests** — stale rendering at 5:59, 6:00 and 6:01; unavailable state; polling interval asserted by counting requests; raw data and rendered UI contain no live barber position or marker.
 
 **Out of scope** — ETA calculation (`P4-T05`); the map view (`P2-T07`).
 
