@@ -1,0 +1,65 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  apps/admin:
+    dependencies:
+      '@quicktrimr/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@quicktrimr/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
+
+  apps/mobile:
+    dependencies:
+      '@quicktrimr/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@quicktrimr/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
+
+  packages/domain:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/shared: {}
+
+  packages/ui:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/validation:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  supabase/functions/workspace-contract:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
