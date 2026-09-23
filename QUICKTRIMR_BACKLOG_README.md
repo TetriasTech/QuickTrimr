@@ -6804,7 +6804,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-SERVICE-02` | `P0-D01`, `P1-T11` |
 | `RULE-SERVICE-03` | `P0-D01`, `P1-T10`, `P5-T11` |
 | `RULE-SERVICE-04` | `P1-T11` |
-| `RULE-SERVICE-05` | `P0-T12`, `P1-T10`, `P1-T11`, `P2-T04`, `P2-T08`, `P5-T11` |
+| `RULE-SERVICE-05` | `P0-D01`, `P0-T12`, `P1-T10`, `P1-T11`, `P2-T04`, `P2-T08`, `P5-T11` |
 | `CFG-AVAIL-EXPIRY-MIN` | `P2-T08`, `P2-T09`, `P2-T15` |
 | `CFG-CANCEL-REFUND-PCT` | `P0-D03`, `P3-T07`, `P3-T08` |
 | `CFG-COMMISSION-PCT` | `P0-D02`, `P2-T08`, `P3-T01`, `P3-T04` |
@@ -6941,7 +6941,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P5-T08` | `P6-T08` | `P0-D03`, `P5-T06`, `P5-T07` |
 | `P5-T09` | `P5-T10` | `P0-D02`, `P0-T17`, `P1-T02`, `P3-T02`, `P3-T03`, `P3-T04`, `P3-T07` |
 | `P5-T10` | — | `P0-D05`, `P3-T10`, `P3-T11`, `P5-T09` |
-| `P5-T11` | — | `P0-T17`, `P1-T02`, `P1-T10` |
+| `P5-T11` | — | `P0-D01`, `P0-T17`, `P1-T02`, `P1-T10` |
 | `P5-T12` | — | `P0-T17`, `P1-T02`, `P4-T14` |
 | `P5-T13` | — | `P0-D04`, `P1-T02`, `P3-T12`, `P5-T03` |
 | `P6-T01` | `P6-T02` | `P0-T13`, `P1-T01` |
