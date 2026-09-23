@@ -408,7 +408,20 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-SERVICE-02` — A barber selects which global categories they offer and sets their own price per category. Prices are per-barber; there is no platform price.
 - `RULE-SERVICE-03` — A category is **archived, never deleted.** Bookings reference it historically.
 - `RULE-SERVICE-04` — A barber updating a price never changes an existing booking. The booking's price snapshot governs (`ADR-009`).
-- `RULE-SERVICE-05` *(reserved — `P0-D01`)* — The service categories QuickTrimr launches with, and the valid price bounds per category.
+- `RULE-SERVICE-05` — QuickTrimr launches with the five service categories below. Price bounds are
+  inclusive, expressed in integer AUD cents, and enforced server-side. No category is mandatory or
+  preselected; a barber chooses the categories they offer, but must have at least one active,
+  priced category to be discoverable. Each price is the barber's single category price within
+  their configured service area. Distance, day-of-week and after-hours surcharges, and dynamic
+  pricing are not supported at launch.
+
+| Display order | Stable slug | Display name | Minimum price | Maximum price |
+|---:|---|---|---:|---:|
+| 1 | `haircut` | Haircut | 2,000 | 15,000 |
+| 2 | `skin_fade` | Skin Fade | 2,500 | 17,500 |
+| 3 | `beard_trim` | Beard Trim | 1,000 | 10,000 |
+| 4 | `haircut_beard` | Haircut + Beard | 3,000 | 20,000 |
+| 5 | `skin_fade_beard` | Skin Fade + Beard | 3,500 | 22,500 |
 
 ### Discovery
 
@@ -544,7 +557,6 @@ These IDs are cited by tickets but the rule does not exist yet. The decision tic
 
 | Reserved ID | What it will say | Written by |
 |---|---|---|
-| `RULE-SERVICE-05` | Launch service categories and price bounds | `P0-D01` |
 | `RULE-PAY-11` | Commission percentage and Stripe fee absorption | `P0-D02` |
 | `RULE-CANCEL-07` | Partial refund split and inconvenience fee funding | `P0-D03` |
 | `RULE-RELY-06` | Reliability thresholds, windows and consequences | `P0-D04` |
@@ -780,7 +792,7 @@ Config stored in the database lives in a platform config table, is updatable onl
 
 | ID | Question | Blocks | Decided by |
 |---|---|---|---|
-| `TBC-SERVICE-CATEGORIES` | Which service categories launch, and what price bounds are valid per category? | Catalogue, barber pricing, discovery, seed data | `P0-D01` |
+| `TBC-SERVICE-CATEGORIES` | **RESOLVED → `RULE-SERVICE-05`** | Catalogue, barber pricing, discovery, seed data | `P0-D01` |
 | `TBC-COMMISSION-PCT` | What is the platform commission percentage? 20% is an assumption carried from the proposal, not a decision. | Every payment, earning and payout row | `P0-D02` |
 | `TBC-STRIPE-FEES` | Who absorbs the Stripe processing fee — QuickTrimr, the barber, or the client? What happens to it on a full and on a partial refund? | Commission maths, refunds, barber net | `P0-D02` |
 | `TBC-CANCEL-SPLIT` | What percentage does a client get back on a late cancellation? | Cancellation, refunds, admin resolution | `P0-D03` |
@@ -826,6 +838,20 @@ Client and barber mobile journeys, Available Now and Scheduled bookings, Stripe 
 ### Out of scope unless separately approved
 
 Full live tracking, in-app chat, SMS, promo codes, loyalty or referral schemes, barber subscriptions, advanced fraud detection, tax or accounting exports, support ticketing, multi-city operations tooling, AI matching, dynamic pricing, legal policy drafting, insurance and compliance workflow, a dedicated backend replacing Edge Functions, AWS migration, Firebase, a GraphQL layer, and Detox mobile E2E.
+
+The following service categories and pricing variants are also deferred until after launch:
+
+- kids haircuts — this requires an explicit guardian and minor-booking policy first;
+- buzz or crew cuts;
+- specialist scissor or long-hair cuts;
+- head shaves and face shaves;
+- line-up-only services;
+- student, senior, or other concession pricing;
+- colouring, waxing, and grooming add-ons; and
+- wedding, event, after-hours, hospital, NDIS, or distance-priced services.
+
+Student, senior, Sunday, after-hours, and distance pricing describe customer eligibility or booking
+conditions, not separate launch service categories.
 
 A ticket drifting into this list stops and is raised, not implemented.
 

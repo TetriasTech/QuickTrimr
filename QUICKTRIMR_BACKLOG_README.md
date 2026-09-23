@@ -217,8 +217,8 @@ phase: 0
 priority: Highest
 jiraKey: TRIMR-2
 dependsOn: []
-affects: [P0-T12, P1-T10, P1-T11, P1-T12, P2-T04, P2-T08]
-knowledgeBase: [RULE-SERVICE-01, RULE-SERVICE-02, RULE-SERVICE-03]
+affects: [P0-T12, P1-T10, P1-T11, P1-T12, P2-T04, P2-T08, P5-T11]
+knowledgeBase: [RULE-SERVICE-01, RULE-SERVICE-02, RULE-SERVICE-03, RULE-SERVICE-05]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, product]
 ```
@@ -253,7 +253,7 @@ Recommend the smallest set with real supply. A category with no barbers is a dea
 
 **Out of scope** — building the catalogue tables or admin CRUD (`P1-T10`); barber pricing UI (`P1-T11`); seeding the data (`P0-T12`).
 
-**Sync notes** — `affects` lists every ticket that hardcodes an assumption about categories or price bounds. If the launch set changes after Phase 1 starts, all six need review.
+**Sync notes** — `affects` lists every ticket that hardcodes an assumption about categories or price bounds. If the launch set changes after Phase 1 starts, all seven need review.
 
 ---
 
