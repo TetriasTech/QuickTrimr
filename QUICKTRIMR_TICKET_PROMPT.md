@@ -182,9 +182,10 @@ make it impossible or unsafe.
 what you recommend, and what it costs. This is a decision, and decisions are not yours to make
 silently — a workaround invented at 4pm becomes an architectural constraint nobody agreed to.
 
-The likeliest live example: `ADR-006` authorises at request time and captures on acceptance, but
-a Stripe authorisation does not live forever. A Scheduled booking confirmed a week ahead may
-outlive its authorisation. If you hit that, it is Case B — not something to patch around.
+For example, `ADR-006` authorises at request time and captures on acceptance. If a supported
+payment method's capture deadline cannot cover the configured pending-request window, that is
+Case B — not something to patch around. A confirmed Scheduled booking has already been captured;
+the later appointment date does not extend an uncaptured authorisation.
 
 ### Case C — Neither says
 

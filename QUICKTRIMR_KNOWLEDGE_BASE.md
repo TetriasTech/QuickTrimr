@@ -210,7 +210,7 @@ Booking completes        → barber earning moves pending → available
 Payout run               → money moves to the barber's bank
 ```
 
-`ADR-006` is why authorisation expiry matters: a Scheduled request may sit pending for up to `CFG-SCHED-EXPIRY-HOURS`, and a Scheduled booking may sit confirmed for days before the appointment. Authorisation lifetime is a real constraint on `RULE-SCHED-*`.
+Authorisation lifetime constrains only the pending request window. A Scheduled request may remain pending for up to `CFG-SCHED-EXPIRY-HOURS`; acceptance captures the payment immediately, even when the appointment is days away. A confirmed Scheduled booking therefore does not retain an uncaptured authorisation until the appointment. Its booking horizon is an operational limit on advance capture and stale plans, not an authorisation-lifetime limit (`RULE-SCHED-04`).
 
 ### ADR-007 — Monorepo with shared contracts
 
@@ -463,7 +463,9 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-SCHED-01` — A client requests a specific future time from a specific barber.
 - `RULE-SCHED-02` — A Scheduled request expires after `CFG-SCHED-EXPIRY-HOURS` if the barber does not respond. On expiry the authorisation is cancelled.
 - `RULE-SCHED-03` — A client has at most one active pending request for the same booking intent (same barber, same service, same time).
-- `RULE-SCHED-04` *(reserved — `P0-D08`)* — The minimum lead time between now and a requested Scheduled appointment, and how far ahead a booking may be made.
+- `RULE-SCHED-04` — At creation, the requested appointment must be no earlier than `CFG-SCHED-MIN-LEAD-MIN` from the server's current time and no later than `CFG-SCHED-MAX-HORIZON-DAYS` from it; both endpoints are included. Days are elapsed 24-hour periods, independent of the device timezone. A time inside the minimum is rejected with copy derived from the current config; at launch: "Scheduled bookings need at least 4 hours' notice. Try Available Now for sooner." The request may remain pending only for `CFG-SCHED-EXPIRY-HOURS`; acceptance captures payment immediately, so the appointment date requires no further authorisation after a successful capture. At launch QuickTrimr has no barber calendar, working-hours or service-duration model: these global bounds are the only slot constraints, acceptance is the barber's availability decision, and every pre-acceptance surface calls the time **requested**, never available or booked. The platform does not prevent overlapping accepted Scheduled bookings at launch.
+
+Decision confirmed by Andrew for `P0-D08`: four hours' lead time leaves preparation time after the existing two-hour response window; the 30-day horizon limits advance capture and stale plans. Availability remains a manual accept/decline responsibility for the MVP.
 
 ### Booking requests
 
@@ -543,12 +545,28 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 
 ### Reviews
 
-- `RULE-REVIEW-01` — A client may review a barber only for their own **completed** booking.
+- `RULE-REVIEW-01` — A client may review a barber only for their own booking when its service outcome is reviewable under `RULE-REVIEW-06` and its review deadline has not passed.
 - `RULE-REVIEW-02` — One review per booking.
 - `RULE-REVIEW-03` — A rating is required; review text is optional and validated.
 - `RULE-REVIEW-04` — A review contributes to the barber's rating aggregate. The aggregate is computed server-side and cannot be written by a client.
 - `RULE-REVIEW-05` — An admin can hide or unhide a review, with an audit log. Hidden reviews are excluded from the public aggregate.
-- `RULE-REVIEW-06` *(reserved — `P0-D08`)* — Whether a disputed, admin-resolved, or cancelled booking is reviewable.
+- `RULE-REVIEW-06` — New reviews are allowed only for the outcomes below. The window is `CFG-REVIEW-DEADLINE-DAYS` elapsed 24-hour periods from the stated server-recorded timestamp; it closes at that timestamp plus the configured window (submission at or after the deadline is rejected). A cancelled or fully refunded booking is not reviewable. Eligibility and the deadline are enforced server-side from booking, dispute and payment state, never from a client-supplied outcome or timestamp. One review per booking still applies (`RULE-REVIEW-02`), including after admin resolution.
+
+| Service outcome | New review allowed? | Window starts at |
+|---|---|---|
+| Client confirms barber completion (`RULE-COMPLETE-02`) | Yes | Completion time |
+| Client completes first (`RULE-COMPLETE-03`) | Yes | Completion time |
+| Auto-completed after barber completion and client inactivity (`RULE-COMPLETE-02`) | Yes | Actual auto-completion time |
+| Auto-completed after neither party acts (`RULE-COMPLETE-04`) | Yes | Actual auto-completion time |
+| Active dispute (`open` or `under_review`) | No | — |
+| Admin resolution: barber paid (`resolved_barber_paid`) | Yes | Resolution time |
+| Admin resolution: partial refund (`resolved_partial_refund`) | Yes | Resolution time |
+| Admin resolution: full client refund (`resolved_client_refund`) | No | — |
+| Admin resolution: operational outcome (`resolved_operational`) | No | — |
+| Cancelled or fully refunded booking | No | — |
+| Any other outcome, including a pending completion response | No | — |
+
+Decision confirmed by Andrew for `P0-D08`: a 14-day window, with a fresh window after an eligible admin resolution so time spent resolving a dispute does not consume the client's opportunity to review.
 
 ### Admin operations
 
@@ -578,8 +596,6 @@ These IDs are cited by tickets but the rule does not exist yet. The decision tic
 | `RULE-CANCEL-07` | Partial refund split and inconvenience fee funding | `P0-D03` |
 | `RULE-RELY-06` | Reliability thresholds, windows and consequences | `P0-D04` |
 | `RULE-EARN-07` | Payout schedule and batch cadence | `P0-D05` |
-| `RULE-SCHED-04` | Scheduled booking lead time and horizon | `P0-D08` |
-| `RULE-REVIEW-06` | Review eligibility after dispute or cancellation | `P0-D08` |
 
 ---
 
@@ -676,8 +692,10 @@ active  busy  expired  manually_disabled  auto_disabled  cancelled
 ### ENUM-DISPUTE-STATUS
 
 ```txt
-open  under_review  resolved_client_refund  resolved_barber_paid  resolved_partial_refund  cancelled
+open  under_review  resolved_client_refund  resolved_barber_paid  resolved_partial_refund  resolved_operational  cancelled
 ```
+
+`resolved_client_refund` denotes the full-client-refund resolution. `resolved_operational` records the operational outcome already permitted by `RULE-DISPUTE-04`; it is distinct from cancelling a dispute and does not establish review eligibility (`RULE-REVIEW-06`).
 
 ### ENUM-RELIABILITY-LEVEL
 
@@ -797,7 +815,9 @@ These are read from config. **A literal `5`, `12`, `20`, `60` or `2` inside feat
 | `CFG-RELIABILITY-WINDOW-DAYS` | `TBC-RELIABILITY-THRESHOLDS` | Rolling window (`RULE-RELY-01`). |
 | `CFG-RELIABILITY-RESET-DAYS` | `TBC-RELIABILITY-THRESHOLDS` | Good-behaviour reset period (`RULE-RELY-02`). |
 | `CFG-RELIABILITY-COOLDOWN-MIN` | `TBC-RELIABILITY-THRESHOLDS` | Available Now cooldown (`RULE-RELY-03`). |
-| `CFG-SCHED-MIN-LEAD-MIN` | `TBC-SCHED-LEAD-TIME` | Minimum lead time for a Scheduled request (`RULE-SCHED-04`). |
+| `CFG-SCHED-MIN-LEAD-MIN` | `240` | Minimum lead time for a Scheduled request, in minutes (`RULE-SCHED-04`). |
+| `CFG-SCHED-MAX-HORIZON-DAYS` | `30` | Maximum horizon for a Scheduled request, in days (`RULE-SCHED-04`). |
+| `CFG-REVIEW-DEADLINE-DAYS` | `14` | Review window from completion, or from an eligible admin resolution, in days (`RULE-REVIEW-06`). |
 
 Config stored in the database lives in a platform config table, is updatable only by an admin, and is audit logged.
 
@@ -819,8 +839,8 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-LOCATION-PRECISION` | **RESOLVED → `RULE-DISCOVERY-05`** | Discovery, map view, search function | `P0-D06` |
 | `TBC-ETA-INTERVAL` | **RESOLVED → `RULE-DISCOVERY-05`** | ETA update function and display | `P0-D06` |
 | `TBC-WORKFLOW-ENGINE` | What runs scheduled and delayed work — Supabase cron, Inngest, Trigger.dev, or another? | Every expiry, auto-completion, prompt and payout run | `P0-D07` |
-| `TBC-SCHED-LEAD-TIME` | What is the minimum lead time for a Scheduled request, and how far ahead can one be made? | Scheduled request validation and discovery | `P0-D08` |
-| `TBC-REVIEW-ELIGIBILITY` | Can a client review after a dispute, an admin resolution, or a cancellation? | Review creation and prompts | `P0-D08` |
+| `TBC-SCHED-LEAD-TIME` | **RESOLVED → `RULE-SCHED-04`** | Scheduled request validation and discovery | `P0-D08` |
+| `TBC-REVIEW-ELIGIBILITY` | **RESOLVED → `RULE-REVIEW-06`** | Review creation and prompts | `P0-D08` |
 
 ---
 
