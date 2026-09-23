@@ -429,7 +429,24 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-DISCOVERY-02` — **Available Now** discovery is distance from the barber's *current session location*, within the session radius, for sessions that are `active` and not expired.
 - `RULE-DISCOVERY-03` — **Scheduled** discovery is against the barber's configured *service area and radius*, not a live GPS position.
 - `RULE-DISCOVERY-04` — Discovery returns public barber data only. A client learns a barber's approximate area, never their home address.
-- `RULE-DISCOVERY-05` *(reserved — `P0-D06`)* — The precision at which a barber's location is exposed to a client before acceptance.
+- `RULE-DISCOVERY-05` — A client never receives a barber's exact coordinate or exact distance.
+  Before acceptance, discovery returns only the server-derived approximate area and one of four
+  distance bands: `under-2km` for distances below 2 km, `2-5km` for distances from 2 km up to but
+  not including 5 km, `5-10km` for distances from 5 km up to but not including 10 km, and `10km+`
+  for distances of 10 km or more. Exact distance may be used server-side for filtering and ordering
+  but is never returned. The approximate area is the matching Australian Bureau of Statistics
+  Suburb or Locality (SAL), resolved server-side from the relevant point under `RULE-DISCOVERY-02`
+  or `RULE-DISCOVERY-03`; its public label and representative map point come from the licensed SAL
+  boundary data, never from averaging barber positions. The source and dataset vintage are recorded.
+  The client map renders one shared cluster per approximate area at that representative point, not
+  an individual barber marker. Selecting a cluster opens the matching barber results. Jitter is not
+  used. Acceptance does not increase coordinate precision for the client: after the booking's barber
+  taps "I'm on my way", the server may use that barber's exact current location solely to calculate
+  the route, while the booked client receives only the ETA and its last-updated time. The origin,
+  route polyline and barber coordinates are not returned, and every other user remains limited to
+  the pre-acceptance projection. The first ETA is calculated immediately, subsequent refreshes use
+  the fixed `CFG-ETA-REFRESH-MIN` interval rather than distance scaling, and the display becomes
+  stale when its age reaches `CFG-ETA-STALE-MIN`.
 
 ### Available Now
 
@@ -503,8 +520,8 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 
 - `RULE-ETA-01` — ETA starts only when the barber taps "I'm on my way" and the booking is in a valid status. There is no tracking before that (`ADR-004`).
 - `RULE-ETA-02` — ETA is calculated in an Edge Function via the Google Routes API. The server API key never reaches the device (`ADR-008`).
-- `RULE-ETA-03` — ETA and its last-updated timestamp are stored and shown together. A client always sees how stale the figure is.
-- `RULE-ETA-04` — Updates are throttled to `CFG-ETA-REFRESH-MIN` and stop when the booking is completed, cancelled, disputed, or otherwise inactive.
+- `RULE-ETA-03` — ETA and its last-updated timestamp are stored and shown together. A client always sees how stale the figure is. An ETA whose age has reached `CFG-ETA-STALE-MIN` is visibly marked stale and is not presented as current.
+- `RULE-ETA-04` — The first ETA is calculated immediately when the barber taps "I'm on my way". Subsequent updates use the fixed `CFG-ETA-REFRESH-MIN` interval; a request inside the interval returns the cached ETA without a Routes call or another location read. Updates stop when the booking is completed, cancelled, disputed, or otherwise inactive.
 - `RULE-ETA-05` — The UI must not imply live tracking. No moving barber marker.
 
 ### Completion
@@ -561,7 +578,6 @@ These IDs are cited by tickets but the rule does not exist yet. The decision tic
 | `RULE-CANCEL-07` | Partial refund split and inconvenience fee funding | `P0-D03` |
 | `RULE-RELY-06` | Reliability thresholds, windows and consequences | `P0-D04` |
 | `RULE-EARN-07` | Payout schedule and batch cadence | `P0-D05` |
-| `RULE-DISCOVERY-05` | Barber location precision before acceptance | `P0-D06` |
 | `RULE-SCHED-04` | Scheduled booking lead time and horizon | `P0-D08` |
 | `RULE-REVIEW-06` | Review eligibility after dispute or cancellation | `P0-D08` |
 
@@ -773,7 +789,8 @@ These are read from config. **A literal `5`, `12`, `20`, `60` or `2` inside feat
 | `CFG-FINAL-DISPUTE-WINDOW-MIN` | `60` | Dispute window after the final prompt (`RULE-COMPLETE-04`). |
 | `CFG-MISSED-REQUEST-THRESHOLD` | `2` | Consecutive missed requests before auto-disable (`RULE-AVAIL-03`). |
 | `CFG-LATE-CANCEL-WINDOW-HOURS` | `12` | Late-cancellation window for Scheduled bookings (`RULE-CANCEL-02`). |
-| `CFG-ETA-REFRESH-MIN` | `TBC-ETA-INTERVAL` | ETA refresh interval (`RULE-ETA-04`). |
+| `CFG-ETA-REFRESH-MIN` | `3` | Fixed ETA refresh interval in minutes (`RULE-ETA-04`). |
+| `CFG-ETA-STALE-MIN` | `6` | ETA is stale after two missed refresh intervals (`RULE-ETA-03`). |
 | `CFG-PAYOUT-SCHEDULE` | `TBC-PAYOUT-SCHEDULE` | Payout batch cadence (`RULE-EARN-05`). |
 | `CFG-CANCEL-REFUND-PCT` | `TBC-CANCEL-SPLIT` | Client partial-refund percentage (`RULE-CANCEL-03`). |
 | `CFG-INCONVENIENCE-FEE` | `TBC-INCONVENIENCE-FEE` | Barber inconvenience payment (`RULE-CANCEL-03`). |
@@ -799,8 +816,8 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-INCONVENIENCE-FEE` | How much is the barber's inconvenience payment, and **which side funds it** — the client's withheld amount, or QuickTrimr? | Cancellation, earnings, refund maths | `P0-D03` |
 | `TBC-RELIABILITY-THRESHOLDS` | What counts as an offence, over what rolling window, with what cooldown, search penalty and suspension criteria? | Reliability engine, barber cancellation, admin | `P0-D04` |
 | `TBC-PAYOUT-SCHEDULE` | How often do payout batches run, on what day, with what minimum balance? | Payout batching and processing | `P0-D05` |
-| `TBC-LOCATION-PRECISION` | At what precision is a barber's location shown to a client before acceptance? | Discovery, map view, search function | `P0-D06` |
-| `TBC-ETA-INTERVAL` | Is the ETA refresh interval 2 or 3 minutes, and is it fixed or distance-scaled? | ETA update function and display | `P0-D06` |
+| `TBC-LOCATION-PRECISION` | **RESOLVED → `RULE-DISCOVERY-05`** | Discovery, map view, search function | `P0-D06` |
+| `TBC-ETA-INTERVAL` | **RESOLVED → `RULE-DISCOVERY-05`** | ETA update function and display | `P0-D06` |
 | `TBC-WORKFLOW-ENGINE` | What runs scheduled and delayed work — Supabase cron, Inngest, Trigger.dev, or another? | Every expiry, auto-completion, prompt and payout run | `P0-D07` |
 | `TBC-SCHED-LEAD-TIME` | What is the minimum lead time for a Scheduled request, and how far ahead can one be made? | Scheduled request validation and discovery | `P0-D08` |
 | `TBC-REVIEW-ELIGIBILITY` | Can a client review after a dispute, an admin resolution, or a cancellation? | Review creation and prompts | `P0-D08` |
