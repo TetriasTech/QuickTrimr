@@ -1,11 +1,21 @@
+export const DISPUTE_STATUS_VALUE = {
+  OPEN: 'open',
+  UNDER_REVIEW: 'under_review',
+  RESOLVED_CLIENT_REFUND: 'resolved_client_refund',
+  RESOLVED_BARBER_PAID: 'resolved_barber_paid',
+  RESOLVED_PARTIAL_REFUND: 'resolved_partial_refund',
+  RESOLVED_OPERATIONAL: 'resolved_operational',
+  CANCELLED: 'cancelled',
+} as const;
+
 export const DISPUTE_STATUS = [
-  'open',
-  'under_review',
-  'resolved_client_refund',
-  'resolved_barber_paid',
-  'resolved_partial_refund',
-  'resolved_operational',
-  'cancelled',
+  DISPUTE_STATUS_VALUE.OPEN,
+  DISPUTE_STATUS_VALUE.UNDER_REVIEW,
+  DISPUTE_STATUS_VALUE.RESOLVED_CLIENT_REFUND,
+  DISPUTE_STATUS_VALUE.RESOLVED_BARBER_PAID,
+  DISPUTE_STATUS_VALUE.RESOLVED_PARTIAL_REFUND,
+  DISPUTE_STATUS_VALUE.RESOLVED_OPERATIONAL,
+  DISPUTE_STATUS_VALUE.CANCELLED,
 ] as const;
 
 export type DisputeStatus = (typeof DISPUTE_STATUS)[number];

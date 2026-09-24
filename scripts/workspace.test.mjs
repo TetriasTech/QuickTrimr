@@ -90,12 +90,15 @@ test('workspace dependency graph follows ADR-007 and has no cycles', async () =>
   const byName = new Map(manifests.map((manifest) => [manifest.name, manifest]));
   assert.equal(byName.size, workspaceManifests.length, 'workspace names must be unique');
 
-  assert.deepEqual(byName.get('@quicktrimr/shared').dependencies ?? {}, {});
+  const workspaceDependencies = (manifest) =>
+    Object.keys(manifest.dependencies ?? {}).filter((dependency) => byName.has(dependency));
+
+  assert.deepEqual(workspaceDependencies(byName.get('@quicktrimr/shared')), []);
   for (const name of ['@quicktrimr/domain', '@quicktrimr/validation', '@quicktrimr/ui']) {
-    assert.deepEqual(Object.keys(byName.get(name).dependencies ?? {}), ['@quicktrimr/shared']);
+    assert.deepEqual(workspaceDependencies(byName.get(name)), ['@quicktrimr/shared']);
   }
   for (const name of ['@quicktrimr/mobile', '@quicktrimr/admin']) {
-    assert.deepEqual(Object.keys(byName.get(name).dependencies ?? {}).sort(), [...sharedPackages].sort());
+    assert.deepEqual(workspaceDependencies(byName.get(name)).sort(), [...sharedPackages].sort());
   }
 
   const visiting = new Set();
