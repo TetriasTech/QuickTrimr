@@ -114,7 +114,8 @@ test('workspace dependency graph follows ADR-007 and has no cycles', async () =>
 });
 
 test('mobile, admin and a Supabase function resolve the shared package import', async () => {
-  const modules = await Promise.all([
+  const [shared, ...modules] = await Promise.all([
+    import(pathToFileURL(resolve(root, 'packages/shared/src/index.ts'))),
     import(pathToFileURL(resolve(root, 'apps/mobile/src/workspace-contract.ts'))),
     import(pathToFileURL(resolve(root, 'apps/admin/src/workspace-contract.ts'))),
     import(pathToFileURL(resolve(root, 'supabase/functions/workspace-contract/index.ts'))),
@@ -124,6 +125,10 @@ test('mobile, admin and a Supabase function resolve the shared package import', 
     { product: 'QuickTrimr', surface: 'admin' },
     { product: 'QuickTrimr', surface: 'function' },
   ]);
+  assert.deepEqual(
+    modules.map((module) => module.mobileBookingStatuses ?? module.adminBookingStatuses ?? module.functionBookingStatuses),
+    [shared.BOOKING_STATUS, shared.BOOKING_STATUS, shared.BOOKING_STATUS],
+  );
 });
 
 test('packages never import an app and placeholder files are absent', async () => {
