@@ -1330,6 +1330,11 @@ Verify that `@quicktrimr/shared`, `@quicktrimr/validation` and `@quicktrimr/ui` 
 - [ ] Feature folder structure matches `KB §7`.
 - [ ] No feature implementation beyond placeholders.
 
+**Tests** — a route-access matrix covering signed-out, incomplete-onboarding, client and barber
+states; a structural test asserting every required route group exists and every shared workspace
+package is imported; Android and iOS bundle exports; launch from a clean clone on both an iOS
+simulator and Android emulator.
+
 **Out of scope** — auth (`P1-T01`); UI primitives (`P0-T14`); state management (`P0-T15`); push (`P6-T01`).
 
 **Sync notes** — every mobile ticket adds routes inside these groups.
