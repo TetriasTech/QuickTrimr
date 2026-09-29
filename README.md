@@ -47,11 +47,16 @@ pnpm --filter @quicktrimr/mobile start
 
 ## Run the admin dashboard
 
-P0-T16 owns the Next.js shell. Once it lands, start it from the root with:
+Start the Next.js shell from the root with:
 
 ```bash
 pnpm --filter @quicktrimr/admin dev
 ```
+
+Open [localhost:3000](http://localhost:3000). The server redirects to `/login`, a foundation
+preview, because the placeholder denies all dashboard access until P1-T02 implements real auth.
+No `.env` file or credentials are needed for this shell. See
+[admin setup and verification](apps/admin/README.md) for build, tests and Vercel configuration.
 
 ## Run Supabase locally
 

@@ -1490,9 +1490,17 @@ Vercel deployment configuration, without deploying.
 - [ ] Server components are the default; any client component is justified in a comment.
 - [ ] Vercel configuration exists.
 
+**Tests**
+
+- Clean install, typecheck, lint and production build; serve the built app locally.
+- Guard unit tests: deny missing sessions and each non-admin role; allow only the server-resolved admin role; never continue rendering while verification is pending or fails.
+- Direct HTTP and React Server Component requests, including forged role headers/cookies/query parameters, expose no protected content or operational data.
+- Browser test of the public access screen and denied dashboard navigation; Tailwind styling and shadcn button render. Loading, error/retry and protected empty states have component tests.
+- Shared-package imports execute through the Next bundler; server/client boundaries and Vercel configuration have regression checks.
+
 **Out of scope** — real auth (`P1-T02`); admin components (`P0-T17`); any data screen (Phase 5).
 
-**Sync notes** — every Phase 5 ticket mounts inside this group and inherits its guard.
+**Sync notes** — every Phase 5 ticket mounts inside this group and inherits its guard. Next layouts and nested pages can render independently: `P0-T17`, `P1-T02` and `P5-T01` must also call the server-only guard at every protected page, data loader and action boundary before fetching. `P1-T02` replaces the deny-all session resolver with verified identity and a database role lookup; this shell has no authentication bypass.
 
 ---
 

@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./metadata": {
+      "types": "./src/node.ts",
+      "default": "./src/node.ts"
+    },
     ".": {
       "types": "./src/index.ts",
       "node": "./src/node.ts",

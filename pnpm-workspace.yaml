@@ -2,3 +2,22 @@ packages:
   - apps/*
   - packages/*
   - supabase/functions/*
+allowBuilds:
+  esbuild@0.28.2: true
+  # Use the lockfile's platform package; do not run its download fallback.
+  unrs-resolver: false
+# Exact versions only: 16.3.7 is the September security patch, published 2026-09-29.
+# https://nextjs.org/blog (September 2026 security release)
+minimumReleaseAgeExclude:
+  - '@next/env@16.3.7'
+  - '@next/eslint-plugin-next@16.3.7'
+  - '@next/swc-darwin-arm64@16.3.7'
+  - '@next/swc-darwin-x64@16.3.7'
+  - '@next/swc-linux-arm64-gnu@16.3.7'
+  - '@next/swc-linux-arm64-musl@16.3.7'
+  - '@next/swc-linux-x64-gnu@16.3.7'
+  - '@next/swc-linux-x64-musl@16.3.7'
+  - '@next/swc-win32-arm64-msvc@16.3.7'
+  - '@next/swc-win32-x64-msvc@16.3.7'
+  - eslint-config-next@16.3.7
+  - next@16.3.7
