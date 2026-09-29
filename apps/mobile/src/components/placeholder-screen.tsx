@@ -1,12 +1,19 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 type PlaceholderScreenProps = {
   title: string;
   description: string;
   details?: readonly string[];
+  children?: ReactNode;
 };
 
-export function PlaceholderScreen({ title, description, details = [] }: PlaceholderScreenProps) {
+export function PlaceholderScreen({
+  title,
+  description,
+  details = [],
+  children,
+}: PlaceholderScreenProps) {
   return (
     <View accessibilityRole="summary" style={styles.container} testID="placeholder-screen">
       <Text style={styles.eyebrow}>QuickTrimr</Text>
@@ -17,6 +24,7 @@ export function PlaceholderScreen({ title, description, details = [] }: Placehol
           {detail}
         </Text>
       ))}
+      {children}
     </View>
   );
 }
