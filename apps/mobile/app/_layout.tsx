@@ -3,12 +3,13 @@ import { StatusBar } from 'expo-status-bar';
 
 import { PLACEHOLDER_SESSION } from '@/features/session/placeholder-session';
 import { getRouteAccess } from '@/features/session/route-access';
+import { MobileQueryProvider } from '@/lib/query/query-provider';
 
 export default function RootLayout() {
   const access = getRouteAccess(PLACEHOLDER_SESSION);
 
   return (
-    <>
+    <MobileQueryProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={access.auth}>
           <Stack.Screen name="(auth)" />
@@ -31,6 +32,6 @@ export default function RootLayout() {
         </Stack.Protected>
       </Stack>
       <StatusBar style="auto" />
-    </>
+    </MobileQueryProvider>
   );
 }
