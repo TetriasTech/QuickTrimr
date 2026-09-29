@@ -10,6 +10,7 @@ const requiredRoutes = [
   'app/_layout.tsx',
   'app/(auth)/_layout.tsx',
   'app/(auth)/index.tsx',
+  'app/(auth)/state-foundations.tsx',
   'app/(auth)/ui-primitives.tsx',
   'app/(client)/_layout.tsx',
   'app/(client)/index.tsx',
@@ -50,15 +51,21 @@ test('the Metro resolution probe imports all four shared workspace packages', as
   }
 });
 
-test('the mobile shell does not add out-of-scope state or auth libraries', async () => {
+test('the mobile shell uses the ADR-003 state libraries and no out-of-scope alternatives', async () => {
   const manifest = JSON.parse(await readFile(resolve(mobileRoot, 'package.json'), 'utf8'));
   const dependencies = { ...manifest.dependencies, ...manifest.devDependencies };
 
+  for (const required of [
+    '@hookform/resolvers',
+    '@tanstack/react-query',
+    'react-hook-form',
+    'zustand',
+  ]) {
+    assert.equal(required in dependencies, true, required);
+  }
+
   for (const outOfScope of [
     '@supabase/supabase-js',
-    '@tanstack/react-query',
-    'zustand',
-    'react-hook-form',
     'redux',
     '@reduxjs/toolkit',
     'expo-notifications',

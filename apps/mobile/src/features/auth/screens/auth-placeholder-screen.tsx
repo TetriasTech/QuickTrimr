@@ -14,6 +14,9 @@ export function AuthPlaceholderScreen() {
       <Link asChild href="/ui-primitives">
         <Button label="View UI primitives" variant="secondary" />
       </Link>
+      <Link asChild href="/state-foundations">
+        <Button label="Try state foundations" variant="secondary" />
+      </Link>
     </PlaceholderScreen>
   );
 }

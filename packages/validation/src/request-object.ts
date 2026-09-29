@@ -32,14 +32,16 @@ export const SERVER_CONTROLLED_REQUEST_FIELDS = [
   'ruleApplied',
 ] as const;
 
-export function ignoreServerControlledFields<Schema extends z.ZodType>(schema: Schema) {
+export function ignoreServerControlledFields<Schema extends z.ZodType>(
+  schema: Schema,
+): z.ZodType<z.output<Schema>, z.input<Schema>> {
   return z.preprocess((input) => {
     if (input === null || typeof input !== 'object' || Array.isArray(input)) return input;
 
     const sanitized = { ...(input as Record<string, unknown>) };
     for (const field of SERVER_CONTROLLED_REQUEST_FIELDS) delete sanitized[field];
     return sanitized;
-  }, schema);
+  }, schema) as z.ZodType<z.output<Schema>, z.input<Schema>>;
 }
 
 export function requestObject<const Shape extends z.ZodRawShape>(shape: Shape) {
