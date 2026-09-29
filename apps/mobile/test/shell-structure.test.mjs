@@ -10,6 +10,7 @@ const requiredRoutes = [
   'app/_layout.tsx',
   'app/(auth)/_layout.tsx',
   'app/(auth)/index.tsx',
+  'app/(auth)/ui-primitives.tsx',
   'app/(client)/_layout.tsx',
   'app/(client)/index.tsx',
   'app/(barber)/_layout.tsx',

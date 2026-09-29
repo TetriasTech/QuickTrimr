@@ -13,12 +13,14 @@
     "build": "expo export --platform android --output-dir dist/android && expo export --platform ios --output-dir dist/ios"
   },
   "dependencies": {
+    "@expo/ui": "~57.0.20",
     "@quicktrimr/domain": "workspace:*",
     "@quicktrimr/shared": "workspace:*",
     "@quicktrimr/ui": "workspace:*",
     "@quicktrimr/validation": "workspace:*",
     "expo": "~57.0.24",
     "expo-constants": "~57.0.19",
+    "expo-image": "~57.0.5",
     "expo-linking": "~57.0.10",
     "expo-router": "~57.0.22",
     "expo-status-bar": "~57.0.1",
