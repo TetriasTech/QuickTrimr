@@ -64,7 +64,7 @@ async function json(path) {
 async function filesBelow(path) {
   const found = [];
   for (const entry of await readdir(path, { withFileTypes: true })) {
-    if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === '.pnpm-store') continue;
+    if (['.git', 'node_modules', '.pnpm-store', '.next', 'test-results', 'playwright-report'].includes(entry.name)) continue;
     const absolute = join(path, entry.name);
     if (entry.isDirectory()) found.push(...await filesBelow(absolute));
     else found.push(absolute);
