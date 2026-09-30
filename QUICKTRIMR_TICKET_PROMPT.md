@@ -269,8 +269,10 @@ go to §4 Case B.
 - Stripe is the source of truth, via API response and verified webhook. A mobile client reporting
   success is not evidence (`RULE-PAY-06`).
 - Never hold a database lock across a Stripe call (`RULE-PAY-09`).
-- An earning becomes `available` only on completion, and never while a dispute is open
-  (`RULE-EARN-02`, `RULE-EARN-03`).
+- An earning becomes `available` only through an eligible server-verified outcome in
+  `RULE-EARN-02`: service completion, the `RULE-CANCEL-07` cancellation/refund-success exception,
+  or an eligible admin dispute resolution. Never release while a dispute is open
+  (`RULE-EARN-03`), or mark a cancelled booking completed to release an inconvenience earning.
 
 **State**
 

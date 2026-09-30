@@ -323,19 +323,17 @@ phase: 0
 priority: Highest
 jiraKey: TRIMR-4
 dependsOn: [P0-D02]
-affects: [P3-T07, P3-T08, P3-T09, P5-T07, P5-T08]
-knowledgeBase: [RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-PAY-11, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
+affects: [P2-T08, P2-T09, P3-T04, P3-T05, P3-T07, P3-T08, P3-T09, P3-T10, P5-T07, P5-T08, P5-T09, P6-T06, P6-T07]
+knowledgeBase: [ADR-009, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-EARN-02, RULE-EARN-03, RULE-PAY-11, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, product, stripe]
 ```
 
 **Context**
 
-The knowledge base says a late client cancellation produces "a partial refund to the client and an inconvenience payment to the barber" (`RULE-CANCEL-03`). **There is no number anywhere, and no statement of who funds the barber's payment.** That is two unresolved decisions wearing one sentence.
+**Decision confirmed by Andrew on 2026-09-30: Option A**, recorded in `RULE-CANCEL-07`. A late Scheduled client cancellation refunds 75%; an accepted Available Now client cancellation refunds 50%. The barber receives all withheld service cents, not an additional service earning or a platform top-up. Refunds round up; QuickTrimr reverses all cancellation commission and absorbs retained processing fees.
 
-The funding question is the one that breaks reconciliation. If the client is refunded 50% and the barber receives an inconvenience fee, that fee comes from somewhere: the withheld 50%, or QuickTrimr's own money. If nobody decides, an implementer picks one, and QuickTrimr discovers which at the end of a month when the numbers do not add up.
-
-This depends on `P0-D02` because the answer has to net against commission and the Stripe fee. `RULE-PAY-11` now confirms QuickTrimr absorbs the payment-processing fee, including after refunds. Its illustrative 50% service refund does not choose this ticket's late-cancellation refund or inconvenience payment.
+The approved earning exception in `RULE-EARN-02` makes the adjusted inconvenience earning available only after cancellation and successful refund processing, with no open dispute. The booking remains cancelled; bank payment follows the normal payout schedule. Pre-acceptance cancellation, outside-window Scheduled cancellation and barber-cancellation refunds remain as already specified. Normal service/dispute-refund commission treatment from `P0-D02` is unchanged.
 
 **Scope**
 
@@ -345,8 +343,9 @@ Decide, and record in `KB §9` as `RULE-CANCEL-07`, with values for `CFG-CANCEL-
 - Whether the split differs between an Available Now booking (barber may already be travelling) and a Scheduled one inside `CFG-LATE-CANCEL-WINDOW-HOURS`. Recommend that it does — a barber halfway across town has incurred a real cost that a barber with a booking tomorrow has not.
 - The inconvenience fee: fixed amount, percentage, or capped percentage.
 - **Which side funds it** — the client's withheld amount, or QuickTrimr.
-- Whether QuickTrimr keeps commission on the cancellation/inconvenience allocation, consistently with `RULE-PAY-11`'s service-price-only basis and proportional service-refund reversal. Do not double-count a barber service entitlement and an inconvenience payment from the same retained cents.
+- Whether QuickTrimr keeps commission on the cancellation/inconvenience allocation. Confirmed: zero, with full reversal of original commission, separate from `RULE-PAY-11`'s normal service-refund formula. Do not double-count a barber service entitlement and an inconvenience payment from the same retained cents.
 - Show what a barber cancellation costs QuickTrimr: the client is refunded in full (`RULE-CANCEL-04`), and **QuickTrimr absorbs the retained payment-processing fee**, already decided by `RULE-PAY-11`.
+- Record the approved earning-release exception and its refund-success/dispute gates in `RULE-EARN-02`, without marking a cancelled booking completed or deciding payout cadence.
 
 **Acceptance criteria**
 
@@ -356,10 +355,14 @@ Decide, and record in `KB §9` as `RULE-CANCEL-07`, with values for `CFG-CANCEL-
 - [ ] A worked example for each of: client cancels before acceptance, client cancels late, barber cancels late — showing client refund, barber receipt, QuickTrimr position, and Stripe fee, all in integer cents, all summing to what was captured.
 - [ ] `TBC-CANCEL-SPLIT` and `TBC-INCONVENIENCE-FEE` in `KB §14` rewritten as `RESOLVED → RULE-CANCEL-07`. Not deleted.
 - [ ] `RULE-CANCEL-07` removed from `KB §9`'s *Pending rules* table.
+- [ ] Refund rounding direction and the exact Scheduled-window boundary are explicit; terms are snapshotted rather than changed retrospectively by config.
+- [ ] `RULE-EARN-02` and affected earnings/payout tickets reflect the approved exception; pending/failed refunds and open disputes cannot release the inconvenience earning.
+
+**Tests** — specification checks against the KB's captured/uncaptured, early/late Scheduled, accepted Available Now and barber-cancellation examples, including uneven cents; exact 12-hour boundary; full commission reversal versus unchanged service-refund policy; config/pointer checks; cancellation contract fixture parity; refund-success/dispute release conditions in the rule and downstream tickets. These are documentation regressions, not production Stripe or earning-release tests.
 
 **Out of scope** — implementing cancellation (`P3-T07`); reliability consequences of a barber cancellation, which is `P0-D04`; admin refunds (`P5-T07`).
 
-**Sync notes** — `P3-T07` implements this, `P3-T08` and `P3-T09` display it to the client and barber before they confirm (`RULE-CANCEL-06`), and `P5-T07` overrides it. Replace the explicitly non-normative cancellation amounts in `P3-T07` and its validation contract fixture when this decision is confirmed. A change here is a change to what the app promised someone at the moment they cancelled.
+**Sync notes** — `P3-T07` implements this, `P3-T08`/`P3-T09` display it, and `P5-T07`/`P5-T08` handle admin outcomes without confusing cancellation with service refunds. `P2-T08` snapshots the terms, `P2-T09` discloses them before booking, and `P3-T04`/`P3-T10` must permit the approved cancellation-earning path. The cancellation contract fixture and downstream display/QA tickets are synchronized. See `docs/decisions/P0-D03.md` for the full traceability review. Generated indexes remain for CI on main. Legal review of rates/disclosure remains required before launch, not claimed by this decision.
 
 ---
 
@@ -3019,9 +3022,9 @@ owner: Andrew
 phase: 2
 priority: Highest
 jiraKey: null
-dependsOn: [P0-D01, P0-D02, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11]
+dependsOn: [P0-D01, P0-D02, P0-D03, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11]
 affects: [P2-T09, P2-T10, P2-T12, P2-T13, P2-T15, P3-T01, P3-T06, P4-T01]
-knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-SERVICE-05, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT]
+knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, database]
 ```
@@ -3043,6 +3046,8 @@ Validate: authenticated client with a complete profile, an owned and unarchived 
 Booking-type rules — Available Now: reject if the client already holds an active pending Available Now request (`RULE-AVAIL-04`). Scheduled: reject a duplicate intent (`RULE-SCHED-03`) and enforce the lead time and horizon from `RULE-SCHED-04`.
 
 Write the request plus its snapshots: service price cents, commission percentage (`RULE-PAY-11`), derived gross, commission and barber net, the address, and the barber's details at request time. Read the percentage from `CFG-COMMISSION-PCT`; round commission down and give the barber the remainder. Do not deduct payment-processing fees from barber net or add a client card surcharge.
+
+Snapshot the booking-type-specific cancellation terms and Scheduled window from config (`RULE-CANCEL-07`) at the same point. Later config edits cannot change this booking's refund, inconvenience allocation or cancellation deadline. These are server-owned snapshots, not client-supplied policy values.
 
 Set the expiry: `CFG-AVAIL-EXPIRY-MIN` or `CFG-SCHED-EXPIRY-HOURS` from config, never a literal.
 
@@ -3086,6 +3091,7 @@ Audit log (`ADR-013`).
 - [ ] A valid Available Now and a valid Scheduled request are each created with correct snapshots.
 - [ ] **Every monetary value is server-derived** — a request body containing an amount, commission or net is ignored, proven by sending one.
 - [ ] Price and commission snapshots are written before any other work and are integer cents.
+- [ ] Cancellation terms and Scheduled window are snapshotted server-side at request time; tests change current config and prove the existing booking's terms remain unchanged.
 - [ ] A second active pending Available Now request for the same client returns `409 active_request_exists` (`RULE-AVAIL-04`).
 - [ ] A duplicate Scheduled intent returns `409 duplicate_request_intent` (`RULE-SCHED-03`).
 - [ ] A Scheduled time inside the lead time or beyond the horizon is rejected per `RULE-SCHED-04`.
@@ -3117,7 +3123,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P0-D08, P0-T14, P1-T12, P2-T05, P2-T08]
 affects: [P3-T08, P4-T01]
-knowledgeBase: [ADR-006, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-06, RULE-SCHED-02, RULE-SCHED-04, RULE-COPY-01, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS]
+knowledgeBase: [ADR-006, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-06, RULE-SCHED-02, RULE-SCHED-04, RULE-CANCEL-07, RULE-COPY-01, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
@@ -3144,6 +3150,7 @@ Terminal states rendered honestly: accepted, declined, expired, cancelled — ea
 - [ ] A Scheduled draft is revalidated against the current server-provided bounds before submission; stale or newly invalid selections retain the draft and show the server's field error.
 - [ ] The screen states the amount is **held, not charged**, until acceptance (`RULE-COPY-01`, `ADR-006`).
 - [ ] The screen states the request cannot be edited after submission (`RULE-REQUEST-04`).
+- [ ] The applicable cancellation terms are disclosed before submission (`RULE-CANCEL-07`), using server-provided terms consistent with the request-time snapshot; test both booking types without describing a hold as a refund.
 - [ ] The submit button is disabled while in flight; **a double tap produces one request.**
 - [ ] The pending state shows a countdown to expiry.
 - [ ] **The countdown does not expire the request** — it re-checks server state, and a client whose app was closed sees the correct terminal state on return.
@@ -3795,9 +3802,9 @@ owner: Tony
 phase: 3
 priority: High
 jiraKey: null
-dependsOn: [P0-D02, P0-T10, P3-T02, P3-T03]
-affects: [P3-T05, P3-T10, P4-T09, P4-T11, P5-T09]
-knowledgeBase: [ADR-009, ADR-013, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-PAY-08, RULE-PAY-11, ENUM-EARNING-STATUS, CFG-COMMISSION-PCT]
+dependsOn: [P0-D02, P0-D03, P0-T10, P3-T02, P3-T03]
+affects: [P3-T05, P3-T07, P3-T10, P4-T09, P4-T11, P5-T09]
+knowledgeBase: [ADR-009, ADR-013, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-CANCEL-07, RULE-PAY-08, RULE-PAY-11, ENUM-EARNING-STATUS, CFG-COMMISSION-PCT]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, database]
 ```
@@ -3808,7 +3815,7 @@ What the barber is owed, held separate from what the client paid. `KB §11` keep
 
 `RULE-EARN-01` — one earning per booking, enforced by the unique constraint from `P0-T10`. A duplicate earning is a barber paid twice, which is the irreversible direction.
 
-The earning starts `pending` and **only** completion moves it to `available` (`RULE-EARN-02`), and never while a dispute is open (`RULE-EARN-03`).
+The earning starts `pending`. Service completion releases it; the approved cancellation exception releases only the adjusted inconvenience amount after cancellation and refund success (`RULE-EARN-02`, `RULE-CANCEL-07`). An open dispute blocks either path (`RULE-EARN-03`).
 
 **Scope**
 
@@ -3816,11 +3823,11 @@ The earning starts `pending` and **only** completion moves it to `available` (`R
 
 Amounts derived from the **booking's snapshots** (`ADR-009`) and the commission rule from `P0-D02`: gross, commission, barber net, all integer cents.
 
-The arithmetic must reconcile: service gross minus commission equals barber net exactly. Commission is rounded down using the booking's snapshotted percentage, never today's config. Separately, QuickTrimr's post-processing position is its commission minus the actual retained processing fee; never deduct that fee from barber net (`RULE-PAY-11`).
+At initial capture, service gross minus commission equals original barber net exactly. Commission is rounded down using the booking's snapshotted percentage, never today's config. Subsequent refunds/cancellations preserve those snapshots but reconcile the adjusted amounts: captured gross equals refunded amount plus adjusted barber entitlement plus retained commission. QuickTrimr's post-processing position is retained commission minus the actual retained processing fee; never deduct that fee from barber net (`RULE-PAY-11`, `RULE-CANCEL-07`).
 
 Idempotent on booking id — a repeated call returns the existing earning.
 
-`release-barber-earning` moving `pending → available`, called only by completion (`P4-T09`, `P4-T11`), refusing while a dispute is open.
+`release-barber-earning` moving `pending → available` only after a server-verified eligible outcome: completion (`P4-T09`, `P4-T11`), the cancellation/refund-success exception (`P3-T07`, `RULE-CANCEL-07`), or an already-specified eligible admin dispute resolution (`P5-T07`). Refuse while a dispute is open. The cancellation caller must supply no trusted client assertion: verify persisted cancellation/refund state and the adjusted earning; never release the original service net as well. `P3-T07` owns the cancellation integration, not this ticket.
 
 Audit log on creation and on every status change.
 
@@ -3842,21 +3849,21 @@ Audit log on creation and on every status change.
 **Acceptance criteria**
 
 - [ ] An earning is created on successful capture, at `pending`, from the booking snapshots.
-- [ ] **Gross minus commission equals barber net exactly**, in integer cents, asserted arithmetically.
+- [ ] **At initial capture, gross minus commission equals original barber net exactly**; after a refund/cancellation, captured gross equals refunded amount plus adjusted barber entitlement plus retained commission. Assert both identities in integer cents without mutating the original snapshots.
 - [ ] The commission percentage used is the **booking's snapshot**, not the current config value.
 - [ ] Stripe fee treatment follows `RULE-PAY-11` and is applied, not improvised.
 - [ ] **A second earning cannot be created for a booking** — enforced by the unique constraint and proven under parallel calls.
 - [ ] A repeated create returns the existing earning without a second row.
-- [ ] `release-barber-earning` moves `pending → available` only from completion.
+- [ ] `release-barber-earning` verifies the eligible server-owned outcome per `RULE-EARN-02`; for cancellation it rejects pending/failed refunds and releases only the adjusted inconvenience amount, never the original service net as well.
 - [ ] **A release attempt while a dispute is open returns `409 dispute_open`** and leaves the earning `pending` (`RULE-EARN-03`).
 - [ ] All amounts are integer cents; no float appears anywhere.
 - [ ] Audit logs are written on creation and every status change.
 
-**Tests** — arithmetic reconciliation across several prices including ones that do not divide evenly, asserting the `P0-D02` rounding direction; parallel create producing one earning; release blocked by an open dispute; a snapshot-versus-current-config test proving the snapshot wins after the config changes.
+**Tests** — arithmetic reconciliation across several prices including ones that do not divide evenly, asserting the `P0-D02` rounding direction; parallel create producing one earning; release blocked by an open dispute; a snapshot-versus-current-config test proving the snapshot wins after the config changes; cancellation release rejected until refund success, with no fake completion or second entitlement.
 
 **Out of scope** — the earnings screen (`P3-T05`); payout batching (`P3-T10`); completion triggers (`P4-T09`, `P4-T11`).
 
-**Sync notes** — five tickets read this row. The rounding direction from `P0-D02` is applied here, so a change to it changes every future earning.
+**Sync notes** — the tickets in `affects` read or adjust this row, including `P3-T07`'s cancellation path. Preserve request-time snapshots separately from adjustments, and keep `P0-D02` service rounding distinct from `P0-D03` cancellation rounding.
 
 ---
 
@@ -3872,7 +3879,7 @@ priority: Medium
 jiraKey: null
 dependsOn: [P0-D05, P0-T14, P1-T08, P3-T04]
 affects: []
-knowledgeBase: [RULE-EARN-02, RULE-EARN-04, RULE-EARN-05, RULE-EARN-07, RULE-COPY-01, ENUM-EARNING-STATUS]
+knowledgeBase: [RULE-EARN-02, RULE-EARN-04, RULE-EARN-05, RULE-EARN-07, RULE-CANCEL-07, RULE-COPY-01, ENUM-EARNING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, mobile]
 ```
@@ -3890,6 +3897,8 @@ An earnings screen in the barber journey: pending, available, queued for payout,
 **Explicit copy** distinguishing a QuickTrimr balance from a bank balance, and the **next payout date** from `RULE-EARN-07`.
 
 Each earning links to its booking, showing gross, commission and net — a barber who cannot see the commission on a specific job will ask, and the answer should be on the screen.
+
+For the `RULE-EARN-02` cancellation exception, identify the amount as an inconvenience earning on a cancelled booking, not a completed service. Show its adjusted entitlement and zero retained commission; test this alongside pending/available states without claiming bank payment.
 
 Money rendered from integer cents through one formatter.
 
@@ -3992,9 +4001,9 @@ owner: Tony
 phase: 3
 priority: Highest
 jiraKey: null
-dependsOn: [P0-D02, P0-D03, P3-T02, P3-T03, P3-T06]
+dependsOn: [P0-D02, P0-D03, P3-T02, P3-T03, P3-T04, P3-T06]
 affects: [P3-T08, P3-T09, P3-T12, P5-T07, P5-T09]
-knowledgeBase: [ADR-009, ADR-013, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-PAY-11, RULE-EARN-01, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE]
+knowledgeBase: [ADR-009, ADR-013, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-PAY-11, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -4003,7 +4012,7 @@ labels: [quicktrimr, phase-3, backend, stripe, security]
 
 The most arithmetically delicate ticket in the backlog. Four distinct cases, each with a different refund, and every one has to reconcile against what Stripe actually captured — including the fee Stripe does not return on a refund.
 
-`P0-D03` gates this because there is no number to implement without it, and `P0-D02` gates it because the Stripe fee treatment determines whether the arithmetic closes.
+`P0-D03` supplies the approved booking-type-specific cancellation allocation and earning-release exception; `P0-D02` supplies platform processing-fee absorption. Cancellation is not the normal proportional-commission service-refund calculation.
 
 **Every calculation belongs in `packages/domain`**, pure and unit-testable (`KB §7`). Refund maths tested only through an Edge Function against live Stripe is refund maths nobody will change with confidence.
 
@@ -4020,29 +4029,41 @@ Four cases (`RULE-CANCEL-01`–`RULE-CANCEL-04`):
 | Client, inside the window or Available Now after acceptance | Partial refund plus barber inconvenience payment, per `RULE-CANCEL-07` |
 | Barber, inside the window or Available Now after acceptance | Full client refund plus a reliability event |
 
-Pure functions in `packages/domain` taking the booking snapshot, the actor, the time and relevant server-derived fee inputs, returning the refund, the barber amount and the QuickTrimr position — all integer cents. Refund plus barber amount plus QuickTrimr's post-processing position plus retained Stripe processing fee must equal what was captured. `RULE-PAY-11` makes that fee QuickTrimr's cost, including after a full refund. This does not resolve `RULE-CANCEL-07`'s late-cancellation allocation.
+Pure functions in `packages/domain` taking the booking snapshot, the actor, the time and relevant server-derived fee inputs, returning the refund, the barber amount and the QuickTrimr position — all integer cents. Use the request-time cancellation terms (`RULE-CANCEL-07`): currently 75% late Scheduled / 50% accepted Available Now, client refund rounded up and the entire remainder allocated to the barber. Reverse all original cancellation commission. Refund plus barber amount plus QuickTrimr's post-processing position plus retained Stripe processing fee must equal what was captured; QuickTrimr's position is negative when Stripe retains a fee. Never refund an uncaptured hold or apply today's config retrospectively.
 
 Refunds are idempotent on a server-derived key. A double-tapped cancel refunds once.
 
-Earnings adjusted: `reversed` on a full refund, adjusted on a partial (`RULE-EARN-01`).
+Earnings adjusted: `reversed` on a full refund, otherwise adjust the existing earning to the inconvenience amount and make it available through `P3-T04` only after cancellation/refund success and with no open dispute (`RULE-EARN-02`). Pending or failed refunds cannot release it. Preserve the cancelled booking status and original snapshots; never create a second service entitlement or fake completion. A retry cannot apply either refund or earning adjustment twice.
 
-Barber cancellation raises a reliability event via `P3-T12`.
+Barber cancellation raises a reliability event via `P3-T12` only where `RULE-CANCEL-04` applies; an outside-window Scheduled cancellation remains penalty-free (`RULE-CANCEL-02`).
 
 Audit log with the calculated amounts and the rule applied.
 
 **Contract example** — `cancel-booking`
 
-The late-client amounts below are **non-normative shape examples only**, not an approved cancellation policy. `P0-D03` must replace them (and the corresponding validation fixture) before this ticket is ready. `platformRetainedCents` here is before processing fees, not QuickTrimr's post-processing position; it must not be added to the fee again in reconciliation.
+The following amounts implement `RULE-CANCEL-07` for a 4500-cent captured service. `platformRetainedCents` is retained commission **before processing fees**, which is zero on cancellation, not QuickTrimr's post-processing position. With an illustrative retained fee of 107 cents that position is -107; never treat zero commission as zero processing cost. The booking type and all amounts come from server-owned state, not the request.
 
 ```jsonc
 // request
 { "bookingId": "9a02...", "reason": "client_unavailable" }
 
-// 200 — late client cancellation; amounts UNDECIDED, pending P0-D03
+// 200 — client cancels accepted Available Now booking
 { "bookingId": "9a02...", "status": "cancelled",
-  "refundCents": 2250, "barberInconvenienceCents": 1350,
-  "platformRetainedCents": 900, "capturedCents": 4500,
+  "refundCents": 2250, "barberInconvenienceCents": 2250,
+  "platformRetainedCents": 0, "capturedCents": 4500,
   "ruleApplied": "RULE-CANCEL-03" }
+
+// 200 — client cancels Scheduled booking at or within the 12-hour window
+{ "bookingId": "9a02...", "status": "cancelled",
+  "refundCents": 3375, "barberInconvenienceCents": 1125,
+  "platformRetainedCents": 0, "capturedCents": 4500,
+  "ruleApplied": "RULE-CANCEL-03" }
+
+// 200 — barber cancels inside the Scheduled window
+{ "bookingId": "9a02...", "status": "cancelled",
+  "refundCents": 4500, "barberInconvenienceCents": 0,
+  "platformRetainedCents": 0, "capturedCents": 4500,
+  "ruleApplied": "RULE-CANCEL-04" }
 
 // 200 — before acceptance
 { "bookingId": "9a02...", "status": "cancelled",
@@ -4060,12 +4081,13 @@ The late-client amounts below are **non-normative shape examples only**, not an 
 - [ ] Timing is evaluated against `CFG-LATE-CANCEL-WINDOW-HOURS` on the server clock, at the exact boundary.
 - [ ] **A duplicate cancel refunds once** — proven against the Stripe test dashboard.
 - [ ] Cancelling before acceptance cancels the authorisation and captures nothing.
-- [ ] A barber cancellation raises exactly one reliability event.
-- [ ] Earnings are reversed or adjusted correspondingly and never left `available` on a refunded booking.
+- [ ] A barber cancellation subject to `RULE-CANCEL-04` raises exactly one reliability event; an outside-window Scheduled cancellation raises none.
+- [ ] A full refund reverses the earning. A partial cancellation refund leaves only the inconvenience entitlement, available only after cancellation/refund success and with no open dispute; pending/failed refunds cannot release it.
+- [ ] A cancellation never marks the booking completed or leaves both a service earning and an inconvenience entitlement payable.
 - [ ] An already-terminal booking returns `409 booking_not_cancellable`.
 - [ ] Audit logs record the calculated amounts and the rule applied.
 
-**Tests** — pure unit tests for all four cases across several prices, including amounts that do not divide evenly; the boundary at exactly `CFG-LATE-CANCEL-WINDOW-HOURS`, one minute either side; duplicate cancel asserted as one refund in Stripe; a reconciliation assertion per case; earning state after each.
+**Tests** — pure unit tests for all four cases and both booking types across uneven prices against `RULE-CANCEL-07`; exact Scheduled boundary and one minute either side; current-config changes cannot alter booking snapshots; duplicate cancel asserted as one refund in Stripe; reconciliation including negative QuickTrimr positions; earning remains pending for pending/failed refund or open dispute, releases only the adjusted inconvenience amount after success, and reverses on full refund; retries and stale completion cannot create a second entitlement.
 
 **Out of scope** — cancellation UI (`P3-T08`, `P3-T09`); admin refunds (`P5-T07`); the reliability engine (`P3-T12`).
 
@@ -4100,7 +4122,7 @@ The screen must call the same `packages/domain` functions as `P3-T07`. A screen 
 
 Cancel actions on the pending request screen and on a confirmed booking.
 
-Before confirmation, show: the refund amount, any barber payment, and which rule applies — computed by the shared domain function, not estimated.
+Before confirmation, show: the refund amount, any barber payment, and which rule applies — computed by the shared domain function, not estimated. Use the booking's snapshotted cancellation terms, including the Scheduled boundary and refund-up rounding; distinguish hold release, full refund and each partial-refund case (`RULE-CANCEL-07`).
 
 `ConfirmDialog` from `P0-T14` with the consequence in the body and a destructive variant.
 
@@ -4140,14 +4162,14 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D03, P0-D04, P0-T14, P3-T07, P3-T12]
 affects: []
-knowledgeBase: [RULE-CANCEL-04, RULE-CANCEL-06, RULE-CANCEL-07, RULE-RELY-01, RULE-RELY-03, RULE-RELY-06, RULE-COPY-01]
+knowledgeBase: [RULE-CANCEL-02, RULE-CANCEL-04, RULE-CANCEL-06, RULE-CANCEL-07, RULE-RELY-01, RULE-RELY-03, RULE-RELY-06, RULE-COPY-01]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, mobile]
 ```
 
 **Context**
 
-A barber cancelling an accepted job refunds the client in full and incurs a reliability consequence (`RULE-CANCEL-04`). The consequence must be shown **before** they confirm — a barber who cancels once and finds themselves in `limited` without warning has been penalised by a system they could not see.
+A barber cancelling an accepted job refunds the client in full and receives nothing. A reliability consequence applies in the late/Available Now cases (`RULE-CANCEL-04`), not a penalty-free outside-window Scheduled cancellation (`RULE-CANCEL-02`). The applicable consequence must be shown **before** confirmation.
 
 `RULE-RELY-02` commits QuickTrimr to recoverability, so the screen should also say how the consequence lifts. A penalty with no stated path back reads as permanent.
 
@@ -4155,7 +4177,7 @@ A barber cancelling an accepted job refunds the client in full and incurs a reli
 
 A cancel action on a confirmed booking in the barber journey.
 
-Before confirmation, show: the client is refunded in full, the barber receives nothing, and the specific reliability consequence — the level it moves them to and what that level does (`RULE-RELY-06`).
+Before confirmation, show: the client is refunded in full, the barber receives nothing, and any applicable reliability consequence — the level it moves them to and what that level does (`RULE-RELY-06`). For an outside-window Scheduled cancellation, state that no reliability penalty applies (`RULE-CANCEL-02`).
 
 `ConfirmDialog` with the consequence and a destructive variant.
 
@@ -4170,11 +4192,11 @@ Handle a booking that became non-cancellable mid-decision.
 - [ ] The screen states the client is refunded in full and the barber receives nothing.
 - [ ] Confirmation is required, with the consequence in the dialog body.
 - [ ] After cancelling, the new reliability level is shown, along with how it recovers (`RULE-RELY-02`).
-- [ ] Exactly one reliability event is raised per cancellation.
+- [ ] Exactly one reliability event is raised where `RULE-CANCEL-04` applies; no event is raised for a penalty-free outside-window Scheduled cancellation.
 - [ ] `409 booking_not_cancellable` renders clearly and refreshes.
 - [ ] Loading and error states exist.
 
-**Tests** — the displayed consequence matching what `P3-T12` actually applies; exactly one reliability event per cancellation including under a double tap; the mid-decision race.
+**Tests** — the displayed consequence matching what `P3-T12` actually applies; exactly one reliability event where `RULE-CANCEL-04` applies including under a double tap, and none for the outside-window Scheduled case; the mid-decision race.
 
 **Out of scope** — the backend (`P3-T07`); the reliability engine (`P3-T12`); admin reliability management (`P5-T13`).
 
@@ -4192,9 +4214,9 @@ owner: Tony
 phase: 3
 priority: Medium
 jiraKey: null
-dependsOn: [P0-D02, P0-D05, P3-T04]
+dependsOn: [P0-D02, P0-D03, P0-D05, P3-T04, P3-T07]
 affects: [P3-T11, P5-T10]
-knowledgeBase: [ADR-009, ADR-013, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
+knowledgeBase: [ADR-009, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-CANCEL-07, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, database]
 ```
@@ -4215,7 +4237,7 @@ Batch statuses through `ENUM-PAYOUT-STATUS`, with per-barber totals.
 
 Idempotent batch creation — running the job twice for one period produces one batch.
 
-Only earnings whose bookings are complete and undisputed are eligible. A disputed booking's earning is not `available` (`RULE-EARN-03`), so this follows, but assert it rather than assuming.
+Only eligible `available` earnings with no open dispute may be queued. Include the adjusted inconvenience earning released after cancellation/refund success (`RULE-EARN-02`, `RULE-CANCEL-07`) even though its booking is cancelled. Do not require fake completion, include reversed full-refund earnings, or queue an amount while its cancellation refund is pending/failed. Existing eligible admin-resolution outcomes remain supported. Apply `RULE-EARN-07`'s normal cut-off and minimum; this exception does not decide payout cadence.
 
 Audit log per batch and per item.
 
@@ -4227,6 +4249,7 @@ Audit log per batch and per item.
 - [ ] **Running the batch job twice for one period produces one batch** — real parallel runs.
 - [ ] The cut-off and minimum balance follow `RULE-EARN-07`; no literal appears in the logic.
 - [ ] An earning attached to a disputed booking is never queued.
+- [ ] An eligible cancellation inconvenience earning is queued once without completing the booking; full-refund reversals and pending/failed cancellation refunds are excluded, tested through the `P3-T07` adjustment path.
 - [ ] Batch totals equal the sum of their items exactly, in integer cents.
 - [ ] Audit logs are written per batch and per item.
 
@@ -5663,14 +5686,14 @@ priority: Highest
 jiraKey: null
 dependsOn: [P0-D02, P0-D03, P0-D08, P3-T07, P4-T12, P5-T06]
 affects: [P5-T08]
-knowledgeBase: [ADR-009, ADR-013, RULE-ADMIN-01, RULE-ADMIN-03, RULE-DISPUTE-04, RULE-DISPUTE-05, RULE-DISPUTE-06, RULE-CANCEL-05, RULE-CANCEL-07, RULE-EARN-03, RULE-PAY-04, RULE-PAY-11, RULE-REVIEW-06, ENUM-DISPUTE-STATUS, ENUM-EARNING-STATUS]
+knowledgeBase: [ADR-009, ADR-013, RULE-ADMIN-01, RULE-ADMIN-03, RULE-DISPUTE-04, RULE-DISPUTE-05, RULE-DISPUTE-06, RULE-CANCEL-05, RULE-CANCEL-07, RULE-EARN-02, RULE-EARN-03, RULE-PAY-04, RULE-PAY-11, RULE-REVIEW-06, ENUM-DISPUTE-STATUS, ENUM-EARNING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-5, admin, backend, stripe, security]
 ```
 
 **Context**
 
-The only path that releases a held earning or refunds a captured payment. `RULE-DISPUTE-05` is the requirement that makes this hard: resolution updates the dispute, the booking, the payment **and** the earning consistently, or it does none of them. A partial application is a financial inconsistency that surfaces weeks later at reconciliation.
+The admin path that resolves a disputed earning or refunds a captured payment; ordinary cancellation is owned by `P3-T07`. `RULE-DISPUTE-05` requires resolution to update the dispute, booking, payment **and** earning consistently, or none of them. A partial application is a financial inconsistency that surfaces weeks later at reconciliation.
 
 `RULE-ADMIN-03` — refunds are idempotent against Stripe. An admin double-clicking must refund once.
 
@@ -5680,7 +5703,7 @@ The only path that releases a held earning or refunds a captured payment. `RULE-
 
 Admin role verified server-side; a mandatory reason (`RULE-DISPUTE-04`).
 
-Refund amounts calculated server-side from the booking snapshot (`RULE-CANCEL-05`), using the same `packages/domain` functions as `P3-T07`. **An admin-supplied amount is bounded** by what was actually captured — an admin cannot refund more than was taken. Apply `RULE-PAY-11`'s proportional service-commission reversal from the original snapshots and cumulative refunds; QuickTrimr absorbs retained processing fees. Barber-paid retains the normal split. Cancellation/inconvenience allocations still require `RULE-CANCEL-07`.
+Refund amounts calculated server-side from the booking snapshot (`RULE-CANCEL-05`), using the same `packages/domain` functions as `P3-T07`. **An admin-supplied amount is bounded** by what was actually captured — an admin cannot refund more than was taken. For service refunds, apply `RULE-PAY-11`'s proportional commission reversal from original snapshots and cumulative refunds; barber-paid retains the normal split. Cancellation/inconvenience allocations instead follow `RULE-CANCEL-07`: zero commission and only the adjusted inconvenience entitlement, never an additional service earning. QuickTrimr absorbs retained processing fees in both cases. Further refunds must account for amounts already refunded and the existing adjusted entitlement, not recompute from today's config or pay the original service net again.
 
 **All state changes in one transaction**, with the Stripe call outside any lock (`RULE-PAY-09`) and the result applied conditionally. If the Stripe refund fails, nothing is marked resolved.
 
@@ -5750,7 +5773,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D03, P0-T17, P5-T06, P5-T07]
 affects: []
-knowledgeBase: [ADR-009, RULE-DISPUTE-04, RULE-DISPUTE-05, RULE-ADMIN-03, RULE-CANCEL-07]
+knowledgeBase: [ADR-009, RULE-DISPUTE-04, RULE-DISPUTE-05, RULE-ADMIN-03, RULE-CANCEL-07, RULE-PAY-11]
 blockedByTbc: []
 labels: [quicktrimr, phase-5, admin]
 ```
@@ -5764,6 +5787,8 @@ An admin resolving a dispute is moving real money in a way that cannot be undone
 A resolution action on the dispute detail: outcome selection, a refund amount for the partial case, and a mandatory reason.
 
 **A financial impact summary before confirmation** — client refund, barber receives, platform retains, and what Stripe keeps — from the shared `packages/domain` functions.
+
+Distinguish a service-refund allocation (`RULE-PAY-11`) from the commission-free cancellation allocation (`RULE-CANCEL-07`). Show QuickTrimr's negative post-processing position when applicable, rather than labelling zero retained commission as zero cost; cover this distinction in the displayed-impact tests.
 
 `ConfirmDialog` from `P0-T17` with the impact in the body and the reason required.
 
@@ -5801,7 +5826,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D02, P0-T17, P1-T02, P3-T03, P3-T04]
 affects: [P5-T10]
-knowledgeBase: [ADR-009, ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, RULE-PAY-08, RULE-PAY-10, RULE-PAY-11, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS]
+knowledgeBase: [ADR-009, ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, RULE-PAY-08, RULE-PAY-10, RULE-PAY-11, RULE-CANCEL-07, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-5, admin, security]
 ```
@@ -5819,6 +5844,8 @@ Payments list: status, date range, client, barber, amount range. Each row carrie
 Earnings list: status, barber, date range, with gross, commission and net.
 
 Distinguish commission from QuickTrimr's post-processing position (`RULE-PAY-11`). Reconcile against actual Stripe-reported retained processing fees, show negative platform positions after full refunds, and do not label this limited cash allocation as profit. Processing fees never reduce barber net.
+
+Include `RULE-CANCEL-07` examples: fully reversed commission, the adjusted inconvenience entitlement and negative QuickTrimr processing cost. Preserve the original snapshot separately from adjusted amounts; an available inconvenience earning does not mean the cancelled service was completed. Test the resulting filtered totals.
 
 Detail linking a payment to its booking, its earning and any refund, so the full chain is traversable in both directions.
 
@@ -6376,6 +6403,8 @@ Some things cannot be automated at reasonable cost: a real Stripe Connect onboar
 
 Each case: preconditions, steps, expected result, and how to verify — including which Stripe dashboard figure to check for money cases.
 
+Cancellation cases must include the `RULE-CANCEL-07` split for both booking types, client-refund-up rounding, the exact Scheduled-window boundary, negative platform processing cost, and the inconvenience earning reaching normal payout eligibility only after refund success with no dispute. Assert the booking stays cancelled and the original service entitlement is not also paid.
+
 A regression subset for each release.
 
 **Acceptance criteria**
@@ -6425,6 +6454,7 @@ A cross-cutting suite covering the invariants:
 | No barber is ever paid twice for one booking | Spans earning creation, batching and payout |
 | Every terminal request releases or captures its hold | Spans accept, decline, expire and cancel |
 | Refund plus barber plus platform plus Stripe fee equals captured, in every path | Spans cancellation and dispute resolution |
+| Cancellation releases only the inconvenience amount after refund success, without completion or duplicate service payment | Spans cancellation, earnings and payout; pending/failed refund and open-dispute cases must block release |
 | An open dispute always blocks release | Spans completion, auto-completion and payout |
 | No table is readable across users | Spans every table |
 | Every admin action is denied to client and barber at the API | Spans every admin function |

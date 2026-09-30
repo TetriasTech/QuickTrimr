@@ -255,8 +255,9 @@ export const CONTRACT_EXAMPLES = {
       bookingId: BOOKING_ID,
       status: bookingCancelled,
       refundCents: 2_250,
-      barberInconvenienceCents: 1_350,
-      platformRetainedCents: 900,
+      // RULE-CANCEL-07: accepted Available Now cancellation; retained commission is pre-fee.
+      barberInconvenienceCents: 2_250,
+      platformRetainedCents: 0,
       capturedCents: 4_500,
       ruleApplied: 'RULE-CANCEL-03',
     },
