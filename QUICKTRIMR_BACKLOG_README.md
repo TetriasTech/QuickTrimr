@@ -6807,7 +6807,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `ADR-006` | `P0-D08`, `P0-T18`, `P2-T08`, `P2-T09`, `P3-T01`, `P3-T02`, `P3-T06` |
 | `ADR-007` | `P0-T01`, `P0-T02`, `P0-T04`, `P0-T06`, `P0-T07`, `P0-T13`, `P0-T14`, `P0-T16`, `P0-T17`, `P6-T10` |
 | `ADR-008` | `P0-D06`, `P0-T03`, `P0-T10`, `P0-T18`, `P1-T05`, `P1-T06`, `P2-T01`, `P2-T04`, `P2-T07`, `P4-T05` |
-| `ADR-009` | `P0-D02`, `P0-T10`, `P1-T11`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P3-T10`, `P5-T07`, `P5-T08`, `P5-T09`, `P5-T10` |
+| `ADR-009` | `P0-D02`, `P0-D03`, `P0-T10`, `P1-T11`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P3-T10`, `P5-T07`, `P5-T08`, `P5-T09`, `P5-T10` |
 | `ADR-010` | `P0-T06`, `P0-T10`, `P2-T12`, `P3-T02`, `P3-T06`, `P4-T01`, `P4-T02`, `P4-T03`, `P4-T07`, `P4-T09`, `P4-T12`, `P5-T04`, `P5-T05` |
 | `ADR-011` | `P0-D07`, `P2-T03`, `P2-T15`, `P3-T11`, `P3-T12`, `P4-T05`, `P4-T11`, `P6-T02` |
 | `ADR-012` | `P0-T05` |
@@ -6825,12 +6825,12 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-AVAIL-06` | `P2-T09`, `P2-T11`, `P2-T15` |
 | `RULE-AVAIL-07` | `P2-T12` |
 | `RULE-CANCEL-01` | `P0-D03`, `P3-T07`, `P3-T08` |
-| `RULE-CANCEL-02` | `P0-D03`, `P3-T07`, `P3-T08` |
+| `RULE-CANCEL-02` | `P0-D03`, `P3-T07`, `P3-T08`, `P3-T09` |
 | `RULE-CANCEL-03` | `P0-D03`, `P3-T07`, `P3-T08` |
 | `RULE-CANCEL-04` | `P0-D03`, `P3-T07`, `P3-T09` |
 | `RULE-CANCEL-05` | `P0-D03`, `P3-T07`, `P5-T07` |
 | `RULE-CANCEL-06` | `P3-T08`, `P3-T09` |
-| `RULE-CANCEL-07` | `P3-T07`, `P3-T08`, `P3-T09`, `P5-T07`, `P5-T08`, `P6-T06`, `P6-T07` |
+| `RULE-CANCEL-07` | `P0-D03`, `P2-T08`, `P2-T09`, `P3-T04`, `P3-T05`, `P3-T07`, `P3-T08`, `P3-T09`, `P3-T10`, `P5-T07`, `P5-T08`, `P5-T09`, `P6-T06`, `P6-T07` |
 | `RULE-COMPLETE-01` | `P4-T07` |
 | `RULE-COMPLETE-02` | `P4-T07`, `P4-T08`, `P4-T09`, `P4-T10`, `P4-T11` |
 | `RULE-COMPLETE-03` | `P4-T09`, `P4-T10` |
@@ -6849,8 +6849,8 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-DISPUTE-05` | `P5-T07`, `P5-T08` |
 | `RULE-DISPUTE-06` | `P4-T12`, `P5-T07` |
 | `RULE-EARN-01` | `P0-D02`, `P3-T04`, `P3-T07` |
-| `RULE-EARN-02` | `P3-T04`, `P3-T05`, `P4-T07`, `P4-T08`, `P4-T09`, `P4-T11`, `P5-T05` |
-| `RULE-EARN-03` | `P3-T04`, `P4-T09`, `P4-T11`, `P4-T12`, `P5-T06`, `P5-T07`, `P6-T07` |
+| `RULE-EARN-02` | `P0-D03`, `P3-T04`, `P3-T05`, `P3-T07`, `P3-T10`, `P4-T07`, `P4-T08`, `P4-T09`, `P4-T11`, `P5-T05`, `P5-T07` |
+| `RULE-EARN-03` | `P0-D03`, `P3-T04`, `P3-T07`, `P3-T10`, `P4-T09`, `P4-T11`, `P4-T12`, `P5-T06`, `P5-T07`, `P6-T07` |
 | `RULE-EARN-04` | `P0-D05`, `P3-T05`, `P3-T10`, `P4-T08`, `P6-T06`, `P7-T01` |
 | `RULE-EARN-05` | `P0-D05`, `P3-T05`, `P3-T10`, `P3-T11`, `P5-T10` |
 | `RULE-EARN-06` | `P0-D05`, `P3-T10`, `P3-T11`, `P5-T10`, `P6-T07` |
@@ -6879,7 +6879,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-PAY-08` | `P0-D02`, `P3-T01`, `P3-T04`, `P5-T09` |
 | `RULE-PAY-09` | `P3-T02`, `P3-T11` |
 | `RULE-PAY-10` | `P0-T03`, `P0-T18`, `P1-T07`, `P1-T09`, `P3-T01`, `P3-T03`, `P5-T09`, `P5-T10`, `P6-T03`, `P6-T05`, `P6-T09`, `P6-T10`, `P6-T11` |
-| `RULE-PAY-11` | `P0-D02`, `P0-D03`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P5-T07`, `P5-T09` |
+| `RULE-PAY-11` | `P0-D02`, `P0-D03`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P5-T07`, `P5-T08`, `P5-T09` |
 | `RULE-RELY-01` | `P0-D04`, `P3-T09`, `P3-T12`, `P5-T03`, `P5-T13` |
 | `RULE-RELY-02` | `P0-D04`, `P3-T12`, `P5-T13` |
 | `RULE-RELY-03` | `P0-D04`, `P3-T09`, `P3-T12` |
@@ -6908,14 +6908,14 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-SERVICE-04` | `P1-T11` |
 | `RULE-SERVICE-05` | `P0-D01`, `P0-T12`, `P1-T10`, `P1-T11`, `P2-T04`, `P2-T08`, `P5-T11` |
 | `CFG-AVAIL-EXPIRY-MIN` | `P2-T08`, `P2-T09`, `P2-T15` |
-| `CFG-CANCEL-REFUND-PCT` | `P0-D03`, `P3-T07`, `P3-T08` |
+| `CFG-CANCEL-REFUND-PCT` | `P0-D03`, `P2-T08`, `P3-T07`, `P3-T08` |
 | `CFG-COMMISSION-PCT` | `P0-D02`, `P2-T08`, `P3-T01`, `P3-T04` |
 | `CFG-COMPLETION-RESPONSE-MIN` | `P4-T07`, `P4-T10`, `P4-T11` |
 | `CFG-ETA-REFRESH-MIN` | `P0-D06`, `P4-T05`, `P4-T06` |
 | `CFG-ETA-STALE-MIN` | `P0-D06`, `P4-T06` |
 | `CFG-FINAL-DISPUTE-WINDOW-MIN` | `P4-T10`, `P4-T11` |
-| `CFG-INCONVENIENCE-FEE` | `P0-D03`, `P3-T07` |
-| `CFG-LATE-CANCEL-WINDOW-HOURS` | `P0-D03`, `P3-T07`, `P3-T08` |
+| `CFG-INCONVENIENCE-FEE` | `P0-D03`, `P2-T08`, `P3-T07` |
+| `CFG-LATE-CANCEL-WINDOW-HOURS` | `P0-D03`, `P2-T08`, `P3-T07`, `P3-T08` |
 | `CFG-MISSED-REQUEST-THRESHOLD` | `P0-D04`, `P2-T03` |
 | `CFG-NO-ACTION-WARNING-HOURS` | `P4-T11` |
 | `CFG-PAYOUT-SCHEDULE` | `P0-D05`, `P3-T10`, `P3-T11` |
@@ -6957,7 +6957,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 |---|---|---|
 | `P0-D01` | `P0-T12`, `P1-T10`, `P1-T11`, `P1-T12`, `P2-T04`, `P2-T08` | — |
 | `P0-D02` | `P0-D03`, `P0-D05`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P3-T10`, `P5-T07`, `P5-T09` | — |
-| `P0-D03` | `P3-T07`, `P3-T08`, `P3-T09`, `P5-T07`, `P5-T08` | `P0-D02` |
+| `P0-D03` | `P2-T08`, `P3-T04`, `P3-T07`, `P3-T08`, `P3-T09`, `P3-T10`, `P5-T07`, `P5-T08` | `P0-D02` |
 | `P0-D04` | `P2-T03`, `P3-T09`, `P3-T12`, `P5-T13` | — |
 | `P0-D05` | `P3-T05`, `P3-T10`, `P3-T11`, `P5-T10` | — |
 | `P0-D06` | `P1-T06`, `P2-T01`, `P2-T04`, `P2-T07`, `P4-T05`, `P4-T06` | — |
@@ -7001,8 +7001,8 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P2-T05` | `P2-T06`, `P2-T07`, `P2-T09` | `P0-D08`, `P0-T14`, `P0-T15`, `P1-T05`, `P2-T04` |
 | `P2-T06` | — | `P0-D06`, `P0-T15`, `P1-T12`, `P2-T04`, `P2-T05` |
 | `P2-T07` | — | `P0-D06`, `P2-T04`, `P2-T05` |
-| `P2-T08` | `P2-T09`, `P2-T10`, `P2-T12`, `P2-T13`, `P2-T15`, `P3-T01`, `P3-T06`, `P6-T02` | `P0-D01`, `P0-D02`, `P0-D08`, `P0-T06`, `P0-T07`, `P0-T10`, `P1-T04`, `P1-T05`, `P1-T11` |
-| `P2-T09` | `P3-T06`, `P3-T08`, `P4-T01` | `P0-D08`, `P0-T14`, `P0-T15`, `P1-T12`, `P2-T04`, `P2-T05`, `P2-T06`, `P2-T08` |
+| `P2-T08` | `P2-T09`, `P2-T10`, `P2-T12`, `P2-T13`, `P2-T15`, `P3-T01`, `P3-T06`, `P6-T02` | `P0-D01`, `P0-D02`, `P0-D03`, `P0-D08`, `P0-T06`, `P0-T07`, `P0-T10`, `P1-T04`, `P1-T05`, `P1-T11` |
+| `P2-T09` | `P3-T06`, `P3-T08`, `P4-T01` | `P0-D03`, `P0-D08`, `P0-T14`, `P0-T15`, `P1-T12`, `P2-T04`, `P2-T05`, `P2-T06`, `P2-T08` |
 | `P2-T10` | `P2-T11`, `P2-T12`, `P2-T13` | `P0-T11`, `P2-T08` |
 | `P2-T11` | `P2-T14` | `P0-T14`, `P2-T02`, `P2-T10` |
 | `P2-T12` | `P2-T14`, `P3-T02`, `P3-T06`, `P4-T02`, `P6-T02`, `P6-T07` | `P0-T07`, `P2-T01`, `P2-T03`, `P2-T08`, `P2-T10` |
@@ -7012,13 +7012,13 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P3-T01` | `P3-T02`, `P3-T03`, `P3-T06` | `P0-D02`, `P0-T06`, `P0-T07`, `P0-T10`, `P0-T18`, `P2-T08` |
 | `P3-T02` | `P3-T04`, `P3-T06`, `P3-T07`, `P5-T04`, `P6-T07` | `P0-D02`, `P2-T12`, `P3-T01` |
 | `P3-T03` | `P3-T04`, `P3-T07`, `P3-T11`, `P5-T09` | `P0-T18`, `P1-T09`, `P3-T01` |
-| `P3-T04` | `P3-T05`, `P3-T10`, `P4-T07`, `P4-T09`, `P4-T11`, `P4-T12`, `P5-T09` | `P0-D02`, `P0-T06`, `P0-T10`, `P3-T02`, `P3-T03` |
-| `P3-T05` | — | `P0-D05`, `P0-T14`, `P1-T08`, `P3-T04` |
+| `P3-T04` | `P3-T05`, `P3-T07`, `P3-T10`, `P4-T07`, `P4-T09`, `P4-T11`, `P4-T12`, `P5-T09` | `P0-D02`, `P0-D03`, `P0-T06`, `P0-T10`, `P3-T02`, `P3-T03` |
+| `P3-T05` | — | `P0-D03`, `P0-D05`, `P0-T14`, `P1-T08`, `P3-T04` |
 | `P3-T06` | `P3-T07`, `P4-T01`, `P4-T02`, `P5-T04`, `P6-T02` | `P2-T08`, `P2-T12`, `P2-T13`, `P2-T15`, `P3-T01`, `P3-T02` |
-| `P3-T07` | `P3-T08`, `P3-T09`, `P3-T12`, `P5-T07`, `P6-T06`, `P6-T07` | `P0-D02`, `P0-D03`, `P3-T01`, `P3-T03` |
+| `P3-T07` | `P3-T08`, `P3-T09`, `P3-T10`, `P3-T12`, `P5-T07`, `P6-T06`, `P6-T07` | `P0-D02`, `P0-D03`, `P3-T01`, `P3-T03`, `P3-T04` |
 | `P3-T08` | — | `P0-D03`, `P2-T09`, `P3-T07` |
 | `P3-T09` | — | `P0-D03`, `P0-D04`, `P3-T07`, `P3-T12` |
-| `P3-T10` | `P3-T11`, `P5-T10` | `P0-D02`, `P0-D05`, `P3-T04` |
+| `P3-T10` | `P3-T11`, `P5-T10` | `P0-D02`, `P0-D03`, `P0-D05`, `P3-T04` |
 | `P3-T11` | `P5-T10`, `P6-T07` | `P0-D05`, `P0-D07`, `P0-T18`, `P1-T07`, `P1-T09`, `P3-T03`, `P3-T10` |
 | `P3-T12` | `P3-T09`, `P5-T03`, `P5-T13` | `P0-D04`, `P2-T03`, `P3-T07` |
 | `P4-T01` | `P4-T06`, `P4-T10`, `P4-T15`, `P5-T04` | `P0-T11`, `P0-T14`, `P0-T15`, `P2-T08`, `P2-T09`, `P2-T12`, `P2-T15`, `P3-T06` |
@@ -7044,7 +7044,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P5-T06` | `P5-T07`, `P5-T08`, `P6-T08` | `P0-T17`, `P1-T02`, `P4-T12` |
 | `P5-T07` | `P5-T08`, `P6-T06`, `P6-T07` | `P0-D02`, `P0-D03`, `P0-D08`, `P3-T07`, `P4-T12` |
 | `P5-T08` | `P6-T08` | `P0-D03`, `P5-T06`, `P5-T07` |
-| `P5-T09` | `P5-T10` | `P0-D02`, `P0-T17`, `P1-T02`, `P3-T02`, `P3-T03`, `P3-T04`, `P3-T07` |
+| `P5-T09` | `P5-T10` | `P0-D02`, `P0-D03`, `P0-T17`, `P1-T02`, `P3-T02`, `P3-T03`, `P3-T04`, `P3-T07` |
 | `P5-T10` | — | `P0-D05`, `P3-T10`, `P3-T11`, `P5-T09` |
 | `P5-T11` | — | `P0-D01`, `P0-T17`, `P1-T02`, `P1-T10` |
 | `P5-T12` | — | `P0-T17`, `P1-T02`, `P4-T14` |
@@ -7054,8 +7054,8 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P6-T03` | — | `P0-T03` |
 | `P6-T04` | — | `P0-T03` |
 | `P6-T05` | `P6-T07` | — |
-| `P6-T06` | `P6-T11` | — |
-| `P6-T07` | `P6-T11` | `P6-T05` |
+| `P6-T06` | `P6-T11` | `P0-D03` |
+| `P6-T07` | `P6-T11` | `P0-D03`, `P6-T05` |
 | `P6-T08` | — | `P0-T04` |
 | `P6-T09` | `P6-T10`, `P6-T11` | `P0-T03`, `P0-T18` |
 | `P6-T10` | `P6-T11` | `P0-T13`, `P6-T09` |
