@@ -3,7 +3,7 @@ name: Docs
 # Keeps QUICKTRIMR_KNOWLEDGE_BASE.md and QUICKTRIMR_BACKLOG_README.md consistent.
 #
 # The split matters:
-#   - PRs only VALIDATE the ticket graph. They never touch sections 8 and 9.
+#   - PRs VALIDATE the ticket graph and decision examples. They never touch sections 8 and 9.
 #   - main REGENERATES sections 8 and 9 after merge.
 #
 # That is deliberate. If branches regenerated the indexes, every PR would conflict in
@@ -15,19 +15,24 @@ on:
     paths:
       - 'QUICKTRIMR_*.md'
       - 'scripts/jira/**'
+      - 'scripts/decisions.test.mjs'
+      - 'docs/decisions/**'
       - '.github/workflows/docs.yml'
   push:
     branches: [main]
     paths:
       - 'QUICKTRIMR_*.md'
       - 'scripts/jira/**'
+      - 'scripts/decisions.test.mjs'
+      - 'docs/decisions/**'
+      - '.github/workflows/docs.yml'
 
 permissions:
   contents: read
 
 jobs:
   validate:
-    name: Validate ticket graph
+    name: Validate ticket graph and decisions
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -41,6 +46,9 @@ jobs:
       # without depending on the decision ticket that writes it.
       - name: Validate
         run: node scripts/jira/generate-indexes.mjs --check
+
+      - name: Check decision examples
+        run: node --test scripts/decisions.test.mjs
 
   regenerate:
     name: Regenerate indexes
