@@ -6849,7 +6849,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-PAY-08` | `P0-D02`, `P3-T01`, `P3-T04`, `P5-T09` |
 | `RULE-PAY-09` | `P3-T02`, `P3-T11` |
 | `RULE-PAY-10` | `P0-T03`, `P0-T18`, `P1-T07`, `P1-T09`, `P3-T01`, `P3-T03`, `P5-T09`, `P5-T10`, `P6-T03`, `P6-T05`, `P6-T09`, `P6-T10`, `P6-T11` |
-| `RULE-PAY-11` | `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P5-T07`, `P5-T09` |
+| `RULE-PAY-11` | `P0-D02`, `P0-D03`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P5-T07`, `P5-T09` |
 | `RULE-RELY-01` | `P0-D04`, `P3-T09`, `P3-T12`, `P5-T03`, `P5-T13` |
 | `RULE-RELY-02` | `P0-D04`, `P3-T12`, `P5-T13` |
 | `RULE-RELY-03` | `P0-D04`, `P3-T09`, `P3-T12` |
@@ -6927,7 +6927,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 |---|---|---|
 | `P0-D01` | `P0-T12`, `P1-T10`, `P1-T11`, `P1-T12`, `P2-T04`, `P2-T08` | — |
 | `P0-D02` | `P0-D03`, `P0-D05`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P3-T10`, `P5-T07`, `P5-T09` | — |
-| `P0-D03` | `P3-T07`, `P3-T08`, `P3-T09`, `P5-T07`, `P5-T08` | — |
+| `P0-D03` | `P3-T07`, `P3-T08`, `P3-T09`, `P5-T07`, `P5-T08` | `P0-D02` |
 | `P0-D04` | `P2-T03`, `P3-T09`, `P3-T12`, `P5-T13` | — |
 | `P0-D05` | `P3-T05`, `P3-T10`, `P3-T11`, `P5-T10` | — |
 | `P0-D06` | `P1-T06`, `P2-T01`, `P2-T04`, `P2-T07`, `P4-T05`, `P4-T06` | — |
@@ -7012,7 +7012,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P5-T04` | `P5-T05`, `P6-T08` | `P0-T12`, `P0-T17`, `P1-T02`, `P3-T02`, `P3-T06`, `P4-T11` |
 | `P5-T05` | — | `P5-T04` |
 | `P5-T06` | `P5-T07`, `P5-T08`, `P6-T08` | `P0-T17`, `P1-T02`, `P4-T12` |
-| `P5-T07` | `P5-T08`, `P6-T06`, `P6-T07` | `P0-D03`, `P0-D08`, `P3-T07`, `P4-T12` |
+| `P5-T07` | `P5-T08`, `P6-T06`, `P6-T07` | `P0-D02`, `P0-D03`, `P0-D08`, `P3-T07`, `P4-T12` |
 | `P5-T08` | `P6-T08` | `P0-D03`, `P5-T06`, `P5-T07` |
 | `P5-T09` | `P5-T10` | `P0-D02`, `P0-T17`, `P1-T02`, `P3-T02`, `P3-T03`, `P3-T04`, `P3-T07` |
 | `P5-T10` | — | `P0-D05`, `P3-T10`, `P3-T11`, `P5-T09` |
