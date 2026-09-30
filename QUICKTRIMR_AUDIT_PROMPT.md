@@ -85,8 +85,11 @@ These are not preferences. A hit is a bug, not a suggestion.
   `accepted_pending_payment` and is recoverable. (`RULE-PAY-05`)
 - **Never hold a database lock** (transaction / `SELECT … FOR UPDATE`) **across a Stripe or other
   network call.** (`RULE-PAY-09`)
-- **An earning becomes `available` only on completion**, and never while a dispute is open
-  (`RULE-EARN-02`, `RULE-EARN-03`).
+- **Earning release requires an eligible server-verified outcome** under `RULE-EARN-02`:
+  service completion, the `RULE-CANCEL-07` cancellation/refund-success exception, or an eligible
+  admin dispute resolution. Never release while a dispute is open (`RULE-EARN-03`); a pending or
+  failed cancellation refund cannot release the inconvenience earning, and the cancelled booking
+  must not be falsely completed to make it payable.
 - **Stripe is the source of truth** — the API response and the verified webhook. A mobile client
   reporting success is not evidence. Webhook signatures verified before parsing; duplicate
   deliveries produce exactly one effect. (`RULE-PAY-06`, `RULE-PAY-07`)

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
@@ -61,6 +62,21 @@ test('every contract uses the shared error response schema', () => {
     assert.equal(result.success, false);
     assert.equal(hasFieldLevelIssue(result.error.issues), true);
   }
+});
+
+test('cancellation fixture matches the approved Available Now backlog example', async () => {
+  const backlog = await readFile(new URL('../../../QUICKTRIMR_BACKLOG_README.md', import.meta.url), 'utf8');
+  const ticket = backlog.split('#### P3-T07 —')[1]?.split('#### P3-T08 —')[0];
+  assert.ok(ticket);
+  const response = ticket.match(/\/\/ 200 — client cancels accepted Available Now booking\s*(\{[\s\S]*?\})/);
+  assert.ok(response, 'Approved cancellation example must exist');
+  const expected = JSON.parse(response[1]);
+  const actual = CONTRACT_EXAMPLES['cancel-booking'].response.valid;
+  for (const field of ['refundCents', 'barberInconvenienceCents', 'platformRetainedCents', 'capturedCents', 'ruleApplied']) {
+    assert.equal(actual[field], expected[field], field);
+  }
+  assert.equal(CONTRACTS['cancel-booking'].responseSchema.safeParse(actual).success, true);
+  // This checks contract-example parity, not production refund calculation or Stripe behavior.
 });
 
 test('request schemas ignore client-supplied identity, status and server-derived money fields', () => {

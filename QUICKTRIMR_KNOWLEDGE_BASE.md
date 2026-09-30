@@ -494,7 +494,7 @@ Decision confirmed by Andrew for `P0-D08`: four hours' lead time leaves preparat
   - Round **QuickTrimr's commission down** to whole cents; the barber receives the remaining service cents. For service price `S` and the snapshotted percentage `p`, original commission `C = floor(S × p / 100)` and original barber net `B = S − C`. A 4503-cent service at 20% therefore yields 900 cents commission and 3603 cents barber net.
   - On a service-price refund, **reverse commission proportionally**. Using the original snapshots and cumulative refunded service cents `R`, retained commission is `floor(C × (S − R) / S)` for a positive captured service price. Commission reversed is `C` minus that retained commission; remaining barber entitlement is `S − R − retained commission`. Calculate from cumulative totals, not by rounding each refund independently. Original booking snapshots remain unchanged. A full service refund leaves zero commission and zero barber entitlement; QuickTrimr still bears any retained processing fee, so its position can be negative.
   - An internal dispute resolved **barber paid** keeps the normal snapshotted split; it does not waive commission. A partial/full service refund follows the proportional rule above. This is not a policy for bank chargebacks.
-  - The late-cancellation refund percentage, inconvenience payment and its funding/commission treatment remain `P0-D03` / `RULE-CANCEL-07`. The partial-refund example below does **not** choose that policy. This decision does not set GST accounting, Stripe Connect/payout fee allocation, or chargeback fee liability.
+  - The late-cancellation refund percentage, inconvenience payment and its funding/commission treatment are specified separately by `P0-D03` / `RULE-CANCEL-07`: cancellation commission is fully reversed, not proportionally retained. The partial-refund example below does **not** choose that policy; it remains the normal service/dispute-refund example. This decision does not set GST accounting, Stripe Connect/payout fee allocation, or chargeback fee liability.
 
 #### Commission and refund worked examples — RULE-PAY-11
 
@@ -514,7 +514,7 @@ For each row: **client refund + barber entitlement + QuickTrimr after processing
 ### Barber earnings and payouts
 
 - `RULE-EARN-01` — An earning row is created on successful capture, with status `pending`, using the booking's snapshots. It cannot be duplicated for a booking.
-- `RULE-EARN-02` — An earning moves `pending → available` **only** on completion or auto-completion (`RULE-COMPLETE-*`).
+- `RULE-EARN-02` — Service earnings move `pending → available` on completion or auto-completion (`RULE-COMPLETE-*`). **Cancellation exception, confirmed by Andrew for `P0-D03`:** the adjusted inconvenience earning becomes available only after the cancellation and its refund have succeeded, with no open dispute, as defined by `RULE-CANCEL-07`. A cancelled booking is never marked completed to release it. Existing admin dispute-resolution outcomes continue to govern their own earning adjustments (`RULE-DISPUTE-04`, `RULE-DISPUTE-05`). No path releases an earning while a dispute is open (`RULE-EARN-03`). Availability is not bank payment (`RULE-EARN-04`).
 - `RULE-EARN-03` — An open dispute holds the earning at `pending`. It does not become available while a dispute is open.
 - `RULE-EARN-04` — **"Available" is a QuickTrimr balance, not money in a bank account.** Cash reaches the barber on the payout run. Every barber-facing surface must say this plainly; a barber who believes "available" means "paid" will call about a missing payout.
 - `RULE-EARN-05` — Payouts are batched. Available earnings are queued into a payout batch, moving to `queued_for_payout`, then `paid_out` when the batch settles.
@@ -529,7 +529,29 @@ For each row: **client refund + barber entitlement + QuickTrimr after processing
 - `RULE-CANCEL-04` — Inside that window, or at any time after acceptance for Available Now, a **barber** cancellation produces a full refund to the client and a reliability event against the barber (`RULE-RELY-*`).
 - `RULE-CANCEL-05` — Refund amounts are calculated server-side from the booking snapshot and are never supplied by a client. Every refund is audit logged.
 - `RULE-CANCEL-06` — The cancellation surface states the financial consequence **before** the client or barber confirms.
-- `RULE-CANCEL-07` *(reserved — `P0-D03`)* — The partial refund split, the inconvenience fee amount, and which side of the ledger funds it.
+- `RULE-CANCEL-07` — **Cancellation allocation.** Andrew confirmed Option A for `P0-D03` on 2026-09-30:
+  - Before acceptance, cancel the authorisation: nothing is captured, no refund of captured funds is issued and the barber receives nothing (`RULE-CANCEL-01`). For an accepted, captured Scheduled booking **more than** `CFG-LATE-CANCEL-WINDOW-HOURS` before the appointment, either party's cancellation refunds the client in full and pays the barber nothing (`RULE-CANCEL-02`).
+  - For a **client** cancellation of a captured Scheduled booking **at or within** that window (currently 12 hours), refund **75%** of the booked service price. For a client cancellation of a captured Available Now booking after acceptance, refund **50%**. Read the booking-type-specific values from `CFG-CANCEL-REFUND-PCT`, not literals.
+  - The barber receives **all withheld service money** as the inconvenience payment: nominally **25% Scheduled / 50% Available Now**, per `CFG-INCONVENIENCE-FEE`. This is a percentage-based allocation of the original captured service price, not an extra fixed charge, a separate service earning or a platform-funded top-up. It has no additional fixed-dollar cap. Do not pay both the original service earning and the inconvenience amount.
+  - For captured service cents `S` and the applicable refund percentage `p`, client refund `R = ceil(S × p / 100)` and barber inconvenience amount `I = S − R`. Round the **client refund up** to whole cents; give the barber the exact remainder. Do not round the two amounts independently. Snapshot the cancellation terms, including the Scheduled window, at request time alongside the price (`ADR-009`, configuration rules); later config changes must not change an existing booking's cancellation terms. Original snapshots remain unchanged by cancellation.
+  - **QuickTrimr keeps zero cancellation commission**: fully reverse the original commission, even for a partial cancellation refund. `RULE-PAY-11`'s proportional commission reversal remains for normal service/dispute refunds, not this cancellation allocation. QuickTrimr absorbs the actual retained Stripe payment-processing fee, never deducting it from the barber amount or adding it as a client surcharge. Its post-processing position on cancellation is the negative of that fee.
+  - A barber cancelling an accepted, captured booking refunds the client **100%**, receives **zero**, and leaves QuickTrimr bearing the retained processing fee. Reliability consequences remain governed by `RULE-CANCEL-04` and `RULE-RELY-*`; this decision does not choose their thresholds or add a penalty to the outside-window case.
+  - **Earning release exception:** adjust the existing earning to the inconvenience amount. It becomes `available` only after the cancellation and refund have succeeded and there is **no open dispute** (`RULE-EARN-02`, `RULE-EARN-03`). A pending or failed refund does not release it. A full refund reverses the earning; no barber entitlement remains. Cancellation must remain a cancellation, not a fake completion. Eligible available inconvenience earnings enter the normal payout process (`RULE-EARN-05`, `RULE-EARN-07`); this does not decide payout cadence or claim cash has reached a bank account.
+  - Disclose the applicable cancellation terms before booking and the actual financial consequence before cancellation confirmation (`RULE-CANCEL-06`). These commercial terms do not override consumer-guarantee remedies. Obtain Australian legal review of rates and disclosure before launch; approval of this product decision is not a legal-compliance sign-off.
+
+#### Cancellation worked examples — RULE-CANCEL-07
+
+All amounts are **integer AUD cents**. Captured-payment examples use an illustrative **107-cent retained processing fee**, not a fee configuration; actual Stripe-reported fees govern. The first row releases an uncaptured hold and has no captured payment or processing fee. For each row: **client refund + barber inconvenience entitlement + QuickTrimr after processing + retained Stripe processing fee = captured amount**. This limited cash allocation is not profit and excludes tax accounting, Connect/payout costs and operating costs.
+
+| Example | Captured cents | Client refund cents | Barber inconvenience cents | Retained commission cents | Stripe processing fee cents | QuickTrimr after processing cents |
+|---|---|---|---|---|---|---|
+| 1. Client before acceptance, hold released | 0 | 0 | 0 | 0 | 0 | 0 |
+| 2. Either party, Scheduled more than 12 hours before | 4500 | 4500 | 0 | 0 | 107 | -107 |
+| 3. Client, Scheduled at or within 12 hours | 4500 | 3375 | 1125 | 0 | 107 | -107 |
+| 4. Client, Available Now after acceptance | 4500 | 2250 | 2250 | 0 | 107 | -107 |
+| 5. Barber cancels accepted captured booking | 4500 | 4500 | 0 | 0 | 107 | -107 |
+| 6. Client, late Scheduled, $45.03 service | 4503 | 3378 | 1125 | 0 | 107 | -107 |
+| 7. Client, accepted Available Now, $45.03 service | 4503 | 2252 | 2251 | 0 | 107 | -107 |
 
 ### Barber reliability
 
@@ -614,7 +636,6 @@ These IDs are cited by tickets but the rule does not exist yet. The decision tic
 
 | Reserved ID | What it will say | Written by |
 |---|---|---|
-| `RULE-CANCEL-07` | Partial refund split and inconvenience fee funding | `P0-D03` |
 | `RULE-RELY-06` | Reliability thresholds, windows and consequences | `P0-D04` |
 | `RULE-EARN-07` | Payout schedule and batch cadence | `P0-D05` |
 
@@ -831,8 +852,8 @@ These are read from config. **A literal `5`, `12`, `20`, `60` or `2` inside feat
 | `CFG-ETA-REFRESH-MIN` | `3` | Fixed ETA refresh interval in minutes (`RULE-ETA-04`). |
 | `CFG-ETA-STALE-MIN` | `6` | ETA is stale after two missed refresh intervals (`RULE-ETA-03`). |
 | `CFG-PAYOUT-SCHEDULE` | `TBC-PAYOUT-SCHEDULE` | Payout batch cadence (`RULE-EARN-05`). |
-| `CFG-CANCEL-REFUND-PCT` | `TBC-CANCEL-SPLIT` | Client partial-refund percentage (`RULE-CANCEL-03`). |
-| `CFG-INCONVENIENCE-FEE` | `TBC-INCONVENIENCE-FEE` | Barber inconvenience payment (`RULE-CANCEL-03`). |
+| `CFG-CANCEL-REFUND-PCT` | `scheduled: 75; available_now: 50` | Client late-cancellation refund percentage of booked service price; snapshot at request time, round refund up (`RULE-CANCEL-07`). |
+| `CFG-INCONVENIENCE-FEE` | `scheduled: 25; available_now: 50` | Percentage allocation of booked service price, funded entirely by withheld client funds. Must complement the refund percentage; exact cents are service price minus rounded-up refund, not independently rounded. Snapshot at request time; no extra charge or fixed-dollar cap (`RULE-CANCEL-07`). |
 | `CFG-RELIABILITY-WINDOW-DAYS` | `TBC-RELIABILITY-THRESHOLDS` | Rolling window (`RULE-RELY-01`). |
 | `CFG-RELIABILITY-RESET-DAYS` | `TBC-RELIABILITY-THRESHOLDS` | Good-behaviour reset period (`RULE-RELY-02`). |
 | `CFG-RELIABILITY-COOLDOWN-MIN` | `TBC-RELIABILITY-THRESHOLDS` | Available Now cooldown (`RULE-RELY-03`). |
@@ -853,8 +874,8 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-SERVICE-CATEGORIES` | **RESOLVED → `RULE-SERVICE-05`** | Catalogue, barber pricing, discovery, seed data | `P0-D01` |
 | `TBC-COMMISSION-PCT` | **RESOLVED → `RULE-PAY-11`** — 20% of booked service price, confirmed by Andrew on 2026-09-30. | Every payment, earning and payout row | `P0-D02` |
 | `TBC-STRIPE-FEES` | **RESOLVED → `RULE-PAY-11`** — QuickTrimr absorbs payment-processing fees, including retained fees after refunds; no client card surcharge. | Commission maths, refunds, barber net | `P0-D02` |
-| `TBC-CANCEL-SPLIT` | What percentage does a client get back on a late cancellation? | Cancellation, refunds, admin resolution | `P0-D03` |
-| `TBC-INCONVENIENCE-FEE` | How much is the barber's inconvenience payment, and **which side funds it** — the client's withheld amount, or QuickTrimr? | Cancellation, earnings, refund maths | `P0-D03` |
+| `TBC-CANCEL-SPLIT` | **RESOLVED → `RULE-CANCEL-07`** — 75% late Scheduled / 50% accepted Available Now; client refund rounded up, confirmed by Andrew on 2026-09-30. | Cancellation, refunds, admin resolution | `P0-D03` |
+| `TBC-INCONVENIENCE-FEE` | **RESOLVED → `RULE-CANCEL-07`** — barber receives all withheld service money; zero cancellation commission; QuickTrimr absorbs retained processing fees. Earning release exception in `RULE-EARN-02`. | Cancellation, earnings, refund maths | `P0-D03` |
 | `TBC-RELIABILITY-THRESHOLDS` | What counts as an offence, over what rolling window, with what cooldown, search penalty and suspension criteria? | Reliability engine, barber cancellation, admin | `P0-D04` |
 | `TBC-PAYOUT-SCHEDULE` | How often do payout batches run, on what day, with what minimum balance? | Payout batching and processing | `P0-D05` |
 | `TBC-LOCATION-PRECISION` | **RESOLVED → `RULE-DISCOVERY-05`** | Discovery, map view, search function | `P0-D06` |
