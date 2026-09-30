@@ -268,8 +268,8 @@ phase: 0
 priority: Highest
 jiraKey: TRIMR-3
 dependsOn: []
-affects: [P2-T08, P3-T01, P3-T02, P3-T04, P3-T07, P3-T10, P5-T09]
-knowledgeBase: [ADR-009, RULE-PAY-01, RULE-PAY-08, RULE-EARN-01, CFG-COMMISSION-PCT]
+affects: [P0-D03, P2-T08, P3-T01, P3-T02, P3-T04, P3-T07, P3-T10, P5-T07, P5-T09]
+knowledgeBase: [ADR-009, RULE-PAY-01, RULE-PAY-08, RULE-PAY-11, RULE-EARN-01, CFG-COMMISSION-PCT]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, product, stripe]
 ```
@@ -278,9 +278,9 @@ labels: [quicktrimr, phase-0, decision, product, stripe]
 
 **This is the highest-stakes decision in the backlog.** The commission percentage is snapshotted onto every booking (`ADR-009`) and every earning derives from it. Changing it later does not change history — it changes only new bookings, which is correct, but it means the number chosen now is baked into every financial record QuickTrimr ever produces. Getting it wrong is not a config edit; it is a conversation with every barber on the platform.
 
-`TBC-COMMISSION-PCT` — the knowledge base carries 20% as an **assumption inherited from the proposal**, explicitly not a decision. An agent that reads "assume 20%" and ships it has decided the business model.
+**Decision confirmed by Andrew on 2026-09-30: Option A**, now recorded in `RULE-PAY-11`. Commission is 20% of booked service price only. QuickTrimr absorbs Stripe payment-processing fees, including fees retained after refunds, without a client card surcharge or deduction from barber net. Service refunds reverse commission proportionally; QuickTrimr's commission is rounded down and the barber receives the remaining cents. Internal dispute resolution barber-paid retains the normal split.
 
-`TBC-STRIPE-FEES` is the part that is usually missed, and it is the part that makes the ledger not balance. Stripe takes its cut of the gross before anything reaches QuickTrimr. If commission is 20% of gross and the barber gets 80% of gross, QuickTrimr has paid Stripe's fee out of its own 20% — which may be intended, but nobody has said so. On a **partial refund** it gets worse: Stripe does not return its processing fee, so a 50% refund does not cost QuickTrimr 50%.
+`TBC-COMMISSION-PCT` and `TBC-STRIPE-FEES` are resolved in place. The KB contains the authoritative integer-cent examples, including QuickTrimr's negative position after a full refund. The illustrative processing fee is not a fixed Stripe rate. Cancellation/inconvenience allocation remains `P0-D03`.
 
 **Scope**
 
@@ -289,7 +289,7 @@ Decide, and record in `KB §9` as `RULE-PAY-11`, with `CFG-COMMISSION-PCT` given
 - The commission percentage.
 - Whether commission is charged on the service price only, or on the total the client pays.
 - **Who absorbs the Stripe processing fee** — QuickTrimr out of commission, the barber out of net, or the client as a surcharge.
-- What happens to the Stripe fee on a **full refund** and on a **partial refund** (`RULE-CANCEL-03`).
+- What happens to the Stripe processing fee on a **full refund** and on a **partial service refund**, without choosing `P0-D03`'s cancellation split.
 - Whether commission is refunded proportionally when a booking is refunded.
 - The rounding rule, in integer cents, when a percentage does not divide evenly. Name the direction explicitly — "round down to the barber" or "round down to QuickTrimr" — because unspecified rounding is where a ledger drifts by a cent per booking.
 
@@ -306,7 +306,9 @@ Work each of these as a **numbered example**: a $45 haircut, full refund; a $45 
 
 **Out of scope** — implementing the calculation (`P3-T01`, `P3-T04`); the cancellation split, which is `P0-D03`.
 
-**Sync notes** — every ticket in `affects` either calculates or displays a number derived from this. If the percentage or the fee absorption changes after Phase 3 starts, all seven need review, and any booking already captured keeps its snapshot.
+**Tests** — documentation checks for the concrete config, resolved TBC pointers and removal from Pending rules; pure integer-cent checks against every KB worked example, including full capture, full/partial refund, barber-paid and uneven cents. Check cumulative-refund rounding, reconciliation including retained processing fees, and preservation of the original snapshots. These are specification checks, not production money logic or proof of a Stripe integration.
+
+**Sync notes** — every ticket in `affects` either calculates or displays a derived number or makes the remaining cancellation decision. `§8 Traceability` additionally identified `P5-T07`, now included alongside `P0-D03`. All nine were reviewed for this decision; see `docs/decisions/P0-D02.md`. Any later change requires the same review; existing bookings keep their request-time snapshots. Generated indexes are left for CI on main.
 
 ---
 
@@ -322,7 +324,7 @@ priority: Highest
 jiraKey: TRIMR-4
 dependsOn: [P0-D02]
 affects: [P3-T07, P3-T08, P3-T09, P5-T07, P5-T08]
-knowledgeBase: [RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
+knowledgeBase: [RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-PAY-11, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, product, stripe]
 ```
@@ -333,7 +335,7 @@ The knowledge base says a late client cancellation produces "a partial refund to
 
 The funding question is the one that breaks reconciliation. If the client is refunded 50% and the barber receives an inconvenience fee, that fee comes from somewhere: the withheld 50%, or QuickTrimr's own money. If nobody decides, an implementer picks one, and QuickTrimr discovers which at the end of a month when the numbers do not add up.
 
-This depends on `P0-D02` because the answer has to net against commission and the Stripe fee. A 50% refund on a $45 booking where Stripe kept its fee on the full $45 does not leave 50% to distribute.
+This depends on `P0-D02` because the answer has to net against commission and the Stripe fee. `RULE-PAY-11` now confirms QuickTrimr absorbs the payment-processing fee, including after refunds. Its illustrative 50% service refund does not choose this ticket's late-cancellation refund or inconvenience payment.
 
 **Scope**
 
@@ -343,8 +345,8 @@ Decide, and record in `KB §9` as `RULE-CANCEL-07`, with values for `CFG-CANCEL-
 - Whether the split differs between an Available Now booking (barber may already be travelling) and a Scheduled one inside `CFG-LATE-CANCEL-WINDOW-HOURS`. Recommend that it does — a barber halfway across town has incurred a real cost that a barber with a booking tomorrow has not.
 - The inconvenience fee: fixed amount, percentage, or capped percentage.
 - **Which side funds it** — the client's withheld amount, or QuickTrimr.
-- Whether QuickTrimr keeps commission on a cancelled booking.
-- What a barber cancellation costs QuickTrimr: the client is refunded in full (`RULE-CANCEL-04`), so state explicitly whether QuickTrimr absorbs the Stripe fee on that refund.
+- Whether QuickTrimr keeps commission on the cancellation/inconvenience allocation, consistently with `RULE-PAY-11`'s service-price-only basis and proportional service-refund reversal. Do not double-count a barber service entitlement and an inconvenience payment from the same retained cents.
+- Show what a barber cancellation costs QuickTrimr: the client is refunded in full (`RULE-CANCEL-04`), and **QuickTrimr absorbs the retained payment-processing fee**, already decided by `RULE-PAY-11`.
 
 **Acceptance criteria**
 
@@ -357,7 +359,7 @@ Decide, and record in `KB §9` as `RULE-CANCEL-07`, with values for `CFG-CANCEL-
 
 **Out of scope** — implementing cancellation (`P3-T07`); reliability consequences of a barber cancellation, which is `P0-D04`; admin refunds (`P5-T07`).
 
-**Sync notes** — `P3-T07` implements this, `P3-T08` and `P3-T09` display it to the client and barber before they confirm (`RULE-CANCEL-06`), and `P5-T07` overrides it. A change here is a change to what the app promised someone at the moment they cancelled.
+**Sync notes** — `P3-T07` implements this, `P3-T08` and `P3-T09` display it to the client and barber before they confirm (`RULE-CANCEL-06`), and `P5-T07` overrides it. Replace the explicitly non-normative cancellation amounts in `P3-T07` and its validation contract fixture when this decision is confirmed. A change here is a change to what the app promised someone at the moment they cancelled.
 
 ---
 
@@ -3040,7 +3042,7 @@ Validate: authenticated client with a complete profile, an owned and unarchived 
 
 Booking-type rules — Available Now: reject if the client already holds an active pending Available Now request (`RULE-AVAIL-04`). Scheduled: reject a duplicate intent (`RULE-SCHED-03`) and enforce the lead time and horizon from `RULE-SCHED-04`.
 
-Write the request plus its snapshots: service price cents, commission percentage (`RULE-PAY-11`), derived gross, commission and barber net, the address, and the barber's details at request time.
+Write the request plus its snapshots: service price cents, commission percentage (`RULE-PAY-11`), derived gross, commission and barber net, the address, and the barber's details at request time. Read the percentage from `CFG-COMMISSION-PCT`; round commission down and give the barber the remainder. Do not deduct payment-processing fees from barber net or add a client card surcharge.
 
 Set the expiry: `CFG-AVAIL-EXPIRY-MIN` or `CFG-SCHED-EXPIRY-HOURS` from config, never a literal.
 
@@ -3578,7 +3580,7 @@ labels: [quicktrimr, phase-3, backend, stripe, security]
 
 `create-payment-authorisation` Edge Function.
 
-Read the amount from the booking request snapshot. Create a **manual-capture** PaymentIntent for that amount against the client's payment method.
+Read the amount from the booking request snapshot. Create a **manual-capture** PaymentIntent for that amount against the client's payment method. `RULE-PAY-11` forbids a client card-processing surcharge: do not inflate the amount with an estimated Stripe fee.
 
 A `payments` row keyed to the request, statuses through `ENUM-PAYMENT-STATUS`, all amounts integer cents (`ADR-009`).
 
@@ -3677,7 +3679,7 @@ On an **expired authorisation**, a distinct error, because the recovery is diffe
 
 Sequence so that no lock is held across the Stripe call: read state, release, call Stripe, then apply the result conditionally.
 
-Stripe is the source of truth (`RULE-PAY-06`). The webhook in `P3-T03` reconciles anything this path misses.
+Stripe is the source of truth (`RULE-PAY-06`). The webhook in `P3-T03` reconciles anything this path misses. `RULE-PAY-11`'s processing fee is a QuickTrimr cost, not a barber-net deduction; reconcile against actual Stripe-reported processing fees, never the KB's illustrative fee.
 
 **Contract example** — `capture-authorised-payment`
 
@@ -3802,7 +3804,7 @@ labels: [quicktrimr, phase-3, backend, database]
 
 **Context**
 
-What the barber is owed, held separate from what the client paid. `KB §11` keeps `payments` and `barber_earnings` as different tables because they are different numbers: commission and the Stripe fee sit between them, and merging them loses the ability to reconcile either.
+What the barber is owed, held separate from what the client paid. `KB §11` keeps `payments` and `barber_earnings` as different tables because commission separates those amounts. Stripe payment-processing fees reduce **QuickTrimr's share**, not the barber's entitlement (`RULE-PAY-11`); merging these numbers loses the ability to reconcile them.
 
 `RULE-EARN-01` — one earning per booking, enforced by the unique constraint from `P0-T10`. A duplicate earning is a barber paid twice, which is the irreversible direction.
 
@@ -3814,7 +3816,7 @@ The earning starts `pending` and **only** completion moves it to `available` (`R
 
 Amounts derived from the **booking's snapshots** (`ADR-009`) and the commission rule from `P0-D02`: gross, commission, barber net, all integer cents.
 
-The arithmetic must reconcile: gross minus commission equals barber net, and the sum against what Stripe actually captured is checked rather than assumed. Whatever `RULE-PAY-11` decided about Stripe fee absorption is applied here, not improvised.
+The arithmetic must reconcile: service gross minus commission equals barber net exactly. Commission is rounded down using the booking's snapshotted percentage, never today's config. Separately, QuickTrimr's post-processing position is its commission minus the actual retained processing fee; never deduct that fee from barber net (`RULE-PAY-11`).
 
 Idempotent on booking id — a repeated call returns the existing earning.
 
@@ -4018,7 +4020,7 @@ Four cases (`RULE-CANCEL-01`–`RULE-CANCEL-04`):
 | Client, inside the window or Available Now after acceptance | Partial refund plus barber inconvenience payment, per `RULE-CANCEL-07` |
 | Barber, inside the window or Available Now after acceptance | Full client refund plus a reliability event |
 
-Pure functions in `packages/domain` taking the booking snapshot, the actor, and the time, returning the refund, the barber amount and the QuickTrimr position — all integer cents, summing to what was captured.
+Pure functions in `packages/domain` taking the booking snapshot, the actor, the time and relevant server-derived fee inputs, returning the refund, the barber amount and the QuickTrimr position — all integer cents. Refund plus barber amount plus QuickTrimr's post-processing position plus retained Stripe processing fee must equal what was captured. `RULE-PAY-11` makes that fee QuickTrimr's cost, including after a full refund. This does not resolve `RULE-CANCEL-07`'s late-cancellation allocation.
 
 Refunds are idempotent on a server-derived key. A double-tapped cancel refunds once.
 
@@ -4030,11 +4032,13 @@ Audit log with the calculated amounts and the rule applied.
 
 **Contract example** — `cancel-booking`
 
+The late-client amounts below are **non-normative shape examples only**, not an approved cancellation policy. `P0-D03` must replace them (and the corresponding validation fixture) before this ticket is ready. `platformRetainedCents` here is before processing fees, not QuickTrimr's post-processing position; it must not be added to the fee again in reconciliation.
+
 ```jsonc
 // request
 { "bookingId": "9a02...", "reason": "client_unavailable" }
 
-// 200 — late client cancellation
+// 200 — late client cancellation; amounts UNDECIDED, pending P0-D03
 { "bookingId": "9a02...", "status": "cancelled",
   "refundCents": 2250, "barberInconvenienceCents": 1350,
   "platformRetainedCents": 900, "capturedCents": 4500,
@@ -5676,7 +5680,7 @@ The only path that releases a held earning or refunds a captured payment. `RULE-
 
 Admin role verified server-side; a mandatory reason (`RULE-DISPUTE-04`).
 
-Refund amounts calculated server-side from the booking snapshot (`RULE-CANCEL-05`), using the same `packages/domain` functions as `P3-T07`. **An admin-supplied amount is bounded** by what was actually captured — an admin cannot refund more than was taken.
+Refund amounts calculated server-side from the booking snapshot (`RULE-CANCEL-05`), using the same `packages/domain` functions as `P3-T07`. **An admin-supplied amount is bounded** by what was actually captured — an admin cannot refund more than was taken. Apply `RULE-PAY-11`'s proportional service-commission reversal from the original snapshots and cumulative refunds; QuickTrimr absorbs retained processing fees. Barber-paid retains the normal split. Cancellation/inconvenience allocations still require `RULE-CANCEL-07`.
 
 **All state changes in one transaction**, with the Stripe call outside any lock (`RULE-PAY-09`) and the result applied conditionally. If the Stripe refund fails, nothing is marked resolved.
 
@@ -5688,6 +5692,8 @@ Audit log recording the admin, the outcome, the reason, and every amount (`RULE-
 
 **Contract example** — `admin-resolve-dispute`
 
+For a first 2000-cent service refund on a 4500-cent capture with 900-cent original commission, retained commission is 500 and barber entitlement is 2000. `platformRetainedCents` is commission **before processing fees**; with an illustrative retained fee of 107, QuickTrimr's post-processing position is 393. Thus 2000 + 2000 + 393 + 107 = 4500. Do not treat commission as the post-fee position or use 107 as a configured fee.
+
 ```jsonc
 // request
 { "disputeId": "f77c...", "outcome": "resolved_partial_refund",
@@ -5695,7 +5701,7 @@ Audit log recording the admin, the outcome, the reason, and every amount (`RULE-
 
 // 200
 { "disputeId": "f77c...", "status": "resolved_partial_refund",
-  "refundCents": 2000, "barberNetCents": 1600, "platformRetainedCents": 900,
+  "refundCents": 2000, "barberNetCents": 2000, "platformRetainedCents": 500,
   "capturedCents": 4500, "earningStatus": "available", "auditLogId": "al99..." }
 
 // 422 — refund exceeds what was captured
@@ -5811,6 +5817,8 @@ The reconciliation surface. When QuickTrimr's Stripe balance does not match what
 Payments list: status, date range, client, barber, amount range. Each row carries its Stripe payment intent id.
 
 Earnings list: status, barber, date range, with gross, commission and net.
+
+Distinguish commission from QuickTrimr's post-processing position (`RULE-PAY-11`). Reconcile against actual Stripe-reported retained processing fees, show negative platform positions after full refunds, and do not label this limited cash allocation as profit. Processing fees never reduce barber net.
 
 Detail linking a payment to its booking, its earning and any refund, so the full chain is traversable in both directions.
 

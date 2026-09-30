@@ -488,6 +488,28 @@ Decision confirmed by Andrew for `P0-D08`: four hours' lead time leaves preparat
 - `RULE-PAY-08` — Money is integer cents (`ADR-009`). Every payment row stores gross, commission, barber net, and refunded amount where applicable.
 - `RULE-PAY-09` — Never hold a database lock across a Stripe call.
 - `RULE-PAY-10` — Stripe secret keys and webhook secrets are server-only. Stripe identifiers are stored but not exposed to clients or barbers beyond what a surface genuinely needs.
+- `RULE-PAY-11` — **Commission and processing fees.** Andrew confirmed Option A for `P0-D02` on 2026-09-30:
+  - QuickTrimr commission is **20% of the booked service price only**, read from `CFG-COMMISSION-PCT` and snapshotted at request time (`ADR-009`). Additional fees are not commission-bearing under this rule. There is **no client card-processing surcharge**.
+  - **QuickTrimr absorbs Stripe payment-processing fees**, out of its own share, never by deducting them from barber net. This includes processing fees retained by Stripe after a full or partial refund. Reconciliation uses the actual Stripe-reported retained processing fee, not an estimated rate or the example fee below.
+  - Round **QuickTrimr's commission down** to whole cents; the barber receives the remaining service cents. For service price `S` and the snapshotted percentage `p`, original commission `C = floor(S × p / 100)` and original barber net `B = S − C`. A 4503-cent service at 20% therefore yields 900 cents commission and 3603 cents barber net.
+  - On a service-price refund, **reverse commission proportionally**. Using the original snapshots and cumulative refunded service cents `R`, retained commission is `floor(C × (S − R) / S)` for a positive captured service price. Commission reversed is `C` minus that retained commission; remaining barber entitlement is `S − R − retained commission`. Calculate from cumulative totals, not by rounding each refund independently. Original booking snapshots remain unchanged. A full service refund leaves zero commission and zero barber entitlement; QuickTrimr still bears any retained processing fee, so its position can be negative.
+  - An internal dispute resolved **barber paid** keeps the normal snapshotted split; it does not waive commission. A partial/full service refund follows the proportional rule above. This is not a policy for bank chargebacks.
+  - The late-cancellation refund percentage, inconvenience payment and its funding/commission treatment remain `P0-D03` / `RULE-CANCEL-07`. The partial-refund example below does **not** choose that policy. This decision does not set GST accounting, Stripe Connect/payout fee allocation, or chargeback fee liability.
+
+#### Commission and refund worked examples — RULE-PAY-11
+
+All amounts below are **integer AUD cents**. Each example assumes an illustrative **107-cent retained processing fee**; it is not a fee configuration or a promise about Stripe pricing. The partial refund is an example of an admin service refund, not a cancellation entitlement. Barber entitlement is not necessarily available or paid out (`RULE-EARN-02`, `RULE-EARN-04`).
+
+| Example | Captured cents | Client refund cents | Retained commission cents | Barber entitlement cents | Stripe processing fee cents | QuickTrimr after processing cents |
+|---|---|---|---|---|---|---|
+| 1. Full capture, $45 service | 4500 | 0 | 900 | 3600 | 107 | 793 |
+| 2. Full service refund | 4500 | 4500 | 0 | 0 | 107 | -107 |
+| 3. Illustrative 50% service refund | 4500 | 2250 | 450 | 1800 | 107 | 343 |
+| 4. Internal dispute resolved barber-paid | 4500 | 0 | 900 | 3600 | 107 | 793 |
+| 5. Rounding, $45.03 service | 4503 | 0 | 900 | 3603 | 107 | 793 |
+| 6. Uneven service refund, $45.03 service | 4503 | 2251 | 450 | 1802 | 107 | 343 |
+
+For each row: **client refund + barber entitlement + QuickTrimr after processing + retained Stripe processing fee = captured amount**. QuickTrimr after processing is retained commission minus the retained processing fee; it is a cash allocation, **not profit**, and excludes tax accounting, Connect/payout costs and operating costs. A pre-capture authorisation cancellation is not a captured-payment refund and is outside this table.
 
 ### Barber earnings and payouts
 
@@ -592,7 +614,6 @@ These IDs are cited by tickets but the rule does not exist yet. The decision tic
 
 | Reserved ID | What it will say | Written by |
 |---|---|---|
-| `RULE-PAY-11` | Commission percentage and Stripe fee absorption | `P0-D02` |
 | `RULE-CANCEL-07` | Partial refund split and inconvenience fee funding | `P0-D03` |
 | `RULE-RELY-06` | Reliability thresholds, windows and consequences | `P0-D04` |
 | `RULE-EARN-07` | Payout schedule and batch cadence | `P0-D05` |
@@ -799,7 +820,7 @@ These are read from config. **A literal `5`, `12`, `20`, `60` or `2` inside feat
 
 | ID | Value | Notes |
 |---|---|---|
-| `CFG-COMMISSION-PCT` | `TBC-COMMISSION-PCT` | Platform commission. Snapshotted per booking. |
+| `CFG-COMMISSION-PCT` | 20 | Percentage of booked service price only. Snapshotted per booking; rounding and processing-fee treatment per `RULE-PAY-11`. |
 | `CFG-AVAIL-EXPIRY-MIN` | `5` | Available Now request expiry, minutes (`RULE-AVAIL-06`). |
 | `CFG-SCHED-EXPIRY-HOURS` | `2` | Scheduled request expiry, hours (`RULE-SCHED-02`). |
 | `CFG-COMPLETION-RESPONSE-MIN` | `60` | Client response window after barber marks complete (`RULE-COMPLETE-02`). |
@@ -830,8 +851,8 @@ Config stored in the database lives in a platform config table, is updatable onl
 | ID | Question | Blocks | Decided by |
 |---|---|---|---|
 | `TBC-SERVICE-CATEGORIES` | **RESOLVED → `RULE-SERVICE-05`** | Catalogue, barber pricing, discovery, seed data | `P0-D01` |
-| `TBC-COMMISSION-PCT` | What is the platform commission percentage? 20% is an assumption carried from the proposal, not a decision. | Every payment, earning and payout row | `P0-D02` |
-| `TBC-STRIPE-FEES` | Who absorbs the Stripe processing fee — QuickTrimr, the barber, or the client? What happens to it on a full and on a partial refund? | Commission maths, refunds, barber net | `P0-D02` |
+| `TBC-COMMISSION-PCT` | **RESOLVED → `RULE-PAY-11`** — 20% of booked service price, confirmed by Andrew on 2026-09-30. | Every payment, earning and payout row | `P0-D02` |
+| `TBC-STRIPE-FEES` | **RESOLVED → `RULE-PAY-11`** — QuickTrimr absorbs payment-processing fees, including retained fees after refunds; no client card surcharge. | Commission maths, refunds, barber net | `P0-D02` |
 | `TBC-CANCEL-SPLIT` | What percentage does a client get back on a late cancellation? | Cancellation, refunds, admin resolution | `P0-D03` |
 | `TBC-INCONVENIENCE-FEE` | How much is the barber's inconvenience payment, and **which side funds it** — the client's withheld amount, or QuickTrimr? | Cancellation, earnings, refund maths | `P0-D03` |
 | `TBC-RELIABILITY-THRESHOLDS` | What counts as an offence, over what rolling window, with what cooldown, search penalty and suspension criteria? | Reliability engine, barber cancellation, admin | `P0-D04` |

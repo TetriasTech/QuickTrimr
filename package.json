@@ -10,7 +10,7 @@
     "typecheck": "pnpm --recursive --if-present typecheck",
     "lint": "pnpm --recursive --if-present lint",
     "format": "pnpm --recursive --if-present format",
-    "test": "pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs",
+    "test": "pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs scripts/decisions.test.mjs",
     "build": "pnpm --recursive --if-present build"
   }
 }
