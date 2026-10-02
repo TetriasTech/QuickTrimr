@@ -516,10 +516,35 @@ For each row: **client refund + barber entitlement + QuickTrimr after processing
 - `RULE-EARN-01` — An earning row is created on successful capture, with status `pending`, using the booking's snapshots. It cannot be duplicated for a booking.
 - `RULE-EARN-02` — Service earnings move `pending → available` on completion or auto-completion (`RULE-COMPLETE-*`). **Cancellation exception, confirmed by Andrew for `P0-D03`:** the adjusted inconvenience earning becomes available only after the cancellation and its refund have succeeded, with no open dispute, as defined by `RULE-CANCEL-07`. A cancelled booking is never marked completed to release it. Existing admin dispute-resolution outcomes continue to govern their own earning adjustments (`RULE-DISPUTE-04`, `RULE-DISPUTE-05`). No path releases an earning while a dispute is open (`RULE-EARN-03`). Availability is not bank payment (`RULE-EARN-04`).
 - `RULE-EARN-03` — An open dispute holds the earning at `pending`. It does not become available while a dispute is open.
-- `RULE-EARN-04` — **"Available" is a QuickTrimr balance, not money in a bank account.** Cash reaches the barber on the payout run. Every barber-facing surface must say this plainly; a barber who believes "available" means "paid" will call about a missing payout.
-- `RULE-EARN-05` — Payouts are batched. Available earnings are queued into a payout batch, moving to `queued_for_payout`, then `paid_out` when the batch settles.
-- `RULE-EARN-06` — Batch creation and processing are idempotent. An earning is never in two open batches and is never paid twice.
-- `RULE-EARN-07` *(reserved — `P0-D05`)* — The payout schedule and batch cadence.
+- `RULE-EARN-04` — **"Available" is a QuickTrimr balance, not money in a bank account.** The payout run starts processing; it does not guarantee bank arrival that day. A Stripe transfer funds a connected Stripe account; a separate bank payout sends funds to its external account. Every barber-facing surface distinguishes the next processing date, current payout status and Stripe's estimated arrival date when known. An estimate is not a promise; settlement, account restrictions and bank holidays can delay arrival.
+- `RULE-EARN-05` — Payouts are batched, with independently processed per-barber items. Eligible earnings move `available → queued_for_payout` atomically with queueing. An earning moves to `paid_out` only when its own mapped bank payout is confirmed `paid` by Stripe, not on transfer success or payout creation. One item's failure does not undo another's payment. A batch is `paid` only when all its items are successfully paid; failed or cancelled items being terminal is not success. A later bank failure corrects the affected earning back to `queued_for_payout` and the item/batch projection accordingly, with append-only audit evidence; it never erases earlier payment history or triggers an unverified replacement payment.
+- `RULE-EARN-06` — Batch creation and processing are idempotent. An earning is never in two open batches and is never paid twice. Persist transfer and payout identities and deterministic server-derived operation/attempt keys; a key alone is not a durable ledger. Retries resume the original item, never re-queue its earnings or repeat a successful funding transfer. Reconcile an uncertain external outcome before another money call, including after Stripe's idempotency retention period. A replacement payout requires a confirmed failed/cancelled prior payout, reconciled returned funds, and no outstanding or successful replacement for that obligation.
+- `RULE-EARN-07` — **Weekly payout policy.** Andrew confirmed Option A for `P0-D05` on 2026-10-02, including the bank-arrival correction and standard Connect/payout fee absorption:
+  - **Schedule:** every Monday at **10:00 am Australia/Sydney**, from `CFG-PAYOUT-SCHEDULE`, following local daylight saving rather than a fixed UTC offset. This is the scheduled processing start, including bank holidays, not a bank-credit deadline. A delayed/recovered run retains its scheduled cut-off and period identity; it does not widen the cut-off to the worker's actual start time.
+  - **Cut-off:** only eligible earnings whose current server-recorded availability began **strictly before** that scheduled instant enter its new batch. Availability at or after 10:00 waits for the next weekly run. Recheck earning eligibility, disputes, refund state and Connect eligibility when queueing and before money movement. Existing release rules (`RULE-EARN-02`, `RULE-EARN-03`, `RULE-CANCEL-07`) are unchanged; no unsettled or unavailable Stripe balance is advanced to meet the schedule.
+  - **Minimum and batching:** pay every positive eligible AUD total: `CFG-PAYOUT-MIN-CENTS` is **1**, meaning no additional QuickTrimr minimum. Zero produces no payment; there is no positive balance carried solely for being too small under this policy. One global batch per scheduled period contains per-barber items and integer-cent totals; each barber's processing/failure is independent. Already-queued obligations stay attached to their original items, including when retried during a later run.
+  - **Confirmed temporary failure:** preserve the queued entitlement and retry the original obligation on the next weekly run, after reconciliation and current eligibility/funds checks. Insufficient settled Stripe funds defer payment; never invent a successful payout or deduct the shortfall from the barber. No immediate new money attempt outside the scheduled retry policy.
+  - **Invalid bank details or restricted account:** place an action-required hold, notify the barber and admin, and show the reason. Do not blindly retry a disabled destination. Resume on the next weekly run only after Stripe-verified correction and eligibility, with funds reconciled. Admin visibility is read-only; correction uses the secure Stripe account/onboarding process, not a manual transfer button. Uncertain outcomes remain under reconciliation, not classified as safely retryable failures.
+  - **Funds must not be silently stranded:** held/failed/uncertain obligations remain visible with age, next action and retry eligibility; alert admin when the hold or uncertainty is detected. Respect Stripe's applicable holding limit (currently 90 days for Australian manual payouts); operations must resolve or escalate with Stripe before that limit, not roll the hold forward indefinitely. This is not permission to forfeit earnings, force a refund or send money to an unverified account.
+    This includes an otherwise available balance blocked by bank/account eligibility **before a batch item exists**: retain the entitlement and expose its block reason/action without falsely queueing or paying it. Visibility and notification must not depend on having attempted a transfer.
+  - **Visible timing:** show the next scheduled processing date and timezone, current status, any action required, and Stripe's estimated bank-arrival date when supplied. A blocked item must not display the next run as an unconditional payment promise. Standard bank payouts only; no instant payouts or barber-triggered withdrawals at launch.
+  - **Fees:** QuickTrimr absorbs standard Stripe Connect and payout fees, without an extra deduction from barber earnings or a client surcharge. This extends, rather than reinterprets, `RULE-PAY-11`'s payment-processing fee decision. Reconcile actual provider fees at their billed scope; do not estimate a tariff or apportion a monthly account fee into booking snapshots. Commission/refund snapshots and barber entitlement are unchanged; GST and chargeback-loss allocation are not decided here.
+  - **Provider setup:** `P0-T18` must demonstrate a Connect configuration permitting platform-controlled scheduled bank payouts, separate transfer/payout reconciliation, and platform-borne fees; `P1-T07` applies that configuration to each account. Do not leave an independent automatic payout schedule or on-demand payout control able to bypass this policy. If the actual account configuration cannot support it, stop under the drift protocol rather than silently promise a different schedule. Production queueing, processing and scheduling remain later tickets.
+
+#### Payout cut-off worked examples — RULE-EARN-07
+
+Each example assumes an otherwise eligible, unqueued earning, no dispute/refund hold, a ready Connect account and sufficient settled funds. Times are explicit instants; the scheduled cut-off is not the eventual bank-arrival time. The one-cent row is a specification boundary, not a recommended service price.
+
+| Example | Available at (UTC) | Barber net cents | Next eligible processing cut-off (UTC) | Sydney cut-off |
+|---|---|---|---|---|
+| 1. Before spring daylight saving | 2026-09-27T23:59:59.999Z | 3600 | 2026-09-28T00:00:00.000Z | 2026-09-28 10:00 +10:00 |
+| 2. After spring daylight saving, just before | 2026-10-04T22:59:59.999Z | 3600 | 2026-10-04T23:00:00.000Z | 2026-10-05 10:00 +11:00 |
+| 3. Exactly at the cut-off | 2026-10-04T23:00:00.000Z | 3600 | 2026-10-11T23:00:00.000Z | 2026-10-12 10:00 +11:00 |
+| 4. Just after the cut-off | 2026-10-04T23:00:00.001Z | 3600 | 2026-10-11T23:00:00.000Z | 2026-10-12 10:00 +11:00 |
+| 5. Smallest positive balance | 2026-10-04T22:59:59.999Z | 1 | 2026-10-04T23:00:00.000Z | 2026-10-05 10:00 +11:00 |
+| 6. After autumn daylight saving ends | 2027-04-04T23:59:59.999Z | 3600 | 2027-04-05T00:00:00.000Z | 2027-04-05 10:00 +10:00 |
+
+These rows and the failure policy are specification examples, not evidence of a working scheduler or Stripe integration. Provider constraints and approval rationale are recorded in `docs/decisions/P0-D05.md`.
 
 ### Cancellations
 
@@ -668,7 +693,8 @@ These IDs are cited by tickets but the rule does not exist yet. The decision tic
 
 | Reserved ID | What it will say | Written by |
 |---|---|---|
-| `RULE-EARN-07` | Payout schedule and batch cadence | `P0-D05` |
+
+No reserved business-rule IDs remain. `TBC-WORKFLOW-ENGINE` still gates the scheduling architecture.
 
 ---
 
@@ -882,7 +908,8 @@ These are read from config. **A literal `5`, `12`, `20`, `60` or `2` inside feat
 | `CFG-LATE-CANCEL-WINDOW-HOURS` | `12` | Late-cancellation window for Scheduled bookings (`RULE-CANCEL-02`). |
 | `CFG-ETA-REFRESH-MIN` | `3` | Fixed ETA refresh interval in minutes (`RULE-ETA-04`). |
 | `CFG-ETA-STALE-MIN` | `6` | ETA is stale after two missed refresh intervals (`RULE-ETA-03`). |
-| `CFG-PAYOUT-SCHEDULE` | `TBC-PAYOUT-SCHEDULE` | Payout batch cadence (`RULE-EARN-05`). |
+| `CFG-PAYOUT-SCHEDULE` | `{"frequency":"weekly","weekday":"Monday","time":"10:00","timezone":"Australia/Sydney"}` | Scheduled processing start and strict availability cut-off, local daylight saving; not a bank-arrival promise (`RULE-EARN-07`). Freeze the scheduled instant/config on the batch; late workers do not move it. |
+| `CFG-PAYOUT-MIN-CENTS` | `1` | Integer AUD cents; pay every positive eligible total, with no additional QuickTrimr minimum (`RULE-EARN-07`). |
 | `CFG-CANCEL-REFUND-PCT` | `scheduled: 75; available_now: 50` | Client late-cancellation refund percentage of booked service price; snapshot at request time, round refund up (`RULE-CANCEL-07`). |
 | `CFG-INCONVENIENCE-FEE` | `scheduled: 25; available_now: 50` | Percentage allocation of booked service price, funded entirely by withheld client funds. Must complement the refund percentage; exact cents are service price minus rounded-up refund, not independently rounded. Snapshot at request time; no extra charge or fixed-dollar cap (`RULE-CANCEL-07`). |
 | `CFG-RELIABILITY-WINDOW-DAYS` | `30` | Elapsed-day rolling window; lower boundary excluded, current timestamp included (`RULE-RELY-06`). |
@@ -910,7 +937,7 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-CANCEL-SPLIT` | **RESOLVED → `RULE-CANCEL-07`** — 75% late Scheduled / 50% accepted Available Now; client refund rounded up, confirmed by Andrew on 2026-09-30. | Cancellation, refunds, admin resolution | `P0-D03` |
 | `TBC-INCONVENIENCE-FEE` | **RESOLVED → `RULE-CANCEL-07`** — barber receives all withheld service money; zero cancellation commission; QuickTrimr absorbs retained processing fees. Earning release exception in `RULE-EARN-02`. | Cancellation, earnings, refund maths | `P0-D03` |
 | `TBC-RELIABILITY-THRESHOLDS` | **RESOLVED → `RULE-RELY-06`** — Option A: 30-day window/reset, 60-minute Available Now cooldown, 1/2/3 escalation and admin-gated suspension review from 4; confirmed by Andrew on 2026-10-02. | Reliability engine, barber cancellation, admin | `P0-D04` |
-| `TBC-PAYOUT-SCHEDULE` | How often do payout batches run, on what day, with what minimum balance? | Payout batching and processing | `P0-D05` |
+| `TBC-PAYOUT-SCHEDULE` | **RESOLVED → `RULE-EARN-07`** — Option A: Monday 10:00 Australia/Sydney, strict cut-off, every positive AUD balance, global batch/per-barber processing, next-run retry or action-required hold, visible processing/estimated arrival and QuickTrimr-borne standard Connect/payout fees; confirmed by Andrew on 2026-10-02. | Payout batching and processing | `P0-D05` |
 | `TBC-LOCATION-PRECISION` | **RESOLVED → `RULE-DISCOVERY-05`** | Discovery, map view, search function | `P0-D06` |
 | `TBC-ETA-INTERVAL` | **RESOLVED → `RULE-DISCOVERY-05`** | ETA update function and display | `P0-D06` |
 | `TBC-WORKFLOW-ENGINE` | What runs scheduled and delayed work — Supabase cron, Inngest, Trigger.dev, or another? | Every expiry, auto-completion, prompt and payout run | `P0-D07` |

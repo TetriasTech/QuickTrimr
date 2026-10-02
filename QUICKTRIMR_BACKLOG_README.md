@@ -428,15 +428,17 @@ phase: 0
 priority: High
 jiraKey: TRIMR-6
 dependsOn: [P0-D02]
-affects: [P3-T05, P3-T10, P3-T11, P5-T10]
-knowledgeBase: [RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, CFG-PAYOUT-SCHEDULE]
+affects: [P0-T18, P1-T07, P3-T03, P3-T05, P3-T10, P3-T11, P5-T10, P6-T02]
+knowledgeBase: [RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, CFG-PAYOUT-SCHEDULE, CFG-PAYOUT-MIN-CENTS]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, product, stripe]
 ```
 
 **Context**
 
-`TBC-PAYOUT-SCHEDULE`. `CFG-PAYOUT-SCHEDULE` is listed as "configurable" with no value, and "for example weekly" is not a decision.
+**Decision confirmed by Andrew on 2026-10-02: Option A**, recorded in `RULE-EARN-07`. Process weekly on Monday at 10:00 am Australia/Sydney, following daylight saving, with a strict before-run availability cut-off. Pay every positive eligible AUD balance; one global batch has independently processed per-barber items. Confirmed temporary failures retry next run; invalid bank details/restrictions hold for verified correction with barber/admin notification; unknown outcomes reconcile before retry. Show processing timing, status and an estimated bank-arrival date when known, never promise bank arrival on Monday.
+
+The approval also covers QuickTrimr absorbing standard Connect/payout fees and correcting the transfer-versus-bank-payout mismatch in `RULE-EARN-04`/`RULE-EARN-05`. `TBC-PAYOUT-SCHEDULE` is resolved in place. Provider account support must be demonstrated in `P0-T18`; this decision does not claim that Stripe is configured or a payout system exists.
 
 This is the number barbers will ask about before they sign up, and `RULE-EARN-04` exists because the gap between "available" and "in my bank" is the single most likely support complaint on the platform. Deciding the cadence is also deciding what the barber-facing copy is allowed to promise.
 
@@ -459,10 +461,13 @@ Decide, and record in `KB §9` as `RULE-EARN-07`, with a value for `CFG-PAYOUT-S
 - [ ] The next-payout-date question is answered, because `P3-T05` renders it.
 - [ ] `TBC-PAYOUT-SCHEDULE` in `KB §14` rewritten as `RESOLVED → RULE-EARN-07`. Not deleted.
 - [ ] `RULE-EARN-07` removed from `KB §9`'s *Pending rules* table.
+- [ ] Cut-off equality, daylight saving, delayed runs, positive/zero balances, provider holds, fee absorption and transfer-versus-bank-payout states are explicit and reflected in affected tickets.
+
+**Tests** — specification regression checks parse the concrete schedule/minimum config, TBC pointer and real rule; validate every UTC/Sydney cut-off example, including strict equality, both daylight-saving offsets and one cent; check zero is not paid and delayed workers retain the scheduled cut-off; check downstream failure/reconciliation, unchanged barber net, next-processing versus estimated-arrival copy and all-items-successful batch completion. These are decision-document and test-only arithmetic checks, not a production scheduler, Stripe integration, database/RLS or concurrency proof.
 
 **Out of scope** — building batching (`P3-T10`) or processing (`P3-T11`); the workflow engine that triggers the run (`P0-D07`).
 
-**Sync notes** — `P3-T10` and `P3-T11` implement this, `P3-T05` displays it to the barber, `P5-T10` gives admin visibility. Changing the cadence changes what the app told a barber to expect.
+**Sync notes** — `P3-T10` and `P3-T11` implement this, `P3-T05` displays it to the barber, `P5-T10` gives admin visibility, and `P6-T02` delivers its notification events. `P0-T18`/`P1-T07` must establish compatible payout controls/fee handling; `P3-T03` routes connected-account payout events. See `docs/decisions/P0-D05.md` for the traceability review and unchanged consumers. Generated indexes are left for CI on main.
 
 ---
 
@@ -1568,9 +1573,9 @@ owner: Tony
 phase: 0
 priority: Highest
 jiraKey: TRIMR-27
-dependsOn: [P0-T03]
+dependsOn: [P0-D05, P0-T03]
 affects: [P1-T07, P1-T09, P2-T04, P3-T01, P3-T03, P3-T11, P4-T05, P6-T09]
-knowledgeBase: [ADR-006, ADR-008, RULE-PAY-10, RULE-ETA-02, RULE-ONBOARD-04]
+knowledgeBase: [ADR-006, ADR-008, RULE-PAY-10, RULE-ETA-02, RULE-ONBOARD-04, RULE-EARN-05, RULE-EARN-07]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation, stripe, maps, security]
 ```
@@ -1585,7 +1590,7 @@ These have lead time. Stripe Connect requires platform settings and a completed 
 
 **Stripe test mode:**
 
-- Enable Connect and choose the account type, informed by `ADR-006` and `RULE-EARN-05` — QuickTrimr captures payment and later pays barbers from its balance, which constrains the choice.
+- Enable Connect and choose the account configuration, informed by `ADR-006`, `RULE-EARN-05` and `RULE-EARN-07`. Demonstrate platform-controlled bank payouts compatible with the Monday run, platform-borne standard Connect/payout fees, separate transfer/payout identities and connected-account webhook delivery. Independent automatic payouts or on-demand controls must not bypass the approved policy. Record applicable settlement/minimum/holding constraints and secure bank-detail correction; stop if the actual configuration cannot support the policy, rather than silently changing it.
 - Confirm manual-capture PaymentIntents are available, since `ADR-006` depends on them.
 - Configure the Connect onboarding branding and return/refresh URLs.
 - Create a webhook endpoint for local development and note the signing secret handling (`RULE-PAY-07`).
@@ -1603,6 +1608,7 @@ Record every variable name in `P0-T03`'s `.env.example`. **No key value is commi
 **Acceptance criteria**
 
 - [ ] Stripe test-mode account exists with Connect enabled and the account type recorded with its reasoning.
+- [ ] Test-mode evidence demonstrates the `RULE-EARN-07` payout controls and fee responsibility, distinguishes transfer funding from bank payout, and records applicable provider limits plus the bank-detail correction path without committing secrets or bank details.
 - [ ] A manual-capture PaymentIntent can be created and captured in test mode, demonstrated.
 - [ ] The **authorisation hold period is recorded** in `docs/architecture/` and checked against the configured pending-request windows. Any mismatch is raised before payment integration; it is not solved by changing the appointment horizon.
 - [ ] Connect onboarding return and refresh URLs are configured.
@@ -2147,9 +2153,9 @@ owner: Tony
 phase: 1
 priority: Highest
 jiraKey: null
-dependsOn: [P0-T03, P0-T18, P1-T03]
+dependsOn: [P0-D05, P0-T03, P0-T18, P1-T03]
 affects: [P1-T08, P1-T09, P3-T11, P5-T03]
-knowledgeBase: [ADR-002, ADR-013, RULE-ONBOARD-04, RULE-PAY-10, ENUM-VERIFICATION-STATUS]
+knowledgeBase: [ADR-002, ADR-013, RULE-ONBOARD-04, RULE-PAY-10, RULE-EARN-07, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, backend, stripe, security]
 ```
@@ -2167,6 +2173,8 @@ A barber cannot be paid without a Connect account, and `RULE-ONBOARD-04` says th
 Authenticated barber only. Client and admin roles rejected.
 
 If the barber has no `stripe_account_id`, create the Connect account of the type chosen in `P0-T18` and **store the id before returning**. If they have one, reuse it.
+
+Apply and verify `P0-T18`'s payout-control and fee configuration for each account (`RULE-EARN-07`), including reused accounts; no default automatic schedule or on-demand control may bypass the approved run. This configures the account, not the Phase 3 payout worker. Bank details remain in Stripe's secure correction flow, never a QuickTrimr log or client-supplied payout destination.
 
 Create an account link with the return and refresh URLs from `P0-T18`, and return the URL. Account links are short-lived, so this is called each time onboarding is opened or resumed — which is exactly why account creation must not repeat.
 
@@ -2201,6 +2209,7 @@ Audit log on account creation and on each link issue (`ADR-013`).
 **Acceptance criteria**
 
 - [ ] An authenticated barber receives a working hosted onboarding URL.
+- [ ] New and reused accounts match the verified `RULE-EARN-07` payout-control and fee configuration, demonstrated in Stripe test mode; unsupported configuration is surfaced, never silently accepted.
 - [ ] **A second call reuses the existing Connect account** — proven by asserting one account id in Stripe after repeated calls.
 - [ ] The account id is persisted before the function returns, so a crash after creation does not orphan an account.
 - [ ] **Concurrent first calls create exactly one Connect account** — tested with real parallel requests.
@@ -3761,9 +3770,9 @@ owner: Tony
 phase: 3
 priority: Highest
 jiraKey: null
-dependsOn: [P0-T18, P1-T09, P3-T01]
+dependsOn: [P0-D05, P0-T18, P1-T09, P3-T01]
 affects: [P3-T04, P3-T07, P3-T11, P5-T09]
-knowledgeBase: [ADR-013, RULE-PAY-06, RULE-PAY-07, RULE-PAY-10, ENUM-PAYMENT-STATUS]
+knowledgeBase: [ADR-013, RULE-PAY-06, RULE-PAY-07, RULE-PAY-10, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, ENUM-PAYMENT-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -3780,6 +3789,8 @@ This **extends the handler from `P1-T09`** rather than creating a second endpoin
 
 Extend the `P1-T09` handler to route payment events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`, `charge.refunded`, `charge.dispute.created`, and the Connect payout events `P3-T11` needs.
 
+For connected-account bank payouts, route `payout.created`, `payout.updated`, `payout.paid` and `payout.failed` with verified account context and the persisted payout-to-item mapping. Reconcile cancellation from the provider's current payout state as well. Transfer success is not bank payment. `P3-T11` integrates the payout projection/reconciliation handlers here; unknown IDs or account mismatches must never credit an earning. Duplicate/out-of-order events, including a bank failure after `paid`, reconcile current provider state without overwriting immutable audit history.
+
 Signature verification before any parsing (`RULE-PAY-07`). An unverified body is not data and is not logged as though it were.
 
 Deduplicate on the Stripe event id, persisted. A replayed event is a no-op.
@@ -3795,6 +3806,7 @@ Safe logging: event type and id only (`RULE-PAY-10`).
 **Acceptance criteria**
 
 - [ ] Payment, refund, dispute and payout events are routed to handlers.
+- [ ] Connected-account payout routing preserves verified account/payout identity, rejects mismatched mappings, and supports late bank failure plus duplicate/out-of-order reconciliation; it never treats a transfer event as bank payment.
 - [ ] **An invalid or missing signature returns 400, parses nothing, and writes nothing.**
 - [ ] **A replayed event id produces exactly one effect** — verified by delivering the same event three times and asserting identical state.
 - [ ] Handlers are order-independent — a `succeeded` arriving after a local capture reconciles instead of double-applying.
@@ -3804,7 +3816,7 @@ Safe logging: event type and id only (`RULE-PAY-10`).
 - [ ] Events that change state write audit logs.
 - [ ] Handler failures are logged with enough detail to replay, without leaking data.
 
-**Tests** — tampered signature rejected; same event delivered three times producing one effect; out-of-order delivery reconciling; unknown event type acknowledged; a timing assertion on acknowledgement latency.
+**Tests** — tampered signature rejected; same event delivered three times producing one effect; out-of-order delivery reconciling; unknown event type acknowledged; a timing assertion on acknowledgement latency; connected-account identity/mapping mismatches rejected. `P3-T11` supplies live transfer-versus-payout and paid-then-failed integration cases, not a second endpoint.
 
 **Out of scope** — Connect account events (`P1-T09`); refund initiation (`P3-T07`); payout processing (`P3-T11`).
 
@@ -3897,7 +3909,7 @@ owner: Tony
 phase: 3
 priority: Medium
 jiraKey: null
-dependsOn: [P0-D05, P0-T14, P1-T08, P3-T04]
+dependsOn: [P0-D05, P0-T14, P1-T08, P3-T04, P3-T11]
 affects: []
 knowledgeBase: [RULE-EARN-02, RULE-EARN-04, RULE-EARN-05, RULE-EARN-07, RULE-CANCEL-07, RULE-COPY-01, ENUM-EARNING-STATUS]
 blockedByTbc: []
@@ -3908,13 +3920,13 @@ labels: [quicktrimr, phase-3, mobile]
 
 **`RULE-EARN-04` is the whole point of this screen.** "Available" is a QuickTrimr balance, not money in a bank account, and the gap between them is the most likely support complaint on the platform. A barber who reads "available: $340" and checks their bank on Tuesday concludes QuickTrimr has not paid them.
 
-`RULE-COPY-01` binds the copy here. This screen must state, without the barber having to look for it, when money actually arrives — which is why it depends on `P0-D05`.
+`RULE-COPY-01` binds the copy here. This screen distinguishes when processing is scheduled from the estimated bank-arrival date, without promising arrival before Stripe confirms it. `P0-D05` defines the policy; `P3-T11` provides the live payout projection.
 
 **Scope**
 
 An earnings screen in the barber journey: pending, available, queued for payout, and paid-out totals, plus a list of recent earnings with per-booking detail.
 
-**Explicit copy** distinguishing a QuickTrimr balance from a bank balance, and the **next payout date** from `RULE-EARN-07`.
+**Explicit copy** distinguishing a QuickTrimr balance from a bank balance, and the **next scheduled processing date**, labelled with Australia/Sydney timezone, from `RULE-EARN-07`. Show Stripe's estimated bank-arrival date only when known and label it as an estimate. Show payout status, retry eligibility, action-required holds and corrective guidance; a blocked item must not promise payment next Monday. Transfer success alone never renders as bank-paid. Standard Connect/payout fees do not reduce the displayed barber entitlement.
 
 Each earning links to its booking, showing gross, commission and net — a barber who cannot see the commission on a specific job will ask, and the answer should be on the screen.
 
@@ -3930,7 +3942,7 @@ RLS: a barber sees only their own earnings.
 
 - [ ] The barber sees pending, available, queued and paid-out totals, and a recent earnings list.
 - [ ] **The screen states plainly that "available" is a QuickTrimr balance, not money in the bank** (`RULE-EARN-04`, `RULE-COPY-01`).
-- [ ] **The next payout date is shown** (`RULE-EARN-07`).
+- [ ] **The next scheduled processing date and timezone are shown**, separately from Stripe's estimated bank-arrival date when known (`RULE-EARN-07`). Unknown estimates, bank-holiday delays, action-required holds and late bank failures render truthfully, without hiding the queued entitlement or promising payment on the next run.
 - [ ] Each earning shows gross, commission and net for its booking.
 - [ ] Amounts are formatted from integer cents by a single formatter; no ad-hoc formatting.
 - [ ] **Barber A cannot see barber B's earnings** — verified at the API.
@@ -3938,7 +3950,7 @@ RLS: a barber sees only their own earnings.
 - [ ] Loading, error and empty states exist; the empty state explains when the first earning appears.
 - [ ] No copy implies money has reached the barber's bank when it has not.
 
-**Tests** — cross-barber denial at the API; every earning status rendering; total arithmetic matching the sum of the listed earnings; a copy assertion that the balance disclaimer is present.
+**Tests** — cross-barber denial at the API; every earning status rendering; total arithmetic matching the sum of the listed earnings; copy assertions for the balance disclaimer, timezone, processing versus estimated arrival, unknown estimate and blocked/retry state; a successful transfer with a pending bank payout never shows paid-out; late bank failure corrects the display; standard Connect/payout fees never reduce barber net.
 
 **Out of scope** — payout batching (`P3-T10`, `P3-T11`); manual withdrawal, which does not exist; admin views (`P5-T09`).
 
@@ -4240,7 +4252,7 @@ priority: Medium
 jiraKey: null
 dependsOn: [P0-D02, P0-D03, P0-D05, P3-T04, P3-T07]
 affects: [P3-T11, P5-T10]
-knowledgeBase: [ADR-009, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-CANCEL-07, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
+knowledgeBase: [ADR-009, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-CANCEL-07, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE, CFG-PAYOUT-MIN-CENTS]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, database]
 ```
@@ -4253,15 +4265,21 @@ Grouping available earnings into a batch, and the last safe point before money l
 
 `queue-payout-batch` creating a batch from earnings that are `available` and satisfy `RULE-EARN-07`'s cut-off and minimum from `P0-D05`.
 
+Read the weekly Monday 10:00 Australia/Sydney schedule and one-cent positive-total minimum from config. Persist the scheduled period/cut-off and config used; use the scheduled instant, not worker start time. Only the current server-recorded availability period beginning strictly before that instant qualifies. At/after-boundary earnings wait for the next run. Produce one global batch with per-barber totals; zero totals produce no money call. A delayed job retains the same cut-off, and daylight saving changes the UTC instant, not the local hour.
+
 Earnings move `available → queued_for_payout` in the same transaction that adds them to the batch. A batch item and an earning status that can disagree is a reconciliation problem later.
 
 A **database constraint** preventing an earning from being in two non-terminal batches. Not application logic.
+
+Also protect the durable payout obligation across failed/cancelled batch statuses: retries resume the original item, not a new claim on its earnings. Retain distinct transfer, payout and attempt identities for `P3-T11`, including confirmed late bank failures. A terminal status alone must never make an earning eligible for duplicate allocation.
 
 Batch statuses through `ENUM-PAYOUT-STATUS`, with per-barber totals.
 
 Idempotent batch creation — running the job twice for one period produces one batch.
 
 Only eligible `available` earnings with no open dispute may be queued. Include the adjusted inconvenience earning released after cancellation/refund success (`RULE-EARN-02`, `RULE-CANCEL-07`) even though its booking is cancelled. Do not require fake completion, include reversed full-refund earnings, or queue an amount while its cancellation refund is pending/failed. Existing eligible admin-resolution outcomes remain supported. Apply `RULE-EARN-07`'s normal cut-off and minimum; this exception does not decide payout cadence.
+
+If bank/account eligibility prevents queueing an otherwise available balance, retain that balance without a fake queued/paid state and persist the block reason/action for `P3-T11`'s notification and status projections. An unqueued account hold must not disappear merely because no batch item exists.
 
 Audit log per batch and per item.
 
@@ -4271,13 +4289,15 @@ Audit log per batch and per item.
 - [ ] Earnings move to `queued_for_payout` in the same transaction as batch item creation.
 - [ ] **A database constraint prevents an earning being in two non-terminal batches** — proven by attempting it directly in SQL.
 - [ ] **Running the batch job twice for one period produces one batch** — real parallel runs.
-- [ ] The cut-off and minimum balance follow `RULE-EARN-07`; no literal appears in the logic.
+- [ ] The cut-off and minimum balance follow `RULE-EARN-07` and both config entries; exact equality, one millisecond either side, daylight saving in both directions, delayed execution, one cent and zero are tested. No literal appears in feature logic.
+- [ ] A retry/late bank failure cannot create a second allocation of the original obligation even when a batch/item is marked failed or cancelled.
 - [ ] An earning attached to a disputed booking is never queued.
+- [ ] An otherwise available balance blocked before queueing remains visible with its bank/account reason and next action, without creating a fake queued item or issuing a payment.
 - [ ] An eligible cancellation inconvenience earning is queued once without completing the booking; full-refund reversals and pending/failed cancellation refunds are excluded, tested through the `P3-T07` adjustment path.
 - [ ] Batch totals equal the sum of their items exactly, in integer cents.
 - [ ] Audit logs are written per batch and per item.
 
-**Tests** — direct SQL attempt to double-queue an earning rejected by the constraint; parallel batch runs producing one batch; totals reconciling against items; a disputed booking's earning excluded.
+**Tests** — direct SQL attempt to double-queue an earning rejected by the constraint; parallel batch runs producing one batch; totals reconciling against items; a disputed booking's earning excluded; strict cut-off/DST/delayed-job/minimum boundaries; failed/cancelled original items cannot be allocated again. Actual scheduling/recovery is integrated by `P3-T11` using `P0-D07`, not a mobile timer.
 
 **Out of scope** — processing and transferring (`P3-T11`); admin views (`P5-T10`).
 
@@ -4296,49 +4316,55 @@ phase: 3
 priority: Medium
 jiraKey: null
 dependsOn: [P0-D05, P0-D07, P0-T18, P1-T07, P3-T03, P3-T10]
-affects: [P5-T10]
-knowledgeBase: [ADR-011, ADR-013, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-PAY-04, RULE-PAY-09, RULE-ONBOARD-04, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
+affects: [P3-T05, P5-T10, P6-T02]
+knowledgeBase: [ADR-011, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-PAY-04, RULE-PAY-06, RULE-PAY-09, RULE-ONBOARD-04, RULE-NOTIF-01, RULE-NOTIF-03, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
 
 **Context**
 
-**The irreversible one.** A Stripe transfer to a barber's bank account cannot be recalled. Every other mistake in this backlog can be corrected; this one is a conversation about getting money back from someone who has spent it.
+**The external money boundary.** A Stripe transfer funds a connected Stripe balance; a separate bank payout sends funds to the barber's bank. Transfer success is not proof of bank payment, and bank funds cannot be assumed recoverable. Tracking both stages is necessary to avoid double funding, false paid-out states and misleading copy.
 
 Everything here is idempotent on a server-derived key, no lock is held across a Stripe call, and a partial failure leaves a state that can be resumed without re-paying anyone who was already paid.
 
 **Scope**
 
-`process-payout-batch` on the engine from `P0-D07`, per `RULE-EARN-07`.
+`process-payout-batch` on the engine from `P0-D07`, per `RULE-EARN-07`. Own the server-side weekly trigger, recovery of dropped/late runs and integration with `P3-T10`; use the persisted scheduled cut-off, never a client clock or fixed UTC offset.
 
-Per barber in the batch: verify the Connect account still satisfies `RULE-ONBOARD-04` — an account restricted since the batch was queued must be skipped, not attempted — then transfer with a **deterministic idempotency key derived from the batch item id**.
+Per barber, recheck earning/refund/dispute eligibility and `RULE-ONBOARD-04` before movement. Use `P0-T18`/`P1-T07`'s verified payout controls. Persist a **deterministic idempotency key derived from the batch item id**, operation and durable attempt identity for each external call. Persist/reconcile transfer and bank-payout IDs separately, including crashes between provider success and local persistence. A weekly retry cannot rely on Stripe retaining a key forever; reconcile unknown outcomes first. If already funded, never transfer those funds again when retrying the bank payout. A replacement payout requires confirmed failure/cancellation and reconciled returned funds; reserve/check the obligation under concurrency so two replacements cannot win.
 
-Success moves the earning to `paid_out` and the item to `paid`. Failure marks the item `failed` with the reason, leaves the earning `queued_for_payout`, and handles it per `P0-D05` — retry next run or hold for admin.
+Transfer success and payout creation leave earnings `queued_for_payout`; only Stripe-confirmed bank-payout `paid` moves mapped earnings to `paid_out` and the item to `paid`. Verified late bank failure corrects the projection back to queued/failed with new audit records, never erased history. Recheck current provider state for stale/out-of-order events. QuickTrimr absorbs standard Connect/payout fees; reconcile actual fees separately without reducing snapshotted barber entitlement.
 
-**Per-item, not per-batch, transactionality.** One barber's failure must not roll back or re-attempt another's completed transfer.
+Confirmed temporary failures, including insufficient settled funds, retry the original obligation next weekly run. Invalid bank details/restricted accounts enter an action-required hold, with reason and barber/admin notification; no attempted transfer/payout to an ineligible account. Resume only after verified correction, reconciled funds and the next run. Unknown results stay under reconciliation, not blind retry. Persist held age, next action, retry eligibility and estimated arrival when provided. Alert on holds/uncertainty and expose provider holding deadlines for operational escalation before the limit; no indefinite silent carry or forfeiture.
 
-Batch status derived from its items: `paid` only when every item is terminal.
+**Per-item, not per-batch, transactionality.** One barber's failure must not roll back or re-attempt another's completed transfer or payout. No database lock spans either external call. A batch is `paid` only when all items are successfully paid, not merely terminal. Failure/cancellation and later corrections must remain visible.
 
-`P3-T03` handles the asynchronous payout events that confirm or reverse a transfer.
+Integrate the account-scoped asynchronous payout routes in `P3-T03`, retaining the payout-to-item/earning mapping and durable deduplication. Produce durable payout/balance-change notification events for the barber and action-required/uncertainty alerts for admin; `P6-T02` integrates shared delivery without making financial success depend on push success. Expose the live own-barber projection to `P3-T05` and admin-only detail to `P5-T10`, with API-level denial tests and no bank details or secrets. No separate integration ticket.
 
-Audit log per item, with the Stripe transfer id.
+Include `P3-T10`'s unqueued bank/account holds in those alerts and projections, not only attempted payments. After correction, queue still-available earnings under the normal next-run cut-off; only already-queued obligations resume an existing item. Test that an account blocked before its first batch is visible/notified and cannot silently strand an available balance.
+
+Append-only audit log per item/attempt and correction, recording safe transfer/payout references and failure reasons.
 
 **Acceptance criteria**
 
-- [ ] A queued batch is processed, transferring per barber.
-- [ ] **The idempotency key is derived from the batch item id** server-side.
+- [ ] The weekly trigger and recovery process the correct frozen cut-off, including DST/holidays and dropped/late runs, with no duplicate batch or client-side timer.
+- [ ] A queued batch is processed per barber through separate funding-transfer and bank-payout stages, subject to eligible earnings, account readiness and settled funds.
+- [ ] **The idempotency key is derived from the batch item id**, operation and durable attempt identity server-side; unknown outcomes and retries after key retention expiry reconcile before another money call.
 - [ ] **Re-running a partially processed batch does not re-pay an already-paid item** — proven against the Stripe test dashboard.
 - [ ] **Parallel runs of the same batch produce one transfer per item** — real concurrency, repeated.
+- [ ] Concurrent bank-payout attempts and replacements produce only one successful payment per obligation; bank-payout failure never repeats a successful funding transfer. Prove against Stripe test mode, including crash-after-success and late paid-then-failed events.
 - [ ] A barber whose Connect account no longer satisfies `RULE-ONBOARD-04` is skipped, with the item marked and the reason recorded — no transfer is attempted.
 - [ ] A failed item does not roll back or re-attempt a succeeded item in the same batch.
-- [ ] Failure handling follows `P0-D05`.
-- [ ] **No database lock is held across a Stripe transfer.**
-- [ ] Batch status reaches `paid` only when every item is terminal.
-- [ ] Audit logs record every item with its Stripe transfer id.
+- [ ] Failure handling follows `RULE-EARN-07`: next-run temporary retry, action-required hold until verified correction, and reconciliation of unknown outcomes; held funds/age/deadline/next action and barber/admin notification events remain visible.
+- [ ] **No database lock is held across a Stripe transfer or bank-payout call.**
+- [ ] Earnings become `paid_out` only on their mapped bank payout's confirmed `paid` state; late failures correct projections with append-only evidence. Batch status reaches `paid` only when all items are successfully paid.
+- [ ] Standard Connect/payout fees never reduce barber entitlement; actual provider costs are reconciled separately from booking snapshots.
+- [ ] Audit logs retain every item/attempt/correction with separate Stripe transfer and payout references, without bank details or secrets.
 - [ ] Payout events from `P3-T03` reconcile the recorded state.
+- [ ] Live barber/admin projections enforce role and cross-barber denial at the API, and notification failure never changes financial state.
 
-**Tests** — a deliberately interrupted batch resumed, asserted against Stripe as one transfer per item; parallel processing runs; a restricted account skipped rather than attempted; one item failing while others succeed; no lock held across the external call.
+**Tests** — a deliberately interrupted batch resumed, asserted against Stripe as one transfer and one successful bank payout per obligation; repeated parallel runs; crash after either external success; retry beyond idempotency retention; confirmed failed payout replacement without re-funding; paid-then-failed/out-of-order events; restricted/invalid account hold and corrected-next-run release; insufficient settled funds; newly opened dispute/refund hold; mixed paid/failed batch never labelled paid; fee absorption; scheduled DST/holiday/late/dropped-run behavior; API denials; durable notifications and send failure; no lock across either external call.
 
 **Out of scope** — batch creation (`P3-T10`); admin payout views (`P5-T10`); live-mode payouts (`P6-T11`).
 
@@ -5921,9 +5947,11 @@ Where a barber's "I haven't been paid" is answered. A **failed** payout item is 
 
 **Scope**
 
-A payout batch list with status, date range and totals, and a detail view of items per barber with amount, status and Stripe transfer reference.
+A payout batch list with scheduled cut-off, status, date range and totals, and a detail view of items per barber with amount, status and separate Stripe transfer and bank-payout references. Funding success is not bank payment; show retries/corrections without erasing history, estimated arrival when known, held age, provider holding deadline, next action and retry eligibility. Standard Connect/payout costs are separate platform costs, not a reduction of barber entitlement.
 
-**A failed-items view across all batches**, because failures are the actionable population and they are otherwise buried inside individual batches.
+**A failed-items view across all batches**, including action-required and uncertain-outcome items, because these must not be silently stranded. Surface the alerts/operational escalation information produced by `P3-T11`; no hardcoded invented retry deadline or automatic forfeiture.
+
+Include unqueued bank/account holds in the actionable population, linked to the affected earnings without inventing a batch item or transfer reference. The view must work for an account whose first payout was blocked before queueing.
 
 Each item links to its earnings and their bookings.
 
@@ -5931,13 +5959,13 @@ Batch totals reconciling against item totals, shown together so a discrepancy is
 
 Read-only. Retry behaviour follows `P0-D05` and is owned by `P3-T11`; no manual transfer is triggered from this screen.
 
-No bank account details or Stripe secrets — the transfer reference is enough.
+No bank account details or Stripe secrets — safe transfer/payout references and corrective guidance are enough. Bank-detail correction stays in the secure Stripe flow; this screen never edits a payout destination.
 
 **Acceptance criteria**
 
 - [ ] An admin can list payout batches with status, date and totals, paginated server-side.
-- [ ] Batch detail shows items per barber with amount, status and Stripe transfer reference.
-- [ ] **A failed-items view exists across all batches.**
+- [ ] Batch detail distinguishes transfer funding from bank payout, shows both references and estimated arrival when known, and never labels a mixed paid/failed batch as paid.
+- [ ] **A failed-items view exists across all batches**, including holds and unknown outcomes with age, provider deadline, next action and retry eligibility; a late failure remains visible with its correction history.
 - [ ] Items link to their earnings and bookings.
 - [ ] **Batch totals and the sum of item totals are shown together**, so a discrepancy is visible.
 - [ ] The view is read-only; no manual transfer can be triggered.
@@ -5945,7 +5973,7 @@ No bank account details or Stripe secrets — the transfer reference is enough.
 - [ ] A non-admin receives no payout data in the response body.
 - [ ] Loading, error and empty states exist.
 
-**Tests** — non-admin denial on the raw body; totals reconciling against items; the failed-items view returning seeded failures; raw response asserted for absence of bank details.
+**Tests** — non-admin denial on the raw body; totals reconciling against items without fee deductions from barber net; failed-items view returning failed/held/uncertain/late-failure cases; transfer success plus pending bank payout not shown as paid; mixed-success batch; age/deadline/next-action display; no retry/destination-edit controls; raw response asserted for absence of bank details.
 
 **Out of scope** — triggering payouts (`P3-T11`); accounting exports.
 
@@ -6198,9 +6226,9 @@ owner: Andrew
 phase: 6
 priority: High
 jiraKey: null
-dependsOn: [P0-D07, P2-T08, P2-T12, P3-T06, P4-T11, P6-T01]
+dependsOn: [P0-D05, P0-D07, P2-T08, P2-T12, P3-T06, P3-T11, P4-T11, P6-T01]
 affects: []
-knowledgeBase: [ADR-011, RULE-NOTIF-01, RULE-NOTIF-02, RULE-NOTIF-03, RULE-NOTIF-04, RULE-COPY-01]
+knowledgeBase: [ADR-011, RULE-NOTIF-01, RULE-NOTIF-02, RULE-NOTIF-03, RULE-NOTIF-04, RULE-COPY-01, RULE-EARN-04, RULE-EARN-07]
 blockedByTbc: []
 labels: [quicktrimr, phase-6, backend, notifications]
 ```
@@ -6217,6 +6245,8 @@ Notifications carry QuickTrimr's state changes to people who are not looking at 
 
 A shared notification helper used by every triggering ticket, covering every event in `RULE-NOTIF-01`.
 
+Integrate `P3-T11`'s durable payout/balance-change events and action-required/uncertain-outcome alerts for barber/admin (`RULE-EARN-07`). Payment success means bank-payout confirmation, not transfer funding. Processing dates and arrival estimates are labelled distinctly; holds require corrective guidance, not an unconditional next-run promise. Do not add bank details to payloads, and keep the in-app/admin state available when push is denied or fails.
+
 Payloads carrying an identifier and minimal display text, with detail fetched in-app on open.
 
 **Sends are fire-and-forget relative to the state change** — the transaction commits, then the notification is dispatched. A send failure is logged, never rolled back.
@@ -6230,6 +6260,7 @@ Copy compliant with `RULE-COPY-01` — nothing implying a charge that is only a 
 **Acceptance criteria**
 
 - [ ] Every event in `RULE-NOTIF-01` has a notification.
+- [ ] Payout holds/uncertainty notify the appropriate barber/admin, deduplicate under retries and link to persistent status/corrective guidance; transfer success is never announced as bank payment.
 - [ ] **No payload contains an address, a phone number, or an amount the recipient is not party to** (`RULE-NOTIF-02`) — asserted per notification type.
 - [ ] **A send failure does not block or reverse the state change**, and is logged.
 - [ ] Notification records are stored with their outcome.

@@ -407,3 +407,162 @@ test('P0-D04 keeps correction history, existing bookings and earnings intact', (
   assert.match(admin, /correction must refer to its original event/);
   assert.match(admin, /configured current offence threshold plus explicit admin approval/);
 });
+
+const payoutPolicy = section(kb, '- `RULE-EARN-04` —', '### Cancellations');
+const payoutSchedule = JSON.parse(configValue('CFG-PAYOUT-SCHEDULE'));
+const payoutMinimum = BigInt(configValue('CFG-PAYOUT-MIN-CENTS'));
+const payoutDecision = section(backlog, '#### P0-D05 —', '#### P0-D06 —');
+const payoutQueue = section(backlog, '#### P3-T10 —', '#### P3-T11 —');
+const payoutProcessor = section(backlog, '#### P3-T11 —', '#### P3-T12 —');
+const payoutScreen = section(backlog, '#### P3-T05 —', '#### P3-T06 —');
+const payoutAdmin = section(backlog, '#### P5-T10 —', '#### P5-T11 —');
+
+test('P0-D05 records the approved schedule, positive minimum and human approval', () => {
+  assert.deepEqual(payoutSchedule, {
+    frequency: 'weekly', weekday: 'Monday', time: '10:00', timezone: 'Australia/Sydney',
+  });
+  assert.equal(payoutMinimum, 1n);
+  assert.match(payoutPolicy, /Andrew confirmed Option A for `P0-D05` on 2026-10-02/);
+  assert.match(payoutPolicy, /One global batch per scheduled period contains per-barber items/);
+  assert.match(payoutDecision, /\*\*Tests\*\*/);
+  assert.match(payoutDecision, /CFG-PAYOUT-MIN-CENTS/);
+});
+
+test('P0-D05 resolves the TBC in place and removes both reserved markers', () => {
+  const rows = kb.split('\n').filter((line) => line.startsWith('| `TBC-PAYOUT-SCHEDULE` |'));
+  assert.equal(rows.length, 1);
+  assert.match(rows[0], /RESOLVED → `RULE-EARN-07`/);
+  assert.doesNotMatch(section(kb, '### Pending rules', '## 10.'), /RULE-EARN-07/);
+  assert.doesNotMatch(kb, /`RULE-EARN-07` \*\(reserved/);
+});
+
+const payoutTimeFormatter = new Intl.DateTimeFormat('en-AU', {
+  timeZone: payoutSchedule.timezone, weekday: 'long', year: 'numeric', month: '2-digit',
+  day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'longOffset',
+});
+function payoutTimeParts(timestamp) {
+  return Object.fromEntries(payoutTimeFormatter.formatToParts(timestamp).map(({ type, value }) => [type, value]));
+}
+
+// Test-only oracle over these Sydney hourly-aligned fixtures. This is not a scheduler:
+// no runtime exports, catch-up engine, persistence, eligible-earning query or Stripe calls.
+function nextExamplePayoutCutoff(availableAt) {
+  const hourMs = 60 * 60 * 1000;
+  const availableMs = Date.parse(availableAt);
+  for (let candidate = Math.floor(availableMs / hourMs) * hourMs;
+    candidate <= availableMs + 8 * 24 * hourMs; candidate += hourMs) {
+    const parts = payoutTimeParts(candidate);
+    if (candidate > availableMs && parts.weekday === payoutSchedule.weekday
+      && `${parts.hour}:${parts.minute}` === payoutSchedule.time) return candidate;
+  }
+  assert.fail('No cut-off found within the example horizon');
+}
+
+const payoutExamples = payoutPolicy.split('\n').filter((line) => /^\| \d+\./.test(line));
+test('P0-D05 retains all six cut-off examples including daylight saving and one cent', () => {
+  assert.equal(payoutExamples.length, 6);
+});
+for (const row of payoutExamples) {
+  const cells = row.split('|').slice(1, -1).map((cell) => cell.trim());
+  const [label, availableAt, net, cutoff, local] = cells;
+  test(`P0-D05 cut-off example ${label}`, () => {
+    assert.equal(cells.length, 5);
+    assert.match(net, /^\d+$/);
+    assert.ok(BigInt(net) >= payoutMinimum);
+    assert.equal(nextExamplePayoutCutoff(availableAt), Date.parse(cutoff));
+    const parts = payoutTimeParts(Date.parse(cutoff));
+    assert.equal(parts.weekday, payoutSchedule.weekday);
+    assert.equal(`${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute} ${parts.timeZoneName.replace('GMT', '')}`, local);
+  });
+}
+
+test('P0-D05 strict cut-off excludes equality and delayed workers do not widen it', () => {
+  const scheduled = Date.parse('2026-10-04T23:00:00Z');
+  const next = Date.parse('2026-10-11T23:00:00Z');
+  assert.equal(nextExamplePayoutCutoff(new Date(scheduled - 1).toISOString()), scheduled);
+  assert.equal(nextExamplePayoutCutoff(new Date(scheduled).toISOString()), next);
+  assert.equal(nextExamplePayoutCutoff(new Date(scheduled + 1).toISOString()), next);
+  assert.match(payoutPolicy, /does not widen the cut-off to the worker's actual start time/);
+  assert.match(payoutQueue, /use the scheduled instant, not worker start time/);
+  assert.match(payoutProcessor, /recovery of dropped\/late runs/);
+});
+
+test('P0-D05 pays one cent but never zero and does not deduct Connect fees', () => {
+  assert.equal(0n >= payoutMinimum, false);
+  assert.equal(1n >= payoutMinimum, true);
+  assert.match(payoutPolicy, /Zero produces no payment/);
+  assert.match(payoutPolicy, /no positive balance carried solely for being too small/);
+  assert.match(payoutPolicy, /QuickTrimr absorbs standard Stripe Connect and payout fees/);
+  assert.match(payoutPolicy, /without an extra deduction from barber earnings or a client surcharge/);
+  assert.match(payoutProcessor, /actual provider costs are reconciled separately from booking snapshots/);
+  assert.match(payoutScreen, /fees do not reduce the displayed barber entitlement/);
+});
+
+test('P0-D05 weekly local-time runs span spring and autumn clock changes', () => {
+  const spring = Date.parse('2026-09-28T00:00:00Z');
+  const autumn = Date.parse('2027-03-28T23:00:00Z');
+  assert.equal(nextExamplePayoutCutoff(new Date(spring).toISOString()), Date.parse('2026-10-04T23:00:00Z'));
+  assert.equal(nextExamplePayoutCutoff(new Date(autumn).toISOString()), Date.parse('2027-04-05T00:00:00Z'));
+  assert.equal((nextExamplePayoutCutoff(new Date(spring).toISOString()) - spring) / 3_600_000, 167);
+  assert.equal((nextExamplePayoutCutoff(new Date(autumn).toISOString()) - autumn) / 3_600_000, 169);
+});
+
+test('P0-D05 failures distinguish next-run retry, verified correction and unknown outcomes', () => {
+  assert.match(payoutPolicy, /Confirmed temporary failure/);
+  assert.match(payoutPolicy, /retry the original obligation on the next weekly run/);
+  assert.match(payoutPolicy, /Resume on the next weekly run only after Stripe-verified correction/);
+  assert.match(payoutPolicy, /Uncertain outcomes remain under reconciliation/);
+  assert.match(payoutPolicy, /no unsettled or unavailable Stripe balance is advanced/);
+  assert.match(payoutProcessor, /insufficient settled funds/);
+  assert.match(payoutProcessor, /no attempted transfer\/payout to an ineligible account/);
+});
+
+test('P0-D05 transfer success is not bank payment and late failures preserve history', () => {
+  assert.match(payoutPolicy, /only when its own mapped bank payout is confirmed `paid` by Stripe/);
+  assert.match(payoutPolicy, /back to `queued_for_payout`/);
+  assert.match(payoutPolicy, /append-only audit evidence/);
+  assert.match(payoutProcessor, /Transfer success and payout creation leave earnings `queued_for_payout`/);
+  assert.match(payoutProcessor, /all items are successfully paid, not merely terminal/);
+  assert.doesNotMatch(payoutProcessor, /`paid` only when every item is terminal/);
+  assert.match(payoutAdmin, /never labels a mixed paid\/failed batch as paid/);
+});
+
+test('P0-D05 durable obligations survive retries and provider key retention expiry', () => {
+  assert.match(payoutPolicy, /a key alone is not a durable ledger/);
+  assert.match(payoutPolicy, /Retries resume the original item/);
+  assert.match(payoutPolicy, /reconciled returned funds/);
+  assert.match(payoutQueue, /terminal status alone must never make an earning eligible for duplicate allocation/);
+  assert.match(payoutProcessor, /retry beyond idempotency retention/);
+  assert.match(payoutProcessor, /never transfer those funds again/);
+  assert.match(payoutProcessor, /No database lock spans either external call/);
+});
+
+test('P0-D05 downstream setup and webhooks require compatible controls and account mapping', () => {
+  const setup = section(backlog, '#### P0-T18 —', '#### P0-T19 —');
+  const onboarding = section(backlog, '#### P1-T07 —', '#### P1-T08 —');
+  const webhook = section(backlog, '#### P3-T03 —', '#### P3-T04 —');
+  for (const ticket of [setup, onboarding, webhook]) {
+    assert.match(ticket, /dependsOn: \[P0-D05,/);
+    assert.match(ticket, /RULE-EARN-07/);
+  }
+  assert.match(setup, /platform-borne standard Connect\/payout fees/);
+  assert.match(onboarding, /including reused accounts/);
+  assert.match(webhook, /payout\.created.*payout\.updated.*payout\.paid.*payout\.failed/);
+  assert.match(webhook, /unknown IDs or account mismatches must never credit an earning/);
+});
+
+test('P0-D05 surfaces timing, aged holds and notifications without manual payout controls', () => {
+  assert.match(payoutScreen, /estimated bank-arrival date only when known/);
+  assert.match(payoutScreen, /blocked item must not promise payment next Monday/);
+  assert.match(payoutPolicy, /including bank holidays, not a bank-credit deadline/);
+  assert.match(payoutPolicy, /operations must resolve or escalate with Stripe before that limit/);
+  assert.match(payoutAdmin, /held age, provider holding deadline, next action and retry eligibility/);
+  assert.match(payoutAdmin, /Read-only/);
+  assert.match(payoutPolicy, /before a batch item exists/);
+  assert.match(payoutQueue, /An unqueued account hold must not disappear/);
+  assert.match(payoutProcessor, /Include `P3-T10`'s unqueued bank\/account holds/);
+  assert.match(payoutAdmin, /Include unqueued bank\/account holds/);
+  const notifications = section(backlog, '#### P6-T02 —', '#### P6-T03 —');
+  assert.match(notifications, /P3-T11.*durable payout\/balance-change events/);
+  assert.match(notifications, /transfer success is never announced as bank payment/);
+});
