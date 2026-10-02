@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { RELIABILITY_LEVEL } from '../packages/shared/src/enums/reliability-level.ts';
 
 const kb = await readFile(new URL('../QUICKTRIMR_KNOWLEDGE_BASE.md', import.meta.url), 'utf8');
 const backlog = await readFile(new URL('../QUICKTRIMR_BACKLOG_README.md', import.meta.url), 'utf8');
@@ -242,4 +243,167 @@ test('P3-T07 contract examples match both approved splits and full barber-cancel
   }
   assert.equal(examples[3].refundCents, 0);
   assert.equal(examples[3].authorisationCancelled, true);
+});
+
+const reliabilityPolicy = section(kb, '- `RULE-RELY-06` —', '### ETA and location');
+const reliabilityWindowMs = Number(configValue('CFG-RELIABILITY-WINDOW-DAYS')) * 86_400_000;
+const reliabilityResetMs = Number(configValue('CFG-RELIABILITY-RESET-DAYS')) * 86_400_000;
+const reliabilityCooldownMs = Number(configValue('CFG-RELIABILITY-COOLDOWN-MIN')) * 60_000;
+const reliabilityThresholds = Object.fromEntries(
+  configValue('CFG-RELIABILITY-THRESHOLDS').split(';').map((entry) => {
+    const [level, count] = entry.trim().split(':').map((part) => part.trim());
+    return [level, Number(count)];
+  }),
+);
+
+// Test-only specification oracle for the approved UTC example and boundary arithmetic.
+// Inputs are already established, non-excused offence facts, not raw client claims.
+// This proves no production authorization, persistence, event deduplication or timer behavior.
+function reliabilityExampleState(occurredTimes, now) {
+  const occurrences = occurredTimes.filter((at) => at <= now).sort((a, b) => a - b);
+  const count = occurrences.filter((at) => at > now - reliabilityWindowMs).length;
+  const level = count >= reliabilityThresholds.restricted ? 'restricted'
+    : count >= reliabilityThresholds.limited ? 'limited'
+    : count >= reliabilityThresholds.watch ? 'watch' : 'good_standing';
+  const triggers = occurrences.filter((at) =>
+    occurrences.filter((prior) => prior <= at && prior > at - reliabilityWindowMs).length
+      >= reliabilityThresholds.limited);
+  const cooldownUntil = triggers.length === 0 ? null : triggers.at(-1) + reliabilityCooldownMs;
+  return { count, level, cooldownUntil, cooldownActive: cooldownUntil !== null && now < cooldownUntil };
+}
+
+test('P0-D04 records approved config and an effect for every shared reliability level', () => {
+  assert.equal(reliabilityWindowMs, 30 * 86_400_000);
+  assert.equal(reliabilityResetMs, reliabilityWindowMs);
+  assert.equal(reliabilityCooldownMs, 60 * 60_000);
+  assert.deepEqual(reliabilityThresholds, { watch: 1, limited: 2, restricted: 3, suspension_review: 4 });
+  assert.equal(configValue('CFG-RELIABILITY-SEARCH-PENALTY'), 'after_non_restricted');
+  for (const level of RELIABILITY_LEVEL) {
+    const rows = reliabilityPolicy.split('\n').filter((line) => line.startsWith(`| \`${level}\` |`));
+    assert.equal(rows.length, 1, `${level} needs one threshold/effect row`);
+    assert.equal(rows[0].split('|').slice(1, -1).filter((cell) => cell.trim()).length, 3);
+  }
+});
+
+test('P0-D04 resolves its TBC in place and removes both reserved markers', () => {
+  const rows = kb.split('\n').filter((line) => line.startsWith('| `TBC-RELIABILITY-THRESHOLDS` |'));
+  assert.equal(rows.length, 1);
+  assert.match(rows[0], /RESOLVED → `RULE-RELY-06`/);
+  assert.doesNotMatch(section(kb, '### Pending rules', '## 10.'), /RULE-RELY-06/);
+  assert.doesNotMatch(kb, /`RULE-RELY-06` \*\(reserved/);
+});
+
+const reliabilityExamples = reliabilityPolicy.split('\n').filter((line) => /^\| 2026-/.test(line));
+const offenceTimes = reliabilityExamples.filter((line) => /late cancellation/.test(line))
+  .map((line) => Date.parse(line.split('|')[1].trim()));
+test('P0-D04 retains the eight-row recovery example with three late cancellations', () => {
+  assert.equal(reliabilityExamples.length, 8);
+  assert.equal(offenceTimes.length, 3);
+  assert.deepEqual(offenceTimes.map((at) => new Date(at).toISOString()), [
+    '2026-10-01T10:00:00.000Z', '2026-10-05T10:00:00.000Z', '2026-10-10T10:00:00.000Z',
+  ]);
+  assert.match(reliabilityExamples.at(-1), /2026-11-09T10:00:00Z.*good_standing/);
+});
+for (const row of reliabilityExamples) {
+  const [timestamp, event, count, level, active] = row.split('|').slice(1, -1).map((cell) => cell.trim());
+  test(`P0-D04 UTC example ${timestamp}: ${event}`, () => {
+    const state = reliabilityExampleState(offenceTimes, Date.parse(timestamp));
+    assert.equal(state.count, Number(count));
+    assert.equal(state.level, level.replaceAll('`', ''));
+    assert.equal(state.cooldownActive, active === 'yes');
+    assert.ok(['yes', 'no'].includes(active));
+  });
+}
+
+test('P0-D04 window expires at exactly 30 elapsed days and excludes future events', () => {
+  const at = offenceTimes[0];
+  assert.match(reliabilityPolicy, /now - window < occurredAt <= now/);
+  assert.equal(reliabilityExampleState([at], at - 1).count, 0);
+  assert.equal(reliabilityExampleState([at], at).count, 1);
+  assert.equal(reliabilityExampleState([at], at + reliabilityWindowMs - 1).level, 'watch');
+  assert.equal(reliabilityExampleState([at], at + reliabilityWindowMs).level, 'good_standing');
+  assert.equal(reliabilityExampleState([at], at + reliabilityWindowMs + 1).level, 'good_standing');
+});
+
+test('P0-D04 cooldown starts on second offence, ends exactly at deadline and restarts on a new offence', () => {
+  const [first, second, third] = offenceTimes;
+  assert.equal(reliabilityExampleState(offenceTimes, first).cooldownUntil, null);
+  const deadline = second + reliabilityCooldownMs;
+  assert.equal(reliabilityExampleState(offenceTimes, second).cooldownUntil, deadline);
+  assert.equal(reliabilityExampleState(offenceTimes, deadline - 1).cooldownActive, true);
+  assert.equal(reliabilityExampleState(offenceTimes, deadline).cooldownActive, false);
+  assert.equal(reliabilityExampleState(offenceTimes, deadline + 1).cooldownActive, false);
+  assert.equal(reliabilityExampleState(offenceTimes, third).cooldownUntil, third + reliabilityCooldownMs);
+  // Re-evaluating the same facts later does not move their deadline.
+  assert.equal(reliabilityExampleState(offenceTimes, third + 1).cooldownUntil, third + reliabilityCooldownMs);
+  assert.match(reliabilityPolicy, /Duplicate delivery, login and recovery passes never restart it/);
+});
+
+test('P0-D04 fourth and later offences remain automatically restricted, never suspended', () => {
+  const fourth = Date.parse('2026-10-11T10:00:00Z');
+  for (const count of [reliabilityThresholds.suspension_review, reliabilityThresholds.suspension_review + 1]) {
+    const times = Array.from({ length: count }, (_, index) => fourth - index * 86_400_000);
+    assert.equal(reliabilityExampleState(times, fourth).count, count);
+    assert.equal(reliabilityExampleState(times, fourth).level, 'restricted');
+  }
+  assert.match(reliabilityPolicy, /automatic calculation never returns `suspended`/);
+  assert.match(reliabilityPolicy, /approved suspension persists until human reinstatement/);
+  assert.match(reliabilityPolicy, /automatic recovery pass cannot override it even when all offences age out/);
+  const engine = section(backlog, '#### P3-T12 —', '## Phase 4');
+  assert.match(engine, /no pass may reinstate an admin-suspended barber/);
+});
+
+test('P0-D04 aging to watch does not erase or extend an already-triggered cooldown', () => {
+  const second = offenceTimes[1];
+  const times = [second - reliabilityWindowMs + reliabilityCooldownMs / 2, second];
+  const aged = reliabilityExampleState(times, second + reliabilityCooldownMs / 2);
+  assert.equal(aged.level, 'watch');
+  assert.equal(aged.cooldownUntil, second + reliabilityCooldownMs);
+  assert.equal(aged.cooldownActive, true);
+  assert.equal(reliabilityExampleState(times, second + reliabilityCooldownMs).cooldownActive, false);
+  assert.match(reliabilityPolicy, /previously triggered cooldown keeps its deadline when the count ages down/);
+});
+
+test('P0-D04 offence scope excludes missed and declined requests without changing auto-disable', () => {
+  assert.equal(configValue('CFG-MISSED-REQUEST-THRESHOLD'), '2');
+  assert.match(reliabilityPolicy, /one event per booking.*`RULE-CANCEL-04`/);
+  assert.match(reliabilityPolicy, /at or within its snapshotted late-cancellation window/);
+  assert.match(reliabilityPolicy, /Count neither declined nor missed requests, client cancellations, nor Scheduled cancellations outside that window/);
+  assert.match(reliabilityPolicy, /No-shows and disputed fault require investigation/);
+  const autoDisable = section(backlog, '#### P2-T03 —', '#### P2-T04 —');
+  assert.match(autoDisable, /never count as reliability offences/);
+  assert.match(autoDisable, /counter that \*\*resets on a response\*\*/);
+});
+
+test('P0-D04 restricted means demotion across both search types, not blanket exclusion', () => {
+  assert.match(reliabilityPolicy, /after non-restricted barbers/);
+  assert.match(reliabilityPolicy, /in both booking types, before the normal deterministic ordering/);
+  const search = section(backlog, '#### P2-T04 —', '#### P2-T05 —');
+  assert.match(search, /demotion, not exclusion/);
+  assert.match(search, /before pagination/);
+  assert.match(search, /cooldown excludes Available Now only/);
+  assert.doesNotMatch(search, /or are reliability-restricted/);
+});
+
+test('P0-D04 server-side entry points and visible standing are in downstream scope', () => {
+  for (const [id, next] of [['P2-T01', 'P2-T02'], ['P2-T08', 'P2-T09'], ['P2-T12', 'P2-T13']]) {
+    const ticket = section(backlog, `#### ${id} —`, `#### ${next} —`);
+    assert.match(ticket, /RULE-RELY-06/);
+    assert.match(ticket, /barber_unavailable/);
+    assert.match(ticket, /server-owned/);
+  }
+  const acceptance = section(backlog, '#### P2-T12 —', '#### P2-T13 —');
+  assert.match(acceptance, /checked atomically with acceptance/);
+  const toggle = section(backlog, '#### P2-T02 —', '#### P2-T03 —');
+  assert.match(toggle, /standing and recovery remain visible outside a cancellation flow/);
+});
+
+test('P0-D04 keeps correction history, existing bookings and earnings intact', () => {
+  assert.match(reliabilityPolicy, /do not edit\/delete original events/);
+  assert.match(reliabilityPolicy, /no completed-job minimum/);
+  assert.match(reliabilityPolicy, /Existing bookings are not automatically cancelled/);
+  assert.match(reliabilityPolicy, /Reliability penalties do not confiscate earnings or change refund\/payout rules/);
+  const admin = section(backlog, '#### P5-T13 —', '## Phase 6');
+  assert.match(admin, /correction must refer to its original event/);
+  assert.match(admin, /configured current offence threshold plus explicit admin approval/);
 });

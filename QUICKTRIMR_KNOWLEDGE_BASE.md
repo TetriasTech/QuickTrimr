@@ -560,7 +560,39 @@ All amounts are **integer AUD cents**. Captured-payment examples use an illustra
 - `RULE-RELY-03` — Reliability consequences escalate: a logged warning, then a temporary Available Now cooldown, then reduced search priority plus an admin review flag, then suspension or platform review.
 - `RULE-RELY-04` — Reliability thresholds and windows are configuration, read from config. A literal threshold inside feature logic is a defect.
 - `RULE-RELY-05` — An admin can adjust a barber's reliability state, with a recorded reason and an audit log. It is never silently adjusted by a feature.
-- `RULE-RELY-06` *(reserved — `P0-D04`)* — The reliability thresholds, window lengths, cooldown duration, search penalty and suspension criteria.
+- `RULE-RELY-06` — **Recoverable reliability policy.** Andrew confirmed Option A for `P0-D04` on 2026-10-02; Tony remains the ticket owner.
+  - **Offences:** count one event per booking for a barber cancellation under `RULE-CANCEL-04`: an accepted Available Now booking, or an accepted Scheduled booking at or within its snapshotted late-cancellation window (currently 12 hours). Count neither declined nor missed requests, client cancellations, nor Scheduled cancellations outside that window. Two consecutive missed requests still auto-disable the session under `RULE-AVAIL-03`; they do not also count as reliability offences. No-shows and disputed fault require investigation through the existing dispute/admin process, not an automatically assumed offence.
+  - **Window and automatic level:** count non-excused qualifying events in the preceding `CFG-RELIABILITY-WINDOW-DAYS` elapsed 24-hour days, currently 30. At server time `now`, include `now - window < occurredAt <= now`; an event stops counting exactly at its window boundary. Read thresholds from `CFG-RELIABILITY-THRESHOLDS`, never feature literals. The table below defines all five levels; the automatic calculation never returns `suspended`.
+  - **Cooldown:** each new qualifying offence whose resulting rolling count reaches or exceeds the configured `limited` threshold starts/restarts an Available Now cooldown of `CFG-RELIABILITY-COOLDOWN-MIN` (60 minutes) from that event's server timestamp. Duplicate delivery, login and recovery passes never restart it. A cooldown is active while server time is strictly before its deadline and ends exactly at the deadline. A previously triggered cooldown keeps its deadline when the count ages down; recovery does not restart or extend it. Scheduled bookings are unaffected by a cooldown.
+  - **Search penalty:** `CFG-RELIABILITY-SEARCH-PENALTY` ranks otherwise eligible `restricted` barbers **after non-restricted barbers** in both booking types, before the normal deterministic ordering within each group. It is demotion, not exclusion or an invented distance/percentage penalty. A restricted barber remains bookable outside an applicable cooldown. An active cooldown excludes the barber from Available Now discovery and new Available Now session activation, requests and acceptance; `suspended` excludes both booking types from discovery, new requests and acceptance, and prevents Available Now activation. Enforce current server-owned restrictions at each entry point, not just in UI or search. These restrictions do not themselves change session-status enums or create a new session auto-disable reason.
+  - **Recovery:** as events age out, recompute the automatic level from the remaining count. After `CFG-RELIABILITY-RESET-DAYS` (30) offence-free elapsed days it is `good_standing`; there is no completed-job minimum. The launch reset period equals the rolling window. Recovery and deadline enforcement are server-side (`ADR-011`), not dependent on an open app. Preserve the append-only history and the config/deadline evidence used for decisions; aging out is not deletion.
+  - **Human suspension and exceptions:** the configured `suspension_review` threshold (4 current offences) makes the barber eligible for an admin suspension review, not automatically suspended. Until an admin approves, the automatic level remains `restricted`. Consider booking volume, documented emergencies, corrected facts and the repeated pattern before deciding. Record the admin, reason and before/after state (`RULE-RELY-05`, `ADR-013`). An approved suspension persists until human reinstatement; an automatic recovery pass cannot override it even when all offences age out. Admins may excuse documented emergencies or correct errors through new, reasoned append-only records; do not edit/delete original events or automatically excuse a client-supplied claim. This is the threshold for this cancellation-reliability policy, not a new automated safety/no-show policy.
+  - **Transparency and financial boundaries:** show the barber their level, applicable restrictions, cooldown end, review status and recovery timing, including before cancellation confirmation; explain that suspension needs human reinstatement, not a promised automatic return date. Existing bookings are not automatically cancelled by a reliability change. Reliability penalties do not confiscate earnings or change refund/payout rules; existing booking, dispute and payment safeguards continue to apply.
+
+| Level | Entry threshold under the launch config | Effect |
+|---|---|---|
+| `good_standing` | 0 current offences | No reliability restriction |
+| `watch` | 1 current offence | Logged warning; no new restriction (a previously triggered cooldown keeps its deadline) |
+| `limited` | 2 current offences | 60-minute Available Now cooldown triggered by each qualifying offence; Scheduled unaffected |
+| `restricted` | 3 or more current offences without an approved suspension | Same cooldown, demotion after non-restricted barbers in both search types, admin review flag |
+| `suspended` | 4 or more current offences **and admin approval** to enter | Hidden in both discovery types; no new bookings; human reinstatement required |
+
+#### Reliability worked example — RULE-RELY-06
+
+Three qualifying late cancellations, no exceptions, no further offences and no admin override. All times are UTC; days are elapsed 24-hour periods, not local calendar midnights. Window, reset and cooldown come from config. The temporary cooldown ends independently of the longer-lived level.
+
+| Server time | Event | Current offences | Automatic level | Available Now cooldown active |
+|---|---|---|---|---|
+| 2026-10-01T10:00:00Z | First late cancellation | 1 | `watch` | no |
+| 2026-10-05T10:00:00Z | Second late cancellation | 2 | `limited` | yes |
+| 2026-10-05T11:00:00Z | Cooldown deadline | 2 | `limited` | no |
+| 2026-10-10T10:00:00Z | Third late cancellation | 3 | `restricted` | yes |
+| 2026-10-10T11:00:00Z | Cooldown deadline; search demotion remains | 3 | `restricted` | no |
+| 2026-10-31T10:00:00Z | First offence ages out | 2 | `limited` | no |
+| 2026-11-04T10:00:00Z | Second offence ages out | 1 | `watch` | no |
+| 2026-11-09T10:00:00Z | Third offence ages out; 30 offence-free days | 0 | `good_standing` | no |
+
+A fourth qualifying offence inside the window would keep the automatic level `restricted` and make it eligible for human suspension review. Without admin approval it never becomes `suspended`. If approved, suspension does not disappear on the example's recovery dates; a human must reinstate the barber.
 
 ### ETA and location
 
@@ -636,7 +668,6 @@ These IDs are cited by tickets but the rule does not exist yet. The decision tic
 
 | Reserved ID | What it will say | Written by |
 |---|---|---|
-| `RULE-RELY-06` | Reliability thresholds, windows and consequences | `P0-D04` |
 | `RULE-EARN-07` | Payout schedule and batch cadence | `P0-D05` |
 
 ---
@@ -854,9 +885,11 @@ These are read from config. **A literal `5`, `12`, `20`, `60` or `2` inside feat
 | `CFG-PAYOUT-SCHEDULE` | `TBC-PAYOUT-SCHEDULE` | Payout batch cadence (`RULE-EARN-05`). |
 | `CFG-CANCEL-REFUND-PCT` | `scheduled: 75; available_now: 50` | Client late-cancellation refund percentage of booked service price; snapshot at request time, round refund up (`RULE-CANCEL-07`). |
 | `CFG-INCONVENIENCE-FEE` | `scheduled: 25; available_now: 50` | Percentage allocation of booked service price, funded entirely by withheld client funds. Must complement the refund percentage; exact cents are service price minus rounded-up refund, not independently rounded. Snapshot at request time; no extra charge or fixed-dollar cap (`RULE-CANCEL-07`). |
-| `CFG-RELIABILITY-WINDOW-DAYS` | `TBC-RELIABILITY-THRESHOLDS` | Rolling window (`RULE-RELY-01`). |
-| `CFG-RELIABILITY-RESET-DAYS` | `TBC-RELIABILITY-THRESHOLDS` | Good-behaviour reset period (`RULE-RELY-02`). |
-| `CFG-RELIABILITY-COOLDOWN-MIN` | `TBC-RELIABILITY-THRESHOLDS` | Available Now cooldown (`RULE-RELY-03`). |
+| `CFG-RELIABILITY-WINDOW-DAYS` | `30` | Elapsed-day rolling window; lower boundary excluded, current timestamp included (`RULE-RELY-06`). |
+| `CFG-RELIABILITY-RESET-DAYS` | `30` | Offence-free elapsed days to automatic good standing; equals the launch window; never overrides an admin suspension (`RULE-RELY-06`). |
+| `CFG-RELIABILITY-COOLDOWN-MIN` | `60` | Available Now only, from each new offence at/above the limited threshold; no restart on retries/login/recovery (`RULE-RELY-06`). |
+| `CFG-RELIABILITY-THRESHOLDS` | `watch: 1; limited: 2; restricted: 3; suspension_review: 4` | Current non-excused offence counts; suspension always requires admin approval (`RULE-RELY-06`). |
+| `CFG-RELIABILITY-SEARCH-PENALTY` | `after_non_restricted` | Restricted barbers follow all otherwise eligible non-restricted barbers in both search types; retain normal deterministic ordering within each group (`RULE-RELY-06`). |
 | `CFG-SCHED-MIN-LEAD-MIN` | `240` | Minimum lead time for a Scheduled request, in minutes (`RULE-SCHED-04`). |
 | `CFG-SCHED-MAX-HORIZON-DAYS` | `30` | Maximum horizon for a Scheduled request, in days (`RULE-SCHED-04`). |
 | `CFG-REVIEW-DEADLINE-DAYS` | `14` | Review window from completion, or from an eligible admin resolution, in days (`RULE-REVIEW-06`). |
@@ -876,7 +909,7 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-STRIPE-FEES` | **RESOLVED → `RULE-PAY-11`** — QuickTrimr absorbs payment-processing fees, including retained fees after refunds; no client card surcharge. | Commission maths, refunds, barber net | `P0-D02` |
 | `TBC-CANCEL-SPLIT` | **RESOLVED → `RULE-CANCEL-07`** — 75% late Scheduled / 50% accepted Available Now; client refund rounded up, confirmed by Andrew on 2026-09-30. | Cancellation, refunds, admin resolution | `P0-D03` |
 | `TBC-INCONVENIENCE-FEE` | **RESOLVED → `RULE-CANCEL-07`** — barber receives all withheld service money; zero cancellation commission; QuickTrimr absorbs retained processing fees. Earning release exception in `RULE-EARN-02`. | Cancellation, earnings, refund maths | `P0-D03` |
-| `TBC-RELIABILITY-THRESHOLDS` | What counts as an offence, over what rolling window, with what cooldown, search penalty and suspension criteria? | Reliability engine, barber cancellation, admin | `P0-D04` |
+| `TBC-RELIABILITY-THRESHOLDS` | **RESOLVED → `RULE-RELY-06`** — Option A: 30-day window/reset, 60-minute Available Now cooldown, 1/2/3 escalation and admin-gated suspension review from 4; confirmed by Andrew on 2026-10-02. | Reliability engine, barber cancellation, admin | `P0-D04` |
 | `TBC-PAYOUT-SCHEDULE` | How often do payout batches run, on what day, with what minimum balance? | Payout batching and processing | `P0-D05` |
 | `TBC-LOCATION-PRECISION` | **RESOLVED → `RULE-DISCOVERY-05`** | Discovery, map view, search function | `P0-D06` |
 | `TBC-ETA-INTERVAL` | **RESOLVED → `RULE-DISCOVERY-05`** | ETA update function and display | `P0-D06` |
