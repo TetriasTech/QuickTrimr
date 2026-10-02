@@ -94,6 +94,20 @@ test('request schemas ignore client-supplied identity, status and server-derived
   }
 });
 
+test('reliability-denial backlog examples reuse the shared error contract', async () => {
+  const backlog = await readFile(new URL('../../../QUICKTRIMR_BACKLOG_README.md', import.meta.url), 'utf8');
+  for (const [id, next] of [['P2-T01', 'P2-T02'], ['P2-T08', 'P2-T09'], ['P2-T12', 'P2-T13']]) {
+    const ticket = backlog.split(`#### ${id} —`)[1]?.split(`#### ${next} —`)[0];
+    assert.ok(ticket, id);
+    const example = ticket.match(/\{ "error": "barber_unavailable" \}/);
+    assert.ok(example, `${id} must document the denial`);
+    const parsed = errorResponseSchema.safeParse(JSON.parse(example[0]));
+    assert.equal(parsed.success, true, id);
+    assert.deepEqual(parsed.data, { error: 'barber_unavailable' });
+  }
+  // Payload compatibility only: no endpoint's actual enforcement is claimed here.
+});
+
 test('request schemas still reject unknown non-server fields', () => {
   for (const [name, contract] of Object.entries(CONTRACTS)) {
     const valid = CONTRACT_EXAMPLES[name].request.valid;

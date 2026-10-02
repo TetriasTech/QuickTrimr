@@ -377,15 +377,15 @@ phase: 0
 priority: Highest
 jiraKey: TRIMR-5
 dependsOn: []
-affects: [P2-T03, P3-T09, P3-T12, P5-T03, P5-T13]
-knowledgeBase: [RULE-RELY-01, RULE-RELY-02, RULE-RELY-03, RULE-RELY-04, RULE-RELY-05, CFG-RELIABILITY-WINDOW-DAYS, CFG-RELIABILITY-RESET-DAYS, CFG-RELIABILITY-COOLDOWN-MIN, CFG-MISSED-REQUEST-THRESHOLD]
+affects: [P2-T01, P2-T02, P2-T03, P2-T04, P2-T08, P2-T12, P2-T14, P3-T07, P3-T09, P3-T12, P5-T03, P5-T13]
+knowledgeBase: [RULE-CANCEL-04, RULE-AVAIL-03, RULE-RELY-01, RULE-RELY-02, RULE-RELY-03, RULE-RELY-04, RULE-RELY-05, RULE-RELY-06, ENUM-RELIABILITY-LEVEL, CFG-RELIABILITY-WINDOW-DAYS, CFG-RELIABILITY-RESET-DAYS, CFG-RELIABILITY-COOLDOWN-MIN, CFG-RELIABILITY-THRESHOLDS, CFG-RELIABILITY-SEARCH-PENALTY, CFG-MISSED-REQUEST-THRESHOLD]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, product]
 ```
 
 **Context**
 
-`TBC-RELIABILITY-THRESHOLDS`. The knowledge base describes the *shape* of reliability — a rolling window, escalating consequences, recovery after good behaviour (`RULE-RELY-01`–`RULE-RELY-03`) — and gives an illustrative 1st/2nd/3rd escalation. It gives no window length, no cooldown duration, no search penalty, no reset period, and no suspension criteria.
+Andrew confirmed **Option A on 2026-10-02**, recorded in `RULE-RELY-06`; Tony remains the owner. This resolves `TBC-RELIABILITY-THRESHOLDS`: a 30-day rolling window/reset, 60-minute Available Now cooldown, warning/limited/restricted at 1/2/3 current offences and eligibility for **human** suspension review from 4. Missed requests do not count as reliability offences.
 
 This is a livelihood decision, not a config value. A barber who is suspended stops earning. Set the window too tight and one bad week ends someone's income; too loose and a client is stood up by the same barber twice with no consequence.
 
@@ -393,15 +393,9 @@ This is a livelihood decision, not a config value. A barber who is suspended sto
 
 **Scope**
 
-Decide, and record in `KB §9` as `RULE-RELY-06`, with values in `KB §13` for `CFG-RELIABILITY-WINDOW-DAYS`, `CFG-RELIABILITY-RESET-DAYS` and `CFG-RELIABILITY-COOLDOWN-MIN`:
+Record the approved policy in `RULE-RELY-06` and the `CFG-RELIABILITY-*` rows. Include the exact rolling-window/cooldown boundaries, per-booking offence deduplication, exclusions, step-down recovery, review threshold distinct from suspension, human reinstatement, emergency/error corrections and truthful barber-facing standing/recovery information.
 
-- What counts as a reliability offence. A late cancellation after acceptance certainly does. Decide whether a missed Available Now request does — it already carries its own consequence via `CFG-MISSED-REQUEST-THRESHOLD` (`RULE-AVAIL-03`), and double-counting it means a barber who steps away from their phone twice is penalised as if they abandoned a client.
-- The rolling window length.
-- The offence count for each level: `watch`, `limited`, `restricted`, `suspended` (`ENUM-RELIABILITY-LEVEL`).
-- What each level actually does — cooldown duration, search priority penalty, whether Available Now is blocked, whether Scheduled is blocked.
-- The good-behaviour period that improves or resets a level, and whether it steps down one level or resets to `good_standing`.
-- What suspension means operationally: automatic, or an admin review flag that a human acts on. Recommend the latter for `suspended` — an automatic suspension is an automated decision about someone's income with no human in the loop.
-- Whether a barber is told their level and their standing. Recommend yes: a penalty nobody can see does not change behaviour.
+Restricted means **demoted after non-restricted barbers**, not excluded. An active cooldown blocks Available Now only; suspension blocks new bookings of both types. Synchronize server-side session, discovery, request and acceptance guards, not just the cancellation screen. Do not automatically cancel existing bookings or confiscate earnings.
 
 **Acceptance criteria**
 
@@ -413,10 +407,13 @@ Decide, and record in `KB §9` as `RULE-RELY-06`, with values in `KB §13` for `
 - [ ] A worked example: a barber cancels late three times across the window, showing the level after each and the date they return to `good_standing`.
 - [ ] `TBC-RELIABILITY-THRESHOLDS` in `KB §14` rewritten as `RESOLVED → RULE-RELY-06`. Not deleted.
 - [ ] `RULE-RELY-06` removed from `KB §9`'s *Pending rules* table.
+- [ ] Cooldown and window boundaries, demotion versus exclusion, human reinstatement and the existing-booking/earnings safeguards are explicit in the KB and affected tickets.
+
+**Tests** — specification regression checks for approved config and all enum levels; every UTC worked-example row; exact 30-day and 60-minute boundaries; second-and-later offence cooldown restart; fourth offence never automatically suspended; suspended state survives aging; missed/declined/client/early cancellations excluded; append-only correction and no-confiscation requirements; downstream guard/ordering consistency. These test the decision document and test-only arithmetic, not a production reliability engine, RLS, concurrency or scheduler.
 
 **Out of scope** — building the reliability engine (`P3-T12`); admin reliability management (`P5-T13`); the Available Now missed-request auto-disable, which is already decided (`RULE-AVAIL-03`).
 
-**Sync notes** — `P3-T12` implements this, `P3-T09` triggers it on barber cancellation, `P2-T03` must not double-count against it, and `P5-T03`/`P5-T13` display and override it.
+**Sync notes** — `P3-T07` produces qualifying cancellation events through `P3-T12`; `P3-T09` displays the result. `P2-T03` never produces offences for misses. Phase 2 entry points consume a shared read-side eligibility policy; `P3-T12` integrates live event calculation without a later-phase dependency in Phase 2. `P5-T03`/`P5-T13` distinguish automatic standing, review and human suspension. See `docs/decisions/P0-D04.md` for the full traceability review. Generated indexes are left for CI on main.
 
 ---
 
@@ -2578,9 +2575,9 @@ owner: Andrew
 phase: 2
 priority: Highest
 jiraKey: null
-dependsOn: [P0-D06, P0-T06, P0-T10, P1-T06]
-affects: [P2-T02, P2-T03, P2-T04, P2-T12]
-knowledgeBase: [ADR-008, RULE-AVAIL-01, RULE-AVAIL-02, RULE-DISCOVERY-05, ENUM-AVAIL-STATUS]
+dependsOn: [P0-D04, P0-D06, P0-T06, P0-T10, P1-T06]
+affects: [P2-T02, P2-T03, P2-T04, P2-T08, P2-T12, P3-T12]
+knowledgeBase: [ADR-008, RULE-AVAIL-01, RULE-AVAIL-02, RULE-DISCOVERY-05, RULE-RELY-06, ENUM-AVAIL-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, database, maps]
 ```
@@ -2594,6 +2591,8 @@ The session location is **not** the barber's service area (`P1-T06`). `RULE-DISC
 **Scope**
 
 Edge Functions `start-available-now-session`, `update-available-now-session`, `stop-available-now-session`.
+
+A shared server-side read-side eligibility helper for `RULE-RELY-06`, reused by discovery, request creation and acceptance: read effective server-owned restrictions and evaluate deadlines against server time. Suspension or an active cooldown prevents Available Now activation; stopping a session remains allowed. Never accept a client-supplied standing/deadline or invent a new session status. Phase 2 tests use seeded restriction state; live offence production, recovery and integration are owned by `P3-T12`, not a Phase 3 dependency added to this ticket.
 
 Session row: barber id, private `geography(Point, 4326)` location, server-resolved public-area reference from `P1-T06`, location source (`gps` or `manual`), radius, available-until timestamp, status (`ENUM-AVAIL-STATUS`), and timestamps. Starting or updating a session resolves the private point against the versioned SAL polygons server-side; the client cannot choose or override the public area.
 
@@ -2626,6 +2625,9 @@ RLS: a barber reads and writes only their own sessions; the discovery path reads
 
 // 403 — barber does not satisfy RULE-ONBOARD-04
 { "error": "onboarding_incomplete" }
+
+// 409 — RULE-RELY-06 prevents Available Now activation
+{ "error": "barber_unavailable" }
 ```
 
 **Acceptance criteria**
@@ -2638,6 +2640,8 @@ RLS: a barber reads and writes only their own sessions; the discovery path reads
 - [ ] The discovery query uses a PostGIS index — verified by an `EXPLAIN` showing an index scan, not a sequential scan.
 - [ ] Radius and available-until are bounded; out-of-bounds values are rejected with field-level errors.
 - [ ] A barber not satisfying `RULE-ONBOARD-04` cannot start a session.
+- [ ] Direct start/update activation calls reject a suspended barber or active cooldown with `409 barber_unavailable`; a stop is still permitted. Evaluate server-owned deadlines, never client state, without restarting cooldowns.
+- [ ] The shared eligibility helper is reused at the other Phase 2 entry points; seeded tests cover every reliability level and just before/at/after a cooldown deadline.
 - [ ] Barber A cannot read or write barber B's session.
 
 **Tests** — parallel start calls producing one active session; server-side public-area resolution including a boundary case; crafted public-area input ignored or rejected; `EXPLAIN` asserting index usage; each excluded status absent from discovery; bounds at and either side of the limits; onboarding-incomplete rejection.
@@ -2660,7 +2664,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P0-T14, P2-T01]
 affects: [P2-T11]
-knowledgeBase: [RULE-AVAIL-01, RULE-AVAIL-02, RULE-AVAIL-03, RULE-COPY-01, ENUM-AVAIL-STATUS]
+knowledgeBase: [RULE-AVAIL-01, RULE-AVAIL-02, RULE-AVAIL-03, RULE-RELY-06, RULE-COPY-01, ENUM-AVAIL-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile, maps]
 ```
@@ -2679,6 +2683,8 @@ Handle permission denied, permission restricted, and location unavailable — ea
 
 Show the active session state: how long remains, current radius, and how the location was set.
 
+Show the barber's current reliability standing and recovery information from the server, including a cooldown end or human-review/reinstatement requirement. A cooldown/suspension is a separate eligibility restriction, not a new session status or missed-request auto-disable reason. A display countdown cannot lift a restriction; refresh server state.
+
 When a session auto-disables (`RULE-AVAIL-03`), the barber is told **why** — time elapsed, missed requests, or a job accepted. A toggle that silently flips off reads as a bug and gets reported as one.
 
 Copy must not promise QuickTrimr notifies the barber of every nearby client (`RULE-COPY-01`).
@@ -2692,6 +2698,7 @@ Copy must not promise QuickTrimr notifies the barber of every nearby client (`RU
 - [ ] **An auto-disabled session shows the reason**, distinguishing time elapsed, missed requests, and job accepted.
 - [ ] Every `ENUM-AVAIL-STATUS` value renders a defined state.
 - [ ] The toggle is disabled with an explanation when the barber does not satisfy `RULE-ONBOARD-04`.
+- [ ] `RULE-RELY-06` standing and recovery remain visible outside a cancellation flow; cooldown/suspension explains why activation is unavailable, and a stale-screen `409 barber_unavailable` refreshes server state. Test normal, cooldown, restricted-but-bookable and suspended states.
 - [ ] Loading and error states exist; a failed start does not leave the toggle showing on.
 
 **Tests** — permission-denied path reaching an active session via manual location; each auto-disable reason rendering distinctly; the toggle reflecting server state after a failed start.
@@ -2714,7 +2721,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D04, P0-D07, P2-T01]
 affects: [P2-T02, P2-T12, P3-T12]
-knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-03, RULE-AVAIL-05, ENUM-AVAIL-STATUS, CFG-MISSED-REQUEST-THRESHOLD]
+knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-03, RULE-AVAIL-05, RULE-RELY-06, ENUM-AVAIL-STATUS, CFG-MISSED-REQUEST-THRESHOLD]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend]
 ```
@@ -2723,7 +2730,7 @@ labels: [quicktrimr, phase-2, backend]
 
 `RULE-AVAIL-03` gives four auto-disable triggers, and three of them are timers or counters that must run server-side (`ADR-011`). A barber whose phone is in their pocket must still stop appearing in searches when their available-until passes.
 
-**This depends on `P0-D04`** because of a specific interaction: missing requests auto-disables the session here, and `P0-D04` decides whether a missed request *also* counts as a reliability offence. If both apply, a barber who steps away from their phone twice is penalised twice for one lapse.
+**`P0-D04` resolved the interaction:** missed requests auto-disable the session here but **never count as reliability offences** (`RULE-RELY-06`). A barber who steps away from their phone twice is not also penalised as if they abandoned an accepted booking.
 
 **Scope**
 
@@ -2751,7 +2758,7 @@ Audit log for each transition, with the reason (`ADR-013`).
 - [ ] A manual toggle-off sets `manually_disabled`.
 - [ ] **Every trigger is idempotent** — firing twice leaves identical state.
 - [ ] The expiry job re-checks state at execution; a session stopped manually before the job fires is not overwritten.
-- [ ] Whether a missed request also raises a reliability event follows `P0-D04`, and is not double-counted.
+- [ ] Missed and declined requests produce no reliability offence (`RULE-RELY-06`); test repeated expiry/delivery and the unchanged two-consecutive-miss auto-disable rule.
 - [ ] Threshold values are read from config; no literal appears in the logic.
 - [ ] Each transition writes an audit log with its reason.
 
@@ -2773,9 +2780,9 @@ owner: Andrew
 phase: 2
 priority: Highest
 jiraKey: null
-dependsOn: [P0-D01, P0-D06, P1-T09, P1-T11, P2-T01]
+dependsOn: [P0-D01, P0-D04, P0-D06, P1-T09, P1-T11, P2-T01]
 affects: [P2-T05, P2-T06, P2-T07, P2-T09]
-knowledgeBase: [ADR-008, RULE-DISCOVERY-01, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-04, RULE-SERVICE-05]
+knowledgeBase: [ADR-008, RULE-DISCOVERY-01, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-04, RULE-SERVICE-05, RULE-RELY-06, CFG-RELIABILITY-SEARCH-PENALTY]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, maps, security]
 ```
@@ -2790,13 +2797,13 @@ It is also the highest-volume privacy surface in QuickTrimr. Every client who se
 
 `search-available-now-barbers` and the Scheduled equivalent, or one function branching on booking type.
 
-Filters: booking type, service category, client point, radius, and eligibility. Eligibility excludes barbers who fail `RULE-ONBOARD-04`, have no active price for the category, or are reliability-restricted.
+Filters: booking type, service category, client point, radius, and eligibility. Eligibility excludes barbers who fail `RULE-ONBOARD-04`, have no active price for the category, or are `suspended`. An active reliability cooldown excludes Available Now only. Use the shared read-side eligibility helper from `P2-T01`. `restricted` alone is **demotion, not exclusion** (`RULE-RELY-06`).
 
 PostGIS distance query against the GiST index (`ADR-008`). Results bounded and paginated — never "fetch all and sort".
 
 Response carries the **public projection only** (`RULE-ONBOARD-05`), at the precision `RULE-DISCOVERY-05` allows, with the price for the requested category, a distance band, and the server-resolved approximate area. The exact distance remains server-side for filtering and ordering. The area label and representative map point come from the versioned public SAL data established by `P1-T06`, not from Google or from a barber coordinate.
 
-Ordering documented and deliberate: distance, price, rating, and any reliability search penalty from `P0-D04`.
+Ordering documented and deliberate: per `CFG-RELIABILITY-SEARCH-PENALTY`, otherwise eligible restricted barbers follow non-restricted barbers in both booking types, before normal deterministic distance/price/rating ordering within each group. Apply that ordering in the bounded database query before pagination, never re-sort a fetched page or expose private offence history in public results.
 
 **Contract example** — `search-available-now-barbers`
 
@@ -2828,8 +2835,9 @@ Ordering documented and deliberate: distance, price, rating, and any reliability
 
 - [ ] Available Now search returns barbers by **live session location**; Scheduled search returns them by **configured service area**. The two are never interchanged.
 - [ ] Results are filtered by service category and exclude barbers with no active price for it.
-- [ ] **A barber failing `RULE-ONBOARD-04` never appears** — verified with a seeded restricted barber.
+- [ ] **A barber failing `RULE-ONBOARD-04` never appears** — verified with a seeded Connect-restricted barber (distinct from the reliability level `restricted`).
 - [ ] Expired, busy and disabled sessions are excluded from Available Now results.
+- [ ] Suspended barbers are excluded from both booking types; active cooldowns exclude Available Now only. Restricted barbers outside a cooldown remain discoverable and bookable, after non-restricted barbers across page boundaries, without leaking reliability history.
 - [ ] Every result returns exactly one of `under-2km`, `2-5km`, `5-10km`, or `10km+`, with boundary behaviour matching `RULE-DISCOVERY-05`.
 - [ ] **The response contains no private barber field, exact distance, barber coordinate, or location more precise than `RULE-DISCOVERY-05` allows** — asserted field by field on the raw body. The only coordinate returned is the shared public-area map point.
 - [ ] Results are paginated and bounded; there is no unbounded response.
@@ -2838,7 +2846,7 @@ Ordering documented and deliberate: distance, price, rating, and any reliability
 - [ ] An empty result is a 200 with an empty array, not an error.
 - [ ] The Google server key is not involved; this is a database query.
 
-**Tests** — raw response asserted for absence of private fields, exact distance and barber coordinates; distance-band boundaries at 2 km, 5 km and 10 km on both sides; two barbers in one SAL returning the same area map point; restricted barber excluded; `EXPLAIN` index assertion; pagination stability across pages with tied ordering values; Available Now versus Scheduled returning different sets and approximate areas for a barber whose session location and service area differ.
+**Tests** — raw response asserted for absence of private fields, exact distance and barber coordinates; distance-band boundaries at 2 km, 5 km and 10 km on both sides; two barbers in one SAL returning the same area map point; Connect-ineligible and suspended barbers excluded; restricted barber demoted but present; cooldown just before/at/after its deadline in both booking types; `EXPLAIN` index assertion; pagination stability across reliability groups and tied ordering values; Available Now versus Scheduled returning different sets and approximate areas for a barber whose session location and service area differ.
 
 **Out of scope** — filter UI (`P2-T05`); result rendering (`P2-T06`, `P2-T07`); ETA (`P4-T05`).
 
@@ -3022,9 +3030,9 @@ owner: Andrew
 phase: 2
 priority: Highest
 jiraKey: null
-dependsOn: [P0-D01, P0-D02, P0-D03, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11]
+dependsOn: [P0-D01, P0-D02, P0-D03, P0-D04, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11, P2-T01]
 affects: [P2-T09, P2-T10, P2-T12, P2-T13, P2-T15, P3-T01, P3-T06, P4-T01]
-knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
+knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, database]
 ```
@@ -3042,6 +3050,8 @@ The centre of the product. Everything downstream reads what this writes.
 `create-booking-request` Edge Function.
 
 Validate: authenticated client with a complete profile, an owned and unarchived address, an eligible barber (`RULE-ONBOARD-04`), an active barber service for the category, and a price within `RULE-SERVICE-05` bounds.
+
+Use the shared read-side eligibility helper from `P2-T01` to enforce `RULE-RELY-06` on direct requests: suspension blocks both types; a current cooldown blocks Available Now only; restricted outside a cooldown remains bookable. Re-check server-owned state rather than trusting a stale search result. Reuse `409 barber_unavailable` without disclosing private reliability history to the client.
 
 Booking-type rules — Available Now: reject if the client already holds an active pending Available Now request (`RULE-AVAIL-04`). Scheduled: reject a duplicate intent (`RULE-SCHED-03`) and enforce the lead time and horizon from `RULE-SCHED-04`.
 
@@ -3097,6 +3107,7 @@ Audit log (`ADR-013`).
 - [ ] A Scheduled time inside the lead time or beyond the horizon is rejected per `RULE-SCHED-04`.
 - [ ] Scheduled validation applies only the global bounds at launch; it does not invent a barber calendar, working hours, service duration or overlap check.
 - [ ] A barber failing `RULE-ONBOARD-04`, or with no active price for the category, returns `409 barber_unavailable`.
+- [ ] Direct requests enforce `RULE-RELY-06` even after an earlier successful search; test both types, every level, cooldown boundaries, and forged client standing/deadline fields. Denial creates no request or payment side effect.
 - [ ] An address belonging to another client, or archived, is rejected.
 - [ ] Expiry is set from config; **no literal 5 or 2 appears in the code.**
 - [ ] **A double-submit creates exactly one request** — tested with real parallel calls.
@@ -3299,9 +3310,9 @@ owner: Tony
 phase: 2
 priority: Highest
 jiraKey: null
-dependsOn: [P0-T07, P2-T01, P2-T03, P2-T08, P2-T10]
+dependsOn: [P0-D04, P0-T07, P2-T01, P2-T03, P2-T08, P2-T10]
 affects: [P2-T14, P3-T02, P3-T06, P4-T01, P4-T02]
-knowledgeBase: [ADR-010, ADR-013, RULE-REQUEST-05, RULE-AVAIL-05, RULE-AVAIL-07, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
+knowledgeBase: [ADR-010, ADR-013, RULE-REQUEST-05, RULE-AVAIL-05, RULE-AVAIL-07, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, security]
 ```
@@ -3317,6 +3328,8 @@ labels: [quicktrimr, phase-2, backend, security]
 `accept-booking-request` Edge Function.
 
 Validate: authenticated barber, request addressed to them, status still `pending`, and not past expiry. Expiry is checked against the **server clock**, never a client-supplied time.
+
+Re-check current server-owned restrictions under `RULE-RELY-06` with the shared eligibility helper from `P2-T01` inside the acceptance transaction. Suspension blocks both types; cooldown blocks Available Now only; restricted outside cooldown is permitted. Coordinate with concurrent restriction writers so a stale preflight check cannot accept after a restriction takes effect. Never trust body-supplied standing or cooldown times.
 
 Concurrency: a conditional update that transitions `pending → accepted` only if it is still `pending`, and a check that the barber holds no active Available Now job. Both under one transaction, with the row locked — but **no external call inside that lock** (`RULE-PAY-09`), which is another reason Stripe is not here.
 
@@ -3340,6 +3353,9 @@ Audit log (`ADR-013`).
 // 409 — RULE-AVAIL-05
 { "error": "active_job_exists", "activeBookingId": "7f10..." }
 
+// 409 — RULE-RELY-06 now prevents accepting this booking type
+{ "error": "barber_unavailable" }
+
 // 403 — request not addressed to this barber
 { "error": "forbidden" }
 ```
@@ -3350,6 +3366,7 @@ Audit log (`ADR-013`).
 - [ ] **Under real parallel acceptance attempts on one request, exactly one succeeds** and the rest receive `409 request_not_pending`. Tested with genuine concurrency and repeated runs, not sequential calls.
 - [ ] **A barber holding an active Available Now job cannot accept a second** — tested under parallel attempts on two different requests.
 - [ ] An expired request cannot be accepted; expiry is evaluated on the server clock.
+- [ ] Current reliability restrictions are checked atomically with acceptance; `409 barber_unavailable` creates no booking/history/capture success. Test both booking types, cooldown boundaries and real parallel restriction-versus-acceptance attempts with a consistent transaction ordering.
 - [ ] A request addressed to another barber returns 403.
 - [ ] `booking_status_history` records the transition with actor and reason.
 - [ ] The Available Now session transitions to `busy` through `P2-T03`, not by writing the status directly.
@@ -3450,7 +3467,7 @@ priority: High
 jiraKey: null
 dependsOn: [P2-T11, P2-T12, P2-T13]
 affects: [P4-T02]
-knowledgeBase: [RULE-REQUEST-05, RULE-AVAIL-05, RULE-COPY-01, ENUM-REQUEST-STATUS]
+knowledgeBase: [RULE-REQUEST-05, RULE-AVAIL-05, RULE-RELY-06, RULE-COPY-01, ENUM-REQUEST-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
@@ -3467,6 +3484,8 @@ Buttons disabled while in flight, and both disabled once either is tapped.
 
 Every backend outcome mapped to a specific message: `409 request_not_pending` reads as "this request is no longer available", `409 active_job_exists` as "finish your current job first".
 
+For `409 barber_unavailable`, refresh the barber's own standing and show the applicable cooldown or suspension explanation from server truth (`RULE-RELY-06`). Do not claim that restricted always means banned, or offer a client timer as a way to lift the restriction. Decline remains available when otherwise valid.
+
 On success the list refreshes and the accepted booking is reachable.
 
 Copy must not imply the client has been charged (`RULE-COPY-01`) — at this point nothing has been captured.
@@ -3477,6 +3496,7 @@ Copy must not imply the client has been charged (`RULE-COPY-01`) — at this poi
 - [ ] Accept requires a confirmation.
 - [ ] Buttons are disabled while in flight; **a double tap produces one call.**
 - [ ] `409 request_not_pending` and `409 active_job_exists` each render a specific, non-technical message.
+- [ ] `409 barber_unavailable` renders the current reliability explanation and refreshes standing; test cooldown, suspended and stale-screen outcomes without disabling an otherwise valid decline.
 - [ ] An expired request cannot be actioned and updates in place.
 - [ ] The list refreshes after either action and the accepted booking is reachable.
 - [ ] No copy implies the client has been charged.
@@ -4001,9 +4021,9 @@ owner: Tony
 phase: 3
 priority: Highest
 jiraKey: null
-dependsOn: [P0-D02, P0-D03, P3-T02, P3-T03, P3-T04, P3-T06]
+dependsOn: [P0-D02, P0-D03, P0-D04, P3-T02, P3-T03, P3-T04, P3-T06]
 affects: [P3-T08, P3-T09, P3-T12, P5-T07, P5-T09]
-knowledgeBase: [ADR-009, ADR-013, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-PAY-11, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE]
+knowledgeBase: [ADR-009, ADR-013, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-PAY-11, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-RELY-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -4036,6 +4056,8 @@ Refunds are idempotent on a server-derived key. A double-tapped cancel refunds o
 Earnings adjusted: `reversed` on a full refund, otherwise adjust the existing earning to the inconvenience amount and make it available through `P3-T04` only after cancellation/refund success and with no open dispute (`RULE-EARN-02`). Pending or failed refunds cannot release it. Preserve the cancelled booking status and original snapshots; never create a second service entitlement or fake completion. A retry cannot apply either refund or earning adjustment twice.
 
 Barber cancellation raises a reliability event via `P3-T12` only where `RULE-CANCEL-04` applies; an outside-window Scheduled cancellation remains penalty-free (`RULE-CANCEL-02`).
+
+Use `RULE-RELY-06` offence eligibility and the booking's snapshotted late window. Deduplicate by booking so retries/refund callbacks cannot add another offence or restart cooldown. A cancelled booking is the event source, not a client claim or a duplicate payment notification. Reliability changes must not alter the approved refund or earning allocation.
 
 Audit log with the calculated amounts and the rule applied.
 
@@ -4182,6 +4204,8 @@ Before confirmation, show: the client is refunded in full, the barber receives n
 `ConfirmDialog` with the consequence and a destructive variant.
 
 After confirming, show the new reliability level and, per `P0-D04`, when it improves.
+
+Use `RULE-RELY-06`: fourth-and-later offences still show automatic `restricted` plus eligibility for human suspension review, never promise automatic suspension. Distinguish cooldown end from level recovery; explain that an approved suspension requires human reinstatement. The always-accessible standing display is in `P2-T02`, not only this cancellation flow.
 
 Handle a booking that became non-cancellable mid-decision.
 
@@ -4332,9 +4356,9 @@ owner: Tony
 phase: 3
 priority: High
 jiraKey: null
-dependsOn: [P0-D04, P0-D07, P0-T10, P3-T07]
-affects: [P2-T04, P3-T09, P5-T03, P5-T13]
-knowledgeBase: [ADR-011, ADR-013, RULE-RELY-01, RULE-RELY-02, RULE-RELY-03, RULE-RELY-04, RULE-RELY-05, RULE-RELY-06, ENUM-RELIABILITY-LEVEL, CFG-RELIABILITY-WINDOW-DAYS, CFG-RELIABILITY-RESET-DAYS, CFG-RELIABILITY-COOLDOWN-MIN]
+dependsOn: [P0-D04, P0-D07, P0-T10, P2-T01, P2-T02, P2-T04, P3-T07]
+affects: [P2-T01, P2-T02, P2-T04, P2-T08, P2-T12, P2-T14, P3-T09, P5-T03, P5-T13]
+knowledgeBase: [ADR-011, ADR-013, RULE-RELY-01, RULE-RELY-02, RULE-RELY-03, RULE-RELY-04, RULE-RELY-05, RULE-RELY-06, ENUM-RELIABILITY-LEVEL, CFG-RELIABILITY-WINDOW-DAYS, CFG-RELIABILITY-RESET-DAYS, CFG-RELIABILITY-COOLDOWN-MIN, CFG-RELIABILITY-THRESHOLDS, CFG-RELIABILITY-SEARCH-PENALTY]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, database]
 ```
@@ -4347,15 +4371,15 @@ It affects someone's income, so `RULE-RELY-02`'s recoverability and `RULE-RELY-0
 
 **Scope**
 
-An append-only `barber_reliability_events` log — offence type, booking, timestamp, and the level before and after. Corrections are new events, never edits.
+An append-only `barber_reliability_events` log — offence type, booking, server occurrence timestamp, config evidence and the level before and after. Corrections/excused events are new, reasoned records, never edits. Exactly one qualifying offence per cancelled booking, including duplicate/concurrent event delivery. Misses, declines, client cancellations and early Scheduled cancellations are not offences. No-show allegations are not automatic offences.
 
 `barber_reliability_state` holding the current level and the window it was computed over, recomputed rather than incremented, so a correction to the event log produces a correct level.
 
 Pure level calculation in `packages/domain` (`KB §7`): given events and a window, return the level. Unit-testable with no database, which is what makes `P0-D04`'s thresholds tunable without fear.
 
-A scheduled recovery pass on the engine from `P0-D07` implementing `RULE-RELY-02` — levels improve as offences age out. Idempotent and re-checking state.
+A scheduled recovery pass on the engine from `P0-D07` implementing `RULE-RELY-06` — automatic levels improve as offences age out, using the exact open-lower/closed-upper rolling window. Idempotent, reconcilable and re-checking current state; no pass may reinstate an admin-suspended barber. Cooldown deadlines are anchored to qualifying offences, never recovery/login/retry time. Preserve the evidence for prior decisions rather than rewriting historical levels.
 
-Consequences applied per level from `RULE-RELY-06`: Available Now cooldown, search priority penalty consumed by `P2-T04`, and any block on accepting.
+Consequences applied per level from `RULE-RELY-06`: Available Now cooldown, restricted search demotion in both types and human-approved suspension. Automatic counts at or above the suspension-review threshold still produce `restricted`. Integrate live state/recovery into the shared read-side helper from `P2-T01` and re-run direct session/request/acceptance and search tests; stale stored levels cannot extend a penalty after recovery or bypass a current restriction. Coordinate event/admin writers with acceptance transactions. Existing bookings are not automatically cancelled and earned money is not confiscated.
 
 An audited admin override (`RULE-RELY-05`) with a mandatory reason, written as an event so it appears in the same history.
 
@@ -4368,15 +4392,18 @@ Thresholds from config (`RULE-RELY-04`) — no literal in the logic.
 - [ ] The level is **recomputed from events**, not incrementally mutated.
 - [ ] Every threshold, window and cooldown comes from config; **no literal appears in the logic.**
 - [ ] Levels improve as offences age out of the window (`RULE-RELY-02`), on a scheduled pass that is idempotent.
+- [ ] The KB's UTC timeline and exact window/cooldown boundaries hold with the app closed; a dropped schedule is reconciled and deadline checks do not depend on job punctuality.
+- [ ] Fourth-and-later offences never automatically suspend; approved suspension persists through aging and requires a human reinstatement record.
+- [ ] Duplicate/concurrent cancellation events count once and do not extend cooldown; exceptions/corrections preserve original events and trigger correct recomputation.
 - [ ] Consequences are applied per level: cooldown, search penalty, accept restriction.
 - [ ] `P2-T04` reflects the search penalty.
 - [ ] An admin override requires a reason and is written as an event visible in the same history (`RULE-RELY-05`).
 - [ ] A barber can see their level and how it recovers.
 - [ ] Every level change writes an audit log.
 
-**Tests** — pure unit tests across the `P0-D04` scenarios, including the worked example in that decision; recovery pass moving a barber back after the window, run twice with identical result; a config change altering thresholds without a code change; append-only enforcement attempted directly in SQL; search penalty visible in `P2-T04` results.
+**Tests** — pure unit tests across all `RULE-RELY-06` levels and worked-example rows; each time boundary and both sides; fourth offence awaiting review; suspension surviving automatic reset; corrected/excused event recomputation; real parallel duplicate events and restriction-versus-acceptance; recovery twice as a no-op and dropped-job reconciliation; config-driven thresholds; append-only cross-user read/write denial at the API plus attempted SQL update/delete; both-type search ordering across page boundaries; live session/request/acceptance guard integration; existing bookings and earning amounts unchanged by reliability state alone.
 
-**Out of scope** — the barber-facing display (`P3-T09`); admin management (`P5-T13`); the Available Now missed-request auto-disable, which is `P2-T03`.
+**Out of scope** — building the barber-facing displays (`P2-T02`, `P3-T09`), though their live integration is tested here; admin management UI (`P5-T13`); the Available Now missed-request auto-disable, which is `P2-T03`.
 
 **Sync notes** — `P3-T07` raises events here, `P2-T04` consumes the search penalty, `P5-T13` overrides. Changing the level calculation changes who is discoverable, so `P2-T04`'s results change with it.
 
@@ -5470,7 +5497,7 @@ A barber list with server-side search, filter and pagination, filterable by veri
 
 Detail: profile, services and prices, Stripe Connect status and outstanding requirements, verification status, reliability level with its event history, Available Now session history, bookings, earnings and payouts.
 
-**A discoverability summary** stating plainly whether the barber currently appears in search, and if not, why — Connect incomplete, reliability restricted, or no active services.
+**A discoverability summary** distinguishing absent (Connect incomplete, no active services, suspended, or Available Now cooldown) from present-but-demoted (`restricted` outside cooldown). Show each booking type, current offence count, cooldown end, automatic level versus human override, review eligibility and recovery/reinstatement information (`RULE-RELY-06`).
 
 Reliability events in full, since `RULE-RELY-01` makes them append-only and a barber disputing a level needs the history.
 
@@ -5487,7 +5514,7 @@ Read-only. Reliability changes go through `P5-T13`.
 - [ ] Pagination is server-side.
 - [ ] Loading, error and empty states exist.
 
-**Tests** — non-admin denial on the raw body; the discoverability summary asserted for each blocking reason using seed barbers; reliability history ordering.
+**Tests** — non-admin denial on the raw body; discoverability summary for both booking types and each blocking/demotion reason using seed barbers; fourth offence awaiting review versus approved suspension; cooldown versus level recovery; reliability history ordering.
 
 **Out of scope** — reliability changes (`P5-T13`); manual Connect override.
 
@@ -6047,7 +6074,7 @@ labels: [quicktrimr, phase-5, admin, backend, security]
 
 **Context**
 
-`RULE-RELY-05` — an admin can adjust a barber's reliability state with a recorded reason. `P0-D04` may make suspension admin-gated rather than automatic, in which case this is where a suspension actually happens.
+`RULE-RELY-05` — an admin can adjust a barber's reliability state with a recorded reason. `RULE-RELY-06` makes cancellation-reliability suspension admin-gated from the configured review threshold; this is where that suspension and human reinstatement happen.
 
 **This decides whether someone earns money this week.** The reason is mandatory, the change is an append-only event in the same history the automatic ones are in (`RULE-RELY-01`), and it is fully reversible.
 
@@ -6057,9 +6084,9 @@ labels: [quicktrimr, phase-5, admin, backend, security]
 
 Admin role verified server-side; a mandatory reason.
 
-Set a level directly, or clear a specific event where it was raised in error. **Both are recorded as new events, never as edits or deletions** — the history stays append-only.
+Set a level directly, or excuse/correct a specific event after investigating an error or documented emergency. **Both are recorded as new events, never as edits or deletions** — the history stays append-only. A correction must refer to its original event so automatic recomputation does not count it again.
 
-If `P0-D04` made suspension admin-gated, this is the path, and the admin sees the full event history and the automatic level before overriding.
+Enforce `RULE-RELY-06` server-side: for suspension under this cancellation policy, require the configured current offence threshold plus explicit admin approval with a reason. The admin sees the full event history, booking volume, exceptions and automatic level before deciding. At four offences the review flag is not itself suspension. Human reinstatement is required even after the offences age out; recovery jobs must not overwrite the suspension. Reuse the engine's audited mutation path and shared eligibility projection, not a second calculation in the dashboard.
 
 An override is visibly distinguished from an automatic level in `P5-T03`'s history, so a later reader knows a human intervened.
 
@@ -6094,6 +6121,8 @@ Audit log with the admin, the reason, and the before and after.
 - [ ] The admin sees the full event history and the automatically computed level before overriding.
 - [ ] The barber is notified of a change affecting their standing.
 - [ ] The override is reversible by the same mechanism.
+- [ ] Suspension under this policy is rejected below the configured review threshold; at/above it approval is still required. Tests cover fourth offence without approval, approved suspension surviving aging, reasoned human reinstatement and exception correction without history deletion.
+- [ ] No reliability action itself cancels existing bookings or confiscates earnings; direct session/request/acceptance restrictions and search projections reflect the outcome.
 - [ ] **A client or barber calling this receives 403** — verified at the API.
 - [ ] An audit log records the admin, the reason, and the before and after.
 
