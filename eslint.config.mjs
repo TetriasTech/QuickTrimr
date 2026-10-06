@@ -8,6 +8,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 import { boundaryPlugin } from './scripts/quality/boundaries.mjs';
+import { clientEnvironmentPlugin } from './scripts/quality/client-environment.mjs';
 
 const source = ['**/*.{js,jsx,mjs,cjs,ts,tsx}'];
 const typescript = ['**/*.{ts,tsx}'];
@@ -65,6 +66,11 @@ export default defineConfig([
       'no-restricted-imports': ['error', { patterns: [appImports] }],
       'quicktrimr/imports': 'error',
     },
+  },
+  {
+    files: ['apps/**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+    plugins: { 'client-env': clientEnvironmentPlugin(import.meta.dirname) },
+    rules: { 'client-env/typed-accessor': 'error' },
   },
   {
     files: ['apps/admin/**/*.{js,mjs,ts,tsx}'],
@@ -132,6 +138,11 @@ export default defineConfig([
         'process',
       ],
     },
+  },
+  {
+    files: ['scripts/environment/accessors.test.mjs'],
+    // Root tooling tests exercise both public readers; this is not a workspace import.
+    rules: { 'no-restricted-imports': 'off' },
   },
   {
     files: ['packages/ui/test/setup.ts'],

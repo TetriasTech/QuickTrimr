@@ -20,3 +20,7 @@ private fields cannot silently leak into a documented response.
 
 All status validators and literals come from `@quicktrimr/shared`. Payload types are inferred with
 `z.infer`; do not declare parallel interfaces.
+
+`requireEnvironmentValue` and `requireEnvironmentUrl` are pure validators shared by the app
+environment accessors. They receive a value; they never read the process environment or perform
+I/O. Errors include the configured variable name only, not the supplied value.
