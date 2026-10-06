@@ -7031,7 +7031,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-REQUEST-02` | `P2-T08` |
 | `RULE-REQUEST-03` | `P2-T08`, `P2-T09` |
 | `RULE-REQUEST-04` | `P2-T08`, `P2-T09` |
-| `RULE-REQUEST-05` | `P2-T12`, `P2-T14`, `P6-T07` |
+| `RULE-REQUEST-05` | `P2-T12`, `P2-T14`, `P2-T15`, `P6-T07` |
 | `RULE-REQUEST-06` | `P2-T13`, `P2-T15`, `P3-T06` |
 | `RULE-REVIEW-01` | `P0-D08`, `P4-T14`, `P4-T15` |
 | `RULE-REVIEW-02` | `P0-D08`, `P4-T14`, `P4-T15` |
@@ -7164,7 +7164,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P3-T09` | — | `P0-D03`, `P0-D04`, `P3-T07`, `P3-T12` |
 | `P3-T10` | `P3-T11`, `P5-T10` | `P0-D02`, `P0-D03`, `P0-D05`, `P3-T04` |
 | `P3-T11` | `P3-T05`, `P5-T10`, `P6-T02`, `P6-T07` | `P0-D05`, `P0-D07`, `P0-T18`, `P1-T07`, `P1-T09`, `P3-T03`, `P3-T10` |
-| `P3-T12` | `P3-T09`, `P5-T03`, `P5-T13` | `P0-D04`, `P2-T01`, `P2-T03`, `P3-T07` |
+| `P3-T12` | `P3-T09`, `P5-T03`, `P5-T13` | `P0-D04`, `P0-D07`, `P2-T01`, `P2-T03`, `P3-T07` |
 | `P4-T01` | `P4-T06`, `P4-T10`, `P4-T15`, `P5-T04` | `P0-T11`, `P0-T14`, `P0-T15`, `P2-T08`, `P2-T09`, `P2-T12`, `P2-T15`, `P3-T06` |
 | `P4-T02` | `P4-T03`, `P4-T04`, `P4-T07`, `P4-T08`, `P5-T04` | `P0-T11`, `P2-T12`, `P2-T14`, `P3-T06` |
 | `P4-T03` | `P4-T04`, `P4-T05` | `P1-T05`, `P4-T02` |
