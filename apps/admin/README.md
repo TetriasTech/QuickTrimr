@@ -17,6 +17,10 @@ Open <http://localhost:3000>. `/` redirects to `/login`. The public information 
 Tailwind theme and shadcn Button; its native form checks dashboard access and returns to `/login`.
 **No `.env`, Supabase credentials, preview account or auth bypass is needed or supported.**
 
+Future integrations use `adminEnv` in `src/lib/env.ts` and this app's public-only `.env.local`
+template. Backend credentials do not belong in this app, including its server components.
+See the [environment contract](../../docs/architecture/environment-variables.md).
+
 ```bash
 pnpm --filter @quicktrimr/admin typecheck
 pnpm --filter @quicktrimr/admin lint

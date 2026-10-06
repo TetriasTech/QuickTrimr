@@ -14,3 +14,8 @@ pnpm --filter @quicktrimr/mobile android
 
 The app relies on Expo's automatic pnpm-workspace Metro configuration. Do not add legacy
 `watchFolders`, `extraNodeModules` or `nodeModulesPath` overrides.
+
+The shell needs no credentials. Future integrations use `mobileEnv` in `src/lib/env.ts` and
+public values from this app's `.env.local`, copied from `.env.example`. Do not read the process
+environment in screens or copy backend/operator configuration here. See the
+[environment contract](../../docs/architecture/environment-variables.md).

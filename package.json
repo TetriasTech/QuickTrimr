@@ -11,7 +11,8 @@
     "lint": "pnpm --recursive --if-present lint && eslint scripts *.mjs --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs scripts/decisions.test.mjs scripts/quality/quality.test.mjs",
+    "test": "pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs scripts/decisions.test.mjs scripts/quality/quality.test.mjs scripts/environment/*.test.mjs",
+    "check:client-env": "node scripts/check-client-env.mjs",
     "build": "pnpm --recursive --if-present build"
   },
   "devDependencies": {

@@ -31,13 +31,24 @@ pnpm lint
 pnpm format
 pnpm format:check
 pnpm test
+pnpm check:client-env
 pnpm build
 ```
 
 `typecheck`, `lint`, `test` and `build` traverse the workspaces; lint also covers repository
 scripts. `format` writes the shared Prettier style across the repository; `format:check` is
 read-only and exits nonzero for unformatted code. These script names are the P0-T04 CI contract;
-this ticket does not add CI or change branch protection.
+the full quality pipeline and branch protection remain P0-T04. The standalone P0-T03
+client-environment guard already runs on every PR and push to `main`, without secrets.
+
+## Environment files
+
+The current shells need no credentials. When an integration needs values, copy that surface's
+template to `apps/mobile/.env.local`, `apps/admin/.env.local` or `supabase/.env.local`.
+Existing Jira credentials stay in `scripts/jira/.env`, never an app file. Do not share filled
+`.env` files or use one combined root file. See the
+[environment contract](docs/architecture/environment-variables.md) for public-only typed accessors,
+per-variable readers, Google key restrictions, and local/staging/production setup.
 
 ### Quality configuration
 

@@ -1,0 +1,23 @@
+name: Client environment boundary
+
+# P0-T03's standalone guard. P0-T04 owns the broader quality pipeline.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  client-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Reject server-only references in apps
+        run: node scripts/check-client-env.mjs
+      - name: Prove rejection with isolated fixtures
+        run: node --test scripts/environment/client-env.test.mjs
