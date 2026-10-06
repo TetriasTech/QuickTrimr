@@ -1,8 +1,9 @@
 import { DOMAIN_PACKAGE_NAME } from '@quicktrimr/domain';
 import { BOOKING_STATUS, QUICKTRIMR_PRODUCT } from '@quicktrimr/shared';
-import type { BookingStatus, WorkspaceIdentity } from '@quicktrimr/shared';
 import { UI_PACKAGE_NAME } from '@quicktrimr/ui';
 import { CONTRACTS } from '@quicktrimr/validation';
+
+import type { BookingStatus, WorkspaceIdentity } from '@quicktrimr/shared';
 
 export const mobileWorkspaceIdentity: WorkspaceIdentity = {
   product: QUICKTRIMR_PRODUCT,

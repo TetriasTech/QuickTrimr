@@ -1,6 +1,6 @@
-import type { BookingStatus } from '@quicktrimr/shared';
-
 import { Badge, type BadgeTone } from './badge';
+
+import type { BookingStatus } from '@quicktrimr/shared';
 
 export type BookingStatusPresentation = {
   label: string;
@@ -30,7 +30,9 @@ export const UNKNOWN_BOOKING_STATUS_PRESENTATION = {
   tone: 'neutral',
 } as const satisfies BookingStatusPresentation;
 
-export function getBookingStatusPresentation(status: string): BookingStatusPresentation {
+export function getBookingStatusPresentation(
+  status: string,
+): BookingStatusPresentation {
   return (
     BOOKING_STATUS_PRESENTATION[status as BookingStatus] ??
     UNKNOWN_BOOKING_STATUS_PRESENTATION
@@ -44,5 +46,11 @@ export interface StatusBadgeProps {
 
 export function StatusBadge({ status, testID }: StatusBadgeProps) {
   const presentation = getBookingStatusPresentation(status);
-  return <Badge label={presentation.label} tone={presentation.tone} testID={testID} />;
+  return (
+    <Badge
+      label={presentation.label}
+      tone={presentation.tone}
+      {...(testID === undefined ? {} : { testID })}
+    />
+  );
 }

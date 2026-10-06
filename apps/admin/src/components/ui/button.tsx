@@ -1,6 +1,8 @@
-import type { ComponentProps } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+
 import { cn } from '@/lib/utils';
+
+import type { ComponentProps } from 'react';
 
 // shadcn/ui's native-button pattern, limited to the shell's required variants.
 // No client boundary: a native form works without JavaScript or client auth.

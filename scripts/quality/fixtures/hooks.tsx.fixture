@@ -1,0 +1,6 @@
+import { useEffect } from 'react';
+
+export function Fixture({ value }: { value: string }) {
+  useEffect(() => { console.log(value); }, []);
+  return null;
+}

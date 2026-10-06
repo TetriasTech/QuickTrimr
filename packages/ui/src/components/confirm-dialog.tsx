@@ -45,7 +45,16 @@ export function ConfirmDialog({
       ],
       { cancelable: true, onDismiss: onCancel },
     );
-  }, [cancelLabel, confirmLabel, consequence, destructive, onCancel, onConfirm, title, visible]);
+  }, [
+    cancelLabel,
+    confirmLabel,
+    consequence,
+    destructive,
+    onCancel,
+    onConfirm,
+    title,
+    visible,
+  ]);
 
   return null;
 }

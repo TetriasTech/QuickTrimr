@@ -39,7 +39,10 @@ test('the root navigator protects every journey with typed route access', async 
 });
 
 test('the Metro resolution probe imports all four shared workspace packages', async () => {
-  const source = await readFile(resolve(mobileRoot, 'src/workspace-contract.ts'), 'utf8');
+  const source = await readFile(
+    resolve(mobileRoot, 'src/workspace-contract.ts'),
+    'utf8',
+  );
 
   for (const packageName of [
     '@quicktrimr/shared',
@@ -47,13 +50,22 @@ test('the Metro resolution probe imports all four shared workspace packages', as
     '@quicktrimr/validation',
     '@quicktrimr/ui',
   ]) {
-    assert.match(source, new RegExp(`from ["']${packageName}["']`), packageName);
+    assert.match(
+      source,
+      new RegExp(`from ["']${packageName}["']`),
+      packageName,
+    );
   }
 });
 
 test('the mobile shell uses the ADR-003 state libraries and no out-of-scope alternatives', async () => {
-  const manifest = JSON.parse(await readFile(resolve(mobileRoot, 'package.json'), 'utf8'));
-  const dependencies = { ...manifest.dependencies, ...manifest.devDependencies };
+  const manifest = JSON.parse(
+    await readFile(resolve(mobileRoot, 'package.json'), 'utf8'),
+  );
+  const dependencies = {
+    ...manifest.dependencies,
+    ...manifest.devDependencies,
+  };
 
   for (const required of [
     '@hookform/resolvers',

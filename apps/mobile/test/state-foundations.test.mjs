@@ -11,8 +11,11 @@ import {
   EdgeFunctionError,
   invokeEdgeFunction,
 } from '../src/lib/api/invoke-edge-function.ts';
+import {
+  createQueryClient,
+  shouldRetryQuery,
+} from '../src/lib/query/query-client.ts';
 import { queryKeys } from '../src/lib/query/query-keys.ts';
-import { createQueryClient, shouldRetryQuery } from '../src/lib/query/query-client.ts';
 import { useBookingDraftStore } from '../src/stores/booking-draft-store.ts';
 
 const mobileRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -115,7 +118,9 @@ test('the Query client defaults refresh server truth without retrying client err
 
 test('the booking draft store contains only the four allowed local selections', () => {
   const store = useBookingDraftStore.getState();
-  const dataKeys = Object.keys(store).filter((key) => typeof store[key] !== 'function');
+  const dataKeys = Object.keys(store).filter(
+    (key) => typeof store[key] !== 'function',
+  );
 
   assert.deepEqual(dataKeys.sort(), [
     'selectedAddressId',
@@ -132,12 +137,15 @@ test('the booking draft store contains only the four allowed local selections', 
   };
   store.replaceDraft(savedDraft);
   assert.deepEqual(
-    Object.fromEntries(dataKeys.map((key) => [key, useBookingDraftStore.getState()[key]])),
+    Object.fromEntries(
+      dataKeys.map((key) => [key, useBookingDraftStore.getState()[key]]),
+    ),
     savedDraft,
   );
 
   useBookingDraftStore.getState().resetDraft();
-  for (const key of dataKeys) assert.equal(useBookingDraftStore.getState()[key], null);
+  for (const key of dataKeys)
+    assert.equal(useBookingDraftStore.getState()[key], null);
 });
 
 test('query keys are constructed only in the query-key factory', async () => {
@@ -148,7 +156,11 @@ test('query keys are constructed only in the query-key factory', async () => {
     if (path === factoryPath) continue;
     const source = await readFile(path, 'utf8');
     assert.doesNotMatch(source, /queryKey\s*:\s*\[/, path);
-    assert.doesNotMatch(source, /invalidateQueries\s*\(\s*\{\s*queryKey\s*:\s*\[/, path);
+    assert.doesNotMatch(
+      source,
+      /invalidateQueries\s*\(\s*\{\s*queryKey\s*:\s*\[/,
+      path,
+    );
   }
 });
 

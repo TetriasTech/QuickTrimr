@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -64,9 +64,19 @@ async function json(path) {
 async function filesBelow(path) {
   const found = [];
   for (const entry of await readdir(path, { withFileTypes: true })) {
-    if (['.git', 'node_modules', '.pnpm-store', '.next', 'test-results', 'playwright-report'].includes(entry.name)) continue;
+    if (
+      [
+        '.git',
+        'node_modules',
+        '.pnpm-store',
+        '.next',
+        'test-results',
+        'playwright-report',
+      ].includes(entry.name)
+    )
+      continue;
     const absolute = join(path, entry.name);
-    if (entry.isDirectory()) found.push(...await filesBelow(absolute));
+    if (entry.isDirectory()) found.push(...(await filesBelow(absolute)));
     else found.push(absolute);
   }
   return found;
@@ -74,37 +84,61 @@ async function filesBelow(path) {
 
 test('repository contains the KB section 7 directory structure', async () => {
   for (const directory of requiredDirectories) {
-    assert.equal((await stat(resolve(root, directory))).isDirectory(), true, directory);
+    assert.equal(
+      (await stat(resolve(root, directory))).isDirectory(),
+      true,
+      directory,
+    );
   }
 });
 
-test('root exposes the five recursive workspace commands', async () => {
+test('root exposes workspace quality commands and repo-wide formatting', async () => {
   const manifest = await json('package.json');
-  for (const command of ['typecheck', 'lint', 'format', 'test', 'build']) {
+  for (const command of ['typecheck', 'lint', 'test', 'build']) {
     assert.match(manifest.scripts[command], /pnpm --recursive --if-present/);
   }
+  assert.equal(manifest.scripts.format, 'prettier --write .');
+  assert.equal(manifest.scripts['format:check'], 'prettier --check .');
 });
 
 test('workspace dependency graph follows ADR-007 and has no cycles', async () => {
   const manifests = await Promise.all(workspaceManifests.map(json));
-  const byName = new Map(manifests.map((manifest) => [manifest.name, manifest]));
-  assert.equal(byName.size, workspaceManifests.length, 'workspace names must be unique');
+  const byName = new Map(
+    manifests.map((manifest) => [manifest.name, manifest]),
+  );
+  assert.equal(
+    byName.size,
+    workspaceManifests.length,
+    'workspace names must be unique',
+  );
 
   const workspaceDependencies = (manifest) =>
-    Object.keys(manifest.dependencies ?? {}).filter((dependency) => byName.has(dependency));
+    Object.keys(manifest.dependencies ?? {}).filter((dependency) =>
+      byName.has(dependency),
+    );
 
   assert.deepEqual(workspaceDependencies(byName.get('@quicktrimr/shared')), []);
-  for (const name of ['@quicktrimr/domain', '@quicktrimr/validation', '@quicktrimr/ui']) {
-    assert.deepEqual(workspaceDependencies(byName.get(name)), ['@quicktrimr/shared']);
+  for (const name of [
+    '@quicktrimr/domain',
+    '@quicktrimr/validation',
+    '@quicktrimr/ui',
+  ]) {
+    assert.deepEqual(workspaceDependencies(byName.get(name)), [
+      '@quicktrimr/shared',
+    ]);
   }
   for (const name of ['@quicktrimr/mobile', '@quicktrimr/admin']) {
-    assert.deepEqual(workspaceDependencies(byName.get(name)).sort(), [...sharedPackages].sort());
+    assert.deepEqual(
+      workspaceDependencies(byName.get(name)).sort(),
+      [...sharedPackages].sort(),
+    );
   }
 
   const visiting = new Set();
   const visited = new Set();
   function visit(name) {
-    if (visiting.has(name)) throw new Error(`workspace dependency cycle at ${name}`);
+    if (visiting.has(name))
+      throw new Error(`workspace dependency cycle at ${name}`);
     if (visited.has(name)) return;
     visiting.add(name);
     for (const dependency of Object.keys(byName.get(name).dependencies ?? {})) {
@@ -119,31 +153,61 @@ test('workspace dependency graph follows ADR-007 and has no cycles', async () =>
 test('mobile, admin and a Supabase function resolve the shared package import', async () => {
   const [shared, ...modules] = await Promise.all([
     import(pathToFileURL(resolve(root, 'packages/shared/src/index.ts'))),
-    import(pathToFileURL(resolve(root, 'apps/mobile/src/workspace-contract.ts'))),
-    import(pathToFileURL(resolve(root, 'apps/admin/src/workspace-contract.ts'))),
-    import(pathToFileURL(resolve(root, 'supabase/functions/workspace-contract/index.ts'))),
-  ]);
-  assert.deepEqual(modules.map((module) => module.mobileWorkspaceIdentity ?? module.adminWorkspaceIdentity ?? module.functionWorkspaceIdentity), [
-    { product: 'QuickTrimr', surface: 'mobile' },
-    { product: 'QuickTrimr', surface: 'admin' },
-    { product: 'QuickTrimr', surface: 'function' },
+    import(
+      pathToFileURL(resolve(root, 'apps/mobile/src/workspace-contract.ts'))
+    ),
+    import(
+      pathToFileURL(resolve(root, 'apps/admin/src/workspace-contract.ts'))
+    ),
+    import(
+      pathToFileURL(
+        resolve(root, 'supabase/functions/workspace-contract/index.ts'),
+      )
+    ),
   ]);
   assert.deepEqual(
-    modules.map((module) => module.mobileBookingStatuses ?? module.adminBookingStatuses ?? module.functionBookingStatuses),
+    modules.map(
+      (module) =>
+        module.mobileWorkspaceIdentity ??
+        module.adminWorkspaceIdentity ??
+        module.functionWorkspaceIdentity,
+    ),
+    [
+      { product: 'QuickTrimr', surface: 'mobile' },
+      { product: 'QuickTrimr', surface: 'admin' },
+      { product: 'QuickTrimr', surface: 'function' },
+    ],
+  );
+  assert.deepEqual(
+    modules.map(
+      (module) =>
+        module.mobileBookingStatuses ??
+        module.adminBookingStatuses ??
+        module.functionBookingStatuses,
+    ),
     [shared.BOOKING_STATUS, shared.BOOKING_STATUS, shared.BOOKING_STATUS],
   );
 });
 
 test('packages never import an app and placeholder files are absent', async () => {
   const files = await filesBelow(root);
-  assert.equal(files.some((path) => path.endsWith('.gitkeep')), false);
+  assert.equal(
+    files.some((path) => path.endsWith('.gitkeep')),
+    false,
+  );
   const packageFiles = files.filter((path) => {
     const projectPath = relative(root, path);
-    return projectPath.startsWith('packages/') && /(?:\.ts|\.tsx|\.js|\.mjs|\.cjs|package\.json)$/.test(projectPath);
+    return (
+      projectPath.startsWith('packages/') &&
+      /(?:\.ts|\.tsx|\.js|\.mjs|\.cjs|package\.json)$/.test(projectPath)
+    );
   });
   for (const path of packageFiles) {
     const contents = await readFile(path, 'utf8');
-    assert.doesNotMatch(contents, /(?:from|import\()\s*['"]@quicktrimr\/(?:mobile|admin)['"]/);
+    assert.doesNotMatch(
+      contents,
+      /(?:from|import\()\s*['"]@quicktrimr\/(?:mobile|admin)['"]/,
+    );
   }
 });
 
@@ -158,6 +222,9 @@ test('README documents setup and every required developer command', async () => 
     'pnpm --filter @quicktrimr/admin dev',
     'Run Supabase locally',
   ]) {
-    assert.match(readme, new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(
+      readme,
+      new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+    );
   }
 });

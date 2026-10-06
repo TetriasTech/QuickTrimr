@@ -3,7 +3,12 @@ jest.mock('@expo/ui', () => {
   const { View } = require('react-native');
 
   return {
-    BottomSheet: ({ children, isPresented, onDismiss, testID }: {
+    BottomSheet: ({
+      children,
+      isPresented,
+      onDismiss,
+      testID,
+    }: {
       children?: React.ReactNode;
       isPresented: boolean;
       onDismiss: () => void;

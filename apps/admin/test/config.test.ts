@@ -1,8 +1,10 @@
 import { readFile, readdir } from 'node:fs/promises';
+
 import { expect, it } from 'vitest';
+
+import components from '../components.json';
 import nextConfig from '../next.config';
 import vercel from '../vercel.json';
-import components from '../components.json';
 
 it('configures workspace transpilation and Vercel without linking or deploying', () => {
   expect(nextConfig.transpilePackages).toEqual([

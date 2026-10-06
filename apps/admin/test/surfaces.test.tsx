@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import LoginPage from '../app/login/page';
+import { afterEach, expect, it, vi } from 'vitest';
+
+import { Button } from '@/components/ui/button';
+
+import ErrorBoundary from '../app/error';
 import ForbiddenPage from '../app/forbidden/page';
 import Loading from '../app/loading';
-import ErrorBoundary from '../app/error';
-import { Button } from '@/components/ui/button';
+import LoginPage from '../app/login/page';
 
 afterEach(cleanup);
 

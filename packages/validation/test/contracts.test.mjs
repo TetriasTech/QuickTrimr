@@ -10,6 +10,7 @@ import {
   EARNING_STATUS_VALUE,
   REQUEST_STATUS_VALUE,
 } from '@quicktrimr/shared';
+
 import {
   CONTRACTS,
   CONTRACT_EXAMPLES,
@@ -24,23 +25,43 @@ function hasFieldLevelIssue(issues) {
   return issues.some((issue) => {
     if (issue.path.length > 0) return true;
     if (!('errors' in issue)) return false;
-    return issue.errors.some((nestedIssues) => hasFieldLevelIssue(nestedIssues));
+    return issue.errors.some((nestedIssues) =>
+      hasFieldLevelIssue(nestedIssues),
+    );
   });
 }
 
 test('every contract has matching valid and invalid examples', () => {
-  assert.deepEqual(Object.keys(CONTRACT_EXAMPLES).sort(), Object.keys(CONTRACTS).sort());
+  assert.deepEqual(
+    Object.keys(CONTRACT_EXAMPLES).sort(),
+    Object.keys(CONTRACTS).sort(),
+  );
 
   for (const [name, contract] of Object.entries(CONTRACTS)) {
     const examples = CONTRACT_EXAMPLES[name];
-    assert.equal(contract.requestSchema.safeParse(examples.request.valid).success, true, name);
-    assert.equal(contract.responseSchema.safeParse(examples.response.valid).success, true, name);
+    assert.equal(
+      contract.requestSchema.safeParse(examples.request.valid).success,
+      true,
+      name,
+    );
+    assert.equal(
+      contract.responseSchema.safeParse(examples.response.valid).success,
+      true,
+      name,
+    );
 
     for (const side of ['request', 'response']) {
-      assert.ok(examples[side].invalid.length >= 3, `${name} ${side} needs three invalid examples`);
+      assert.ok(
+        examples[side].invalid.length >= 3,
+        `${name} ${side} needs three invalid examples`,
+      );
       for (const invalid of examples[side].invalid) {
         const result = contract[`${side}Schema`].safeParse(invalid);
-        assert.equal(result.success, false, `${name} ${side} accepted ${JSON.stringify(invalid)}`);
+        assert.equal(
+          result.success,
+          false,
+          `${name} ${side} accepted ${JSON.stringify(invalid)}`,
+        );
         assert.equal(
           hasFieldLevelIssue(result.error.issues),
           true,
@@ -56,7 +77,10 @@ test('every contract uses the shared error response schema', () => {
     assert.equal(contract.errorSchema, errorResponseSchema, name);
   }
 
-  assert.equal(errorResponseSchema.safeParse(ERROR_RESPONSE_EXAMPLES.valid).success, true);
+  assert.equal(
+    errorResponseSchema.safeParse(ERROR_RESPONSE_EXAMPLES.valid).success,
+    true,
+  );
   for (const invalid of ERROR_RESPONSE_EXAMPLES.invalid) {
     const result = errorResponseSchema.safeParse(invalid);
     assert.equal(result.success, false);
@@ -65,17 +89,31 @@ test('every contract uses the shared error response schema', () => {
 });
 
 test('cancellation fixture matches the approved Available Now backlog example', async () => {
-  const backlog = await readFile(new URL('../../../QUICKTRIMR_BACKLOG_README.md', import.meta.url), 'utf8');
+  const backlog = await readFile(
+    new URL('../../../QUICKTRIMR_BACKLOG_README.md', import.meta.url),
+    'utf8',
+  );
   const ticket = backlog.split('#### P3-T07 —')[1]?.split('#### P3-T08 —')[0];
   assert.ok(ticket);
-  const response = ticket.match(/\/\/ 200 — client cancels accepted Available Now booking\s*(\{[\s\S]*?\})/);
+  const response = ticket.match(
+    /\/\/ 200 — client cancels accepted Available Now booking\s*(\{[\s\S]*?\})/,
+  );
   assert.ok(response, 'Approved cancellation example must exist');
   const expected = JSON.parse(response[1]);
   const actual = CONTRACT_EXAMPLES['cancel-booking'].response.valid;
-  for (const field of ['refundCents', 'barberInconvenienceCents', 'platformRetainedCents', 'capturedCents', 'ruleApplied']) {
+  for (const field of [
+    'refundCents',
+    'barberInconvenienceCents',
+    'platformRetainedCents',
+    'capturedCents',
+    'ruleApplied',
+  ]) {
     assert.equal(actual[field], expected[field], field);
   }
-  assert.equal(CONTRACTS['cancel-booking'].responseSchema.safeParse(actual).success, true);
+  assert.equal(
+    CONTRACTS['cancel-booking'].responseSchema.safeParse(actual).success,
+    true,
+  );
   // This checks contract-example parity, not production refund calculation or Stripe behavior.
 });
 
@@ -89,14 +127,25 @@ test('request schemas ignore client-supplied identity, status and server-derived
         true,
         `${name} did not ignore forbidden field ${field}`,
       );
-      assert.equal(field in result.data, false, `${name} returned forbidden field ${field}`);
+      assert.equal(
+        field in result.data,
+        false,
+        `${name} returned forbidden field ${field}`,
+      );
     }
   }
 });
 
 test('reliability-denial backlog examples reuse the shared error contract', async () => {
-  const backlog = await readFile(new URL('../../../QUICKTRIMR_BACKLOG_README.md', import.meta.url), 'utf8');
-  for (const [id, next] of [['P2-T01', 'P2-T02'], ['P2-T08', 'P2-T09'], ['P2-T12', 'P2-T13']]) {
+  const backlog = await readFile(
+    new URL('../../../QUICKTRIMR_BACKLOG_README.md', import.meta.url),
+    'utf8',
+  );
+  for (const [id, next] of [
+    ['P2-T01', 'P2-T02'],
+    ['P2-T08', 'P2-T09'],
+    ['P2-T12', 'P2-T13'],
+  ]) {
     const ticket = backlog.split(`#### ${id} —`)[1]?.split(`#### ${next} —`)[0];
     assert.ok(ticket, id);
     const example = ticket.match(/\{ "error": "barber_unavailable" \}/);
@@ -112,7 +161,8 @@ test('request schemas still reject unknown non-server fields', () => {
   for (const [name, contract] of Object.entries(CONTRACTS)) {
     const valid = CONTRACT_EXAMPLES[name].request.valid;
     assert.equal(
-      contract.requestSchema.safeParse({ ...valid, misspelledField: true }).success,
+      contract.requestSchema.safeParse({ ...valid, misspelledField: true })
+        .success,
       false,
       name,
     );
@@ -120,7 +170,8 @@ test('request schemas still reject unknown non-server fields', () => {
 });
 
 test('booking type controls whether a requested scheduled time is present', () => {
-  const availableNow = CONTRACT_EXAMPLES['create-booking-request'].request.valid;
+  const availableNow =
+    CONTRACT_EXAMPLES['create-booking-request'].request.valid;
   assert.equal(
     createBookingRequestRequestSchema.safeParse({
       ...availableNow,
@@ -142,7 +193,8 @@ test('ETA responses reject private routing data', () => {
   const valid = CONTRACT_EXAMPLES['update-eta'].response.valid;
   for (const field of ['lat', 'lng', 'origin', 'polyline']) {
     assert.equal(
-      updateEtaResponseSchema.safeParse({ ...valid, [field]: 'private' }).success,
+      updateEtaResponseSchema.safeParse({ ...valid, [field]: 'private' })
+        .success,
       false,
       field,
     );
@@ -152,10 +204,20 @@ test('ETA responses reject private routing data', () => {
 test('ETA and its timestamp are returned together', () => {
   const valid = CONTRACT_EXAMPLES['update-eta'].response.valid;
   assert.equal(updateEtaResponseSchema.safeParse(valid).success, true);
-  assert.equal(updateEtaResponseSchema.safeParse({ ...valid, etaMinutes: null }).success, false);
-  assert.equal(updateEtaResponseSchema.safeParse({ ...valid, etaUpdatedAt: null }).success, false);
   assert.equal(
-    updateEtaResponseSchema.safeParse({ ...valid, etaMinutes: null, etaUpdatedAt: null }).success,
+    updateEtaResponseSchema.safeParse({ ...valid, etaMinutes: null }).success,
+    false,
+  );
+  assert.equal(
+    updateEtaResponseSchema.safeParse({ ...valid, etaUpdatedAt: null }).success,
+    false,
+  );
+  assert.equal(
+    updateEtaResponseSchema.safeParse({
+      ...valid,
+      etaMinutes: null,
+      etaUpdatedAt: null,
+    }).success,
     true,
   );
 });
@@ -165,16 +227,31 @@ test('success responses reject other valid statuses from the same shared enum', 
     ['start-available-now-session', { status: AVAIL_STATUS_VALUE.BUSY }],
     ['stop-available-now-session', { status: AVAIL_STATUS_VALUE.ACTIVE }],
     ['create-booking-request', { status: REQUEST_STATUS_VALUE.ACCEPTED }],
-    ['accept-booking-request', { requestStatus: REQUEST_STATUS_VALUE.DECLINED }],
-    ['accept-booking-request', { bookingStatus: BOOKING_STATUS_VALUE.PAID_CONFIRMED }],
+    [
+      'accept-booking-request',
+      { requestStatus: REQUEST_STATUS_VALUE.DECLINED },
+    ],
+    [
+      'accept-booking-request',
+      { bookingStatus: BOOKING_STATUS_VALUE.PAID_CONFIRMED },
+    ],
     ['decline-booking-request', { status: REQUEST_STATUS_VALUE.ACCEPTED }],
     ['cancel-booking-request', { status: REQUEST_STATUS_VALUE.DECLINED }],
     ['cancel-booking', { status: BOOKING_STATUS_VALUE.COMPLETED }],
     ['mark-on-the-way', { status: BOOKING_STATUS_VALUE.ARRIVED }],
     ['mark-job-complete-by-barber', { status: BOOKING_STATUS_VALUE.COMPLETED }],
-    ['mark-job-complete-by-barber', { earningStatus: EARNING_STATUS_VALUE.AVAILABLE }],
-    ['confirm-job-complete-by-client', { status: BOOKING_STATUS_VALUE.COMPLETED_BY_BARBER }],
-    ['confirm-job-complete-by-client', { earningStatus: EARNING_STATUS_VALUE.PENDING }],
+    [
+      'mark-job-complete-by-barber',
+      { earningStatus: EARNING_STATUS_VALUE.AVAILABLE },
+    ],
+    [
+      'confirm-job-complete-by-client',
+      { status: BOOKING_STATUS_VALUE.COMPLETED_BY_BARBER },
+    ],
+    [
+      'confirm-job-complete-by-client',
+      { earningStatus: EARNING_STATUS_VALUE.PENDING },
+    ],
     ['open-dispute', { status: DISPUTE_STATUS_VALUE.UNDER_REVIEW }],
     ['open-dispute', { bookingStatus: BOOKING_STATUS_VALUE.COMPLETED }],
     ['open-dispute', { earningStatus: EARNING_STATUS_VALUE.AVAILABLE }],
@@ -183,7 +260,8 @@ test('success responses reject other valid statuses from the same shared enum', 
   for (const [name, override] of wrongStatuses) {
     const valid = CONTRACT_EXAMPLES[name].response.valid;
     assert.equal(
-      CONTRACTS[name].responseSchema.safeParse({ ...valid, ...override }).success,
+      CONTRACTS[name].responseSchema.safeParse({ ...valid, ...override })
+        .success,
       false,
       `${name}: ${JSON.stringify(override)}`,
     );

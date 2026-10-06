@@ -10,7 +10,12 @@ test('toIntegerCents explicitly converts safe integer values', () => {
 });
 
 test('toIntegerCents rejects values that are not safe integers', () => {
-  for (const value of [0.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1]) {
+  for (const value of [
+    0.5,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.MAX_SAFE_INTEGER + 1,
+  ]) {
     assert.throws(() => toIntegerCents(value), {
       name: 'RangeError',
       message: 'Integer cents must be a safe integer',

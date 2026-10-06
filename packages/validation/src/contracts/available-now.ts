@@ -34,7 +34,8 @@ export type StartAvailableNowSessionRequest = z.infer<
   typeof startAvailableNowSessionRequestSchema
 >;
 
-export const startAvailableNowSessionResponseSchema = availableNowSessionResponseSchema;
+export const startAvailableNowSessionResponseSchema =
+  availableNowSessionResponseSchema;
 export type StartAvailableNowSessionResponse = z.infer<
   typeof startAvailableNowSessionResponseSchema
 >;
@@ -50,7 +51,8 @@ export type UpdateAvailableNowSessionRequest = z.infer<
   typeof updateAvailableNowSessionRequestSchema
 >;
 
-export const updateAvailableNowSessionResponseSchema = availableNowSessionResponseSchema;
+export const updateAvailableNowSessionResponseSchema =
+  availableNowSessionResponseSchema;
 export type UpdateAvailableNowSessionResponse = z.infer<
   typeof updateAvailableNowSessionResponseSchema
 >;

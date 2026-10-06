@@ -1,6 +1,7 @@
 import { Text, View, type ViewStyle } from 'react-native';
 
 import { spacing, typography, useTheme } from '../theme';
+
 import { Button, type ButtonVariant } from './button';
 
 export type StateAction = {
@@ -23,7 +24,11 @@ export function EmptyState({ message, action, testID }: EmptyStateProps) {
         {message}
       </Text>
       {action ? (
-        <Button label={action.label} onPress={action.onPress} variant={action.variant ?? 'secondary'} />
+        <Button
+          label={action.label}
+          onPress={action.onPress}
+          variant={action.variant ?? 'secondary'}
+        />
       ) : null}
     </View>
   );

@@ -1,0 +1,30 @@
+# Specifications, historical evidence and agent instructions are not code-style inputs.
+# In particular, never rewrite the generated backlog sections on a feature branch.
+**/*.md
+**/node_modules/**
+**/.git/**
+**/.pnpm-store/**
+**/.next/**
+**/.expo/**
+**/.vercel/**
+**/dist/**
+**/build/**
+**/out/**
+**/coverage/**
+**/android/**
+**/ios/**
+**/playwright-report/**
+**/test-results/**
+**/next-env.d.ts
+**/expo-env.d.ts
+**/*.tsbuildinfo
+pnpm-lock.yaml
+**/package-lock.json
+**/.env*
+supabase/.branches/**
+supabase/.temp/**
+.claude/**
+.codex/**
+.agents/**
+# Intentionally malformed input, exercised by quality.test.mjs.
+scripts/quality/fixtures/**

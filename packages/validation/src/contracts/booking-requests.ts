@@ -15,36 +15,35 @@ import {
 import { requestObject } from '../request-object.ts';
 
 export const createBookingRequestRequestSchema = requestObject({
-    bookingType: bookingTypeSchema,
-    barberId: postgresUuidSchema,
-    serviceCategoryId: postgresUuidSchema,
-    clientAddressId: postgresUuidSchema,
-    notes: z.string().optional(),
-    scheduledFor: timestampSchema.optional(),
-  })
-  .superRefine((value, context) => {
-    if (
-      value.bookingType === BOOKING_TYPE_VALUE.SCHEDULED &&
-      value.scheduledFor === undefined
-    ) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Scheduled bookings require a requested time',
-        path: ['scheduledFor'],
-      });
-    }
+  bookingType: bookingTypeSchema,
+  barberId: postgresUuidSchema,
+  serviceCategoryId: postgresUuidSchema,
+  clientAddressId: postgresUuidSchema,
+  notes: z.string().optional(),
+  scheduledFor: timestampSchema.optional(),
+}).superRefine((value, context) => {
+  if (
+    value.bookingType === BOOKING_TYPE_VALUE.SCHEDULED &&
+    value.scheduledFor === undefined
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: 'Scheduled bookings require a requested time',
+      path: ['scheduledFor'],
+    });
+  }
 
-    if (
-      value.bookingType === BOOKING_TYPE_VALUE.AVAILABLE_NOW &&
-      value.scheduledFor !== undefined
-    ) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Available Now bookings cannot include a scheduled time',
-        path: ['scheduledFor'],
-      });
-    }
-  });
+  if (
+    value.bookingType === BOOKING_TYPE_VALUE.AVAILABLE_NOW &&
+    value.scheduledFor !== undefined
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: 'Available Now bookings cannot include a scheduled time',
+      path: ['scheduledFor'],
+    });
+  }
+});
 export type CreateBookingRequestRequest = z.infer<
   typeof createBookingRequestRequestSchema
 >;

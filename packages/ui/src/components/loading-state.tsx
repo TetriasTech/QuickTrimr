@@ -7,7 +7,10 @@ export interface LoadingStateProps {
   testID?: string;
 }
 
-export function LoadingState({ message = 'Loading…', testID }: LoadingStateProps) {
+export function LoadingState({
+  message = 'Loading…',
+  testID,
+}: LoadingStateProps) {
   useTheme();
   return (
     <View

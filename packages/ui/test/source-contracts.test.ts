@@ -32,7 +32,11 @@ test('the public package exports every ticket primitive', async () => {
     'StatusBadge',
     'TextInput',
   ]) {
-    assert.match(source, new RegExp(`export \\{ ${component}(?:,| \\})`), component);
+    assert.match(
+      source,
+      new RegExp(`export \\{ ${component}(?:,| \\})`),
+      component,
+    );
   }
 });
 
@@ -50,7 +54,11 @@ test('hex colors stay in the theme and never appear in components or features', 
 
   for (const path of paths) {
     for (const file of await sourceFilesBelow(path)) {
-      assert.doesNotMatch(await readFile(file, 'utf8'), /#[\da-f]{3,8}\b/i, file);
+      assert.doesNotMatch(
+        await readFile(file, 'utf8'),
+        /#[\da-f]{3,8}\b/i,
+        file,
+      );
     }
   }
 });

@@ -10,7 +10,8 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution Bundler --allowImportingTsExtensions --skipLibCheck src/index.ts test-d/inferred-contracts.test-d.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {

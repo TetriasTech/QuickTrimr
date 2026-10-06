@@ -7,7 +7,11 @@ export type { BadgeProps, BadgeTone } from './components/badge';
 export { BottomSheet } from './components/bottom-sheet';
 export type { BottomSheetProps } from './components/bottom-sheet';
 export { Button } from './components/button';
-export type { ButtonProps, ButtonSize, ButtonVariant } from './components/button';
+export type {
+  ButtonProps,
+  ButtonSize,
+  ButtonVariant,
+} from './components/button';
 export { Card } from './components/card';
 export type { CardProps, CardVariant } from './components/card';
 export { ConfirmDialog } from './components/confirm-dialog';

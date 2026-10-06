@@ -30,8 +30,10 @@ export const queryKeys = {
   bookings: {
     all: rootKeys.bookings,
     lists: () => [...rootKeys.bookings, 'list'] as const,
-    detail: (bookingId: string) => [...rootKeys.bookings, 'detail', bookingId] as const,
-    eta: (bookingId: string) => [...rootKeys.bookings, 'detail', bookingId, 'eta'] as const,
+    detail: (bookingId: string) =>
+      [...rootKeys.bookings, 'detail', bookingId] as const,
+    eta: (bookingId: string) =>
+      [...rootKeys.bookings, 'detail', bookingId, 'eta'] as const,
   },
   bookingRequests: {
     all: rootKeys.bookingRequests,

@@ -2,9 +2,10 @@ import {
   BottomSheet as ExpoBottomSheet,
   type BottomSheetProps as ExpoBottomSheetProps,
 } from '@expo/ui';
-import type { ReactNode } from 'react';
 
 import { colors, spacing, useTheme } from '../theme';
+
+import type { ReactNode } from 'react';
 
 export interface BottomSheetProps {
   children: ReactNode;
@@ -31,8 +32,8 @@ export function BottomSheet({
       isPresented={isPresented}
       onDismiss={onDismiss}
       showDragIndicator={showDragIndicator}
-      snapPoints={snapPoints}
-      testID={testID}
+      {...(snapPoints === undefined ? {} : { snapPoints })}
+      {...(testID === undefined ? {} : { testID })}
     >
       {children}
     </ExpoBottomSheet>

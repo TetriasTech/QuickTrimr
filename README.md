@@ -29,13 +29,43 @@ Run all commands from the repository root. The lockfile is committed; CI and cle
 pnpm typecheck
 pnpm lint
 pnpm format
+pnpm format:check
 pnpm test
 pnpm build
 ```
 
-These root commands traverse every workspace. P0-T02 adds the shared TypeScript, ESLint and
-formatting configuration; individual app and package tickets add their concrete tasks without
-changing the root command contract.
+`typecheck`, `lint`, `test` and `build` traverse the workspaces; lint also covers repository
+scripts. `format` writes the shared Prettier style across the repository; `format:check` is
+read-only and exits nonzero for unformatted code. These script names are the P0-T04 CI contract;
+this ticket does not add CI or change branch protection.
+
+### Quality configuration
+
+- Every workspace extends `tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`,
+  `noImplicitOverride` and `exactOptionalPropertyTypes`. Mobile and UI retain Expo's base;
+  admin retains Next's plugin and generated route types.
+- `@quicktrimr/shared` resolves through its existing pnpm workspace link and package exports
+  in mobile, admin and the Supabase function. There is no compiler-only alias hiding a missing
+  runtime link. App-local `@/*` aliases stay local to their app.
+- One ESLint flat config enforces TypeScript, React/Hooks, import ordering and typed promise
+  checks. `any`, unhandled promises (including `void promise`) and missing hook dependencies
+  are errors. Handle failures explicitly; do not silence a money call with `void`.
+- Static `no-restricted-imports` rules plus resolved-path checks prevent cross-app imports and
+  keep domain/shared production source free of I/O imports, including dynamic imports,
+  CommonJS and relative-path escapes. Domain may import shared. Test runners can use Node I/O.
+- Generated/native/build output, dependencies and intentional negative fixtures are excluded.
+  Required generated Expo/Next declaration files still participate in TypeScript resolution.
+  Prettier checks code/configuration, not Markdown specifications, historical evidence or
+  lockfiles. In particular it never rewrites the generated backlog sections.
+
+Run `node --test scripts/quality/quality.test.mjs` for the negative/positive fixtures, actual
+ESLint/Prettier exit-code checks, compiler strictness tests, import resolution and ignore checks.
+It is included in `pnpm test`. Fixtures end in `.fixture` and are linted as real workspace
+files without overwriting source. These checks need no environment secrets or running services.
+
+Tooling uses the existing pinned ESLint 9 / TypeScript 6 framework-compatible baseline; this is
+not an Expo, Next or TypeScript-major upgrade. See [typed linting](https://typescript-eslint.io/getting-started/typed-linting/)
+and [ESLint import restrictions](https://eslint.org/docs/latest/rules/no-restricted-imports).
 
 ## Run the mobile app
 

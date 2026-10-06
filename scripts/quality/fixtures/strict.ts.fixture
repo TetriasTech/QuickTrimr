@@ -1,0 +1,5 @@
+export function implicit(value) { return value; }
+export const indexed: string = ([] as string[])[0];
+export const optional: { value?: string } = { value: undefined };
+class Base { value() { return 1; } }
+export class Child extends Base { value() { return 2; } }

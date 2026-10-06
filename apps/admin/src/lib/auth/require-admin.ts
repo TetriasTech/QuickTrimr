@@ -1,7 +1,8 @@
 import 'server-only';
-import { cache } from 'react';
-import { redirect } from 'next/navigation';
 import { USER_ROLE_VALUE } from '@quicktrimr/shared';
+import { redirect } from 'next/navigation';
+import { cache } from 'react';
+
 import { readAdminSession } from './session';
 
 // Request-local React cache, never a persistent/shared authorization cache.
