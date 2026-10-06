@@ -369,6 +369,18 @@ A ticket may not start until:
 
 ---
 
+### RULE-DEV-CI — Protected main and generated documentation
+
+`main` requires passing CI and at least one approving human review. Generated documentation
+does not bypass those requirements. Backlog sections 8 and 9 are generated from `main` after
+merge, never on feature branches, and proposed in a dedicated automation pull request.
+The bot may create or update that PR, but must not approve it, merge it, or push directly to
+`main`. Reviewers approve workflow execution when GitHub requires it, then review and merge
+only after the required checks pass. No application secrets or personal access token are
+needed for these quality checks or generated-index PRs.
+
+---
+
 ## 7. Monorepo Structure
 
 ```txt

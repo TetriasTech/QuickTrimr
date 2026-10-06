@@ -1,0 +1,19 @@
+name: Set up QuickTrimr workspace
+description: Install the pinned package manager, Node 24 and frozen workspace dependencies.
+runs:
+  using: composite
+  steps:
+    - name: Install pnpm and Node with dependency cache
+      id: pnpm
+      uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
+      with:
+        runtime: node@24
+        cache: true
+        cache-dependency-path: pnpm-lock.yaml
+        install: false
+    - name: Install locked dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+    - name: Generate admin framework types
+      shell: bash
+      run: pnpm --filter @quicktrimr/admin exec next typegen

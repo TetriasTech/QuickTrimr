@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Fork code never runs with a write token or application secrets.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  quality:
+    name: CI / ${{ matrix.check }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [typecheck, lint, 'format:check', test]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-workspace
+      - name: Run workspace check
+        env:
+          CHECK: ${{ matrix.check }}
+        run: pnpm run "$CHECK"
+
+  client-env:
+    name: CI / client-env
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Reject server-only references and prove the guard fires
+        run: |
+          node scripts/check-client-env.mjs
+          node --test scripts/environment/client-env.test.mjs
+          node scripts/jira/generate-indexes.mjs --check
+
+  required:
+    name: CI required
+    needs: [quality, client-env]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every check to succeed
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          CLIENT_ENV_RESULT: ${{ needs.client-env.result }}
+        # A skipped/cancelled prerequisite must not become a green merge gate.
+        run: |
+          test "$QUALITY_RESULT" = success
+          test "$CLIENT_ENV_RESULT" = success
