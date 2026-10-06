@@ -1,0 +1,8 @@
+{
+  "name": "quicktrimr-p0-d07-inngest-lab",
+  "private": true,
+  "type": "module",
+  "scripts": { "proof": "node proof.mjs" },
+  "dependencies": { "inngest": "4.21.1", "inngest-cli": "1.45.1" },
+  "overrides": { "adm-zip": "0.6.1" }
+}
