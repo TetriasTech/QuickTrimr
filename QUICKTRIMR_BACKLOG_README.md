@@ -6993,6 +6993,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-COMPLETE-04` | `P4-T10`, `P4-T11`, `P6-T06`, `P6-T07` |
 | `RULE-COMPLETE-05` | `P4-T11` |
 | `RULE-COPY-01` | `P1-T08`, `P2-T02`, `P2-T09`, `P2-T14`, `P3-T05`, `P3-T08`, `P3-T09`, `P4-T01`, `P4-T02`, `P4-T04`, `P4-T06`, `P4-T08`, `P4-T10`, `P4-T13`, `P6-T02`, `P6-T04`, `P6-T11`, `P7-T01`, `P7-T02` |
+| `RULE-DEV-CI` | `P0-T04` |
 | `RULE-DISCOVERY-01` | `P2-T04`, `P2-T05` |
 | `RULE-DISCOVERY-02` | `P0-D06`, `P2-T04` |
 | `RULE-DISCOVERY-03` | `P1-T06`, `P2-T04` |
