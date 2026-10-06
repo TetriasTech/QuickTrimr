@@ -88,8 +88,9 @@ found when it is expensive.
 **Stable IDs, not section numbers.** Cite `ADR-006`, `RULE-AVAIL-05`, `CFG-COMMISSION-PCT`. Never
 "see section 9". IDs are permanent; never renumber, never reuse, never delete a `TBC-*`.
 
-**Sections 8 and 9 of the backlog are generated.** Never hand-edit them. They regenerate on `main`
-via CI — do not regenerate on a branch, it only creates conflicts.
+**Sections 8 and 9 of the backlog are generated.** Never hand-edit them. CI generates them from
+`main` after merge and proposes a reviewed automation PR (`RULE-DEV-CI`). Do not regenerate on
+feature branches; only the bot-managed `codex/generated-indexes` branch carries generated updates.
 
 ## Non-negotiables
 

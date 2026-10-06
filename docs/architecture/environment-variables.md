@@ -152,8 +152,8 @@ pnpm typecheck
 git check-ignore apps/mobile/.env.local apps/admin/.env.local supabase/.env.local scripts/jira/.env
 ```
 
-The standalone `client-env.yml` workflow runs on every PR and push to `main`, without secrets
-or dependencies. It scans authored files under `apps/`, including hidden env files, templates,
+The `client-env` job in `ci.yml` runs on every PR to `main` and push to `main`, without secrets
+or dependency installation. It scans authored files under `apps/`, including hidden env files, templates,
 docs, native source and tests, rejecting private names even with a public prefix. Diagnostics
 contain only path, line and rule, never source values. Source symlinks fail closed. Dependencies
 and generated output directories are excluded (listed explicitly in the script).

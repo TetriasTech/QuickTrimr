@@ -11,7 +11,7 @@
     "lint": "pnpm --recursive --if-present lint && eslint scripts *.mjs --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs scripts/decisions.test.mjs scripts/quality/quality.test.mjs scripts/environment/*.test.mjs",
+    "test": "pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs scripts/decisions.test.mjs scripts/quality/quality.test.mjs scripts/environment/*.test.mjs scripts/ci/*.test.mjs",
     "check:client-env": "node scripts/check-client-env.mjs",
     "build": "pnpm --recursive --if-present build"
   },
@@ -26,6 +26,7 @@
     "globals": "16.4.0",
     "prettier": "3.9.9",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.70.1"
+    "typescript-eslint": "8.70.1",
+    "yaml": "2.9.1"
   }
 }

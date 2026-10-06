@@ -37,9 +37,41 @@ pnpm build
 
 `typecheck`, `lint`, `test` and `build` traverse the workspaces; lint also covers repository
 scripts. `format` writes the shared Prettier style across the repository; `format:check` is
-read-only and exits nonzero for unformatted code. These script names are the P0-T04 CI contract;
-the full quality pipeline and branch protection remain P0-T04. The standalone P0-T03
-client-environment guard already runs on every PR and push to `main`, without secrets.
+read-only and exits nonzero for unformatted code. These script names are the P0-T04 CI contract.
+
+## Continuous integration and reviews
+
+Every PR targeting `main` and every push to `main` runs GitHub Actions CI, with no path filters:
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, and `pnpm test` run independently.
+- The separate client-env job runs `node scripts/check-client-env.mjs`, its negative tests,
+  and `node scripts/jira/generate-indexes.mjs --check` to gate the ticket graph too.
+- `CI required` waits for all five checks and fails if any fails, is skipped, or is cancelled.
+
+The shared setup action installs Node 24 and the `packageManager`-pinned pnpm version, caches
+the pnpm store by lockfile, installs with `--frozen-lockfile`, and generates Next's route types.
+No application secrets, `.env` files, provider accounts or running services are needed; fork
+PRs use read-only permissions. The client-env guard is now part of CI, not a duplicate workflow.
+
+`main` requires **CI required** and **one approving review**, including administrators; force
+pushes and deletion stay disabled. A contributor cannot approve their own PR. Review and merge
+remain human actions. P0-T05 owns the checklist, and P6-T08 adds Playwright later. Deployment,
+native builds and end-to-end browser tests are not part of this quality pipeline.
+
+### Generated backlog indexes
+
+The Docs workflow validates the graph and decision examples. After a relevant merge to `main`,
+it generates sections 8 and 9 from the latest validated `main` snapshot and opens or updates a
+PR on the bot-managed `codex/generated-indexes` branch. Only the backlog file is committed;
+unchanged output creates no new PR. Do not edit this branch or generate indexes on feature
+branches. The automation never pushes to `main`, approves, or merges (`RULE-DEV-CI`).
+
+Repository Settings → Actions → General must allow GitHub Actions to create pull requests.
+GitHub labels this setting **Allow GitHub Actions to create and approve pull requests**; this
+workflow only creates them. Bot-created PR workflows may wait for a maintainer to select
+**Approve workflows to run** in the PR. Then wait for `CI required`, review and merge normally.
+No PAT or protection bypass is needed. See [GitHub's workflow-trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
+and the [create-pull-request action](https://github.com/peter-evans/create-pull-request).
 
 ## Environment files
 

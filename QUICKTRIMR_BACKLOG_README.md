@@ -853,7 +853,7 @@ priority: High
 jiraKey: TRIMR-13
 dependsOn: [P0-T02, P0-T03]
 affects: [P0-T05, P6-T08]
-knowledgeBase: [ADR-007]
+knowledgeBase: [ADR-007, RULE-DEV-CI]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation]
 ```
@@ -872,6 +872,11 @@ A composite action for the repeated setup steps, so adding a job later does not 
 
 Branch protection on `main`: CI must pass, and at least one review.
 
+Approved scope extension (`RULE-DEV-CI`): adapt the existing docs workflow to generate indexes
+from `main` after merge and open/update a dedicated PR instead of pushing directly to `main`.
+The generated PR requires the same CI and human review; no protection bypass or auto-merge.
+Document GitHub's workflow-execution approval step for bot-created PRs.
+
 **Acceptance criteria**
 
 - [ ] CI runs on every PR to `main` and on push to `main`.
@@ -881,8 +886,18 @@ Branch protection on `main`: CI must pass, and at least one review.
 - [ ] Dependency install is cached; a no-change run completes in a reasonable time.
 - [ ] Branch protection requires CI to pass before merge.
 - [ ] `README.md` documents what CI enforces.
+- [ ] Generated-index updates use a scoped, reusable PR branch with no direct write to `main`,
+      automated approval, or merge; generation is restricted to validated pushes on `main`.
 
-**Out of scope** — deployment (`P6-T09`, `P6-T10`); Playwright (`P6-T08`); the docs workflow that validates this backlog, which ships with the jira scripts.
+**Tests** — parse and assert workflow triggers, independent checks, cached frozen setup and
+read-only/no-secret permissions; execute the required-check gate against success, failure,
+cancelled and skipped results; run the workflow on a PR and repeat it unchanged to inspect
+cache reuse; read back `main` protection to confirm required CI and at least one review.
+Assert docs generation is main-only, validation-gated and serialized; generated commits are
+restricted to the backlog file and use the default repository token, without bypasses.
+After merge, observe the first generated-index PR and approve its workflow runs before review.
+
+**Out of scope** — deployment (`P6-T09`, `P6-T10`); Playwright (`P6-T08`); changing the index generator or Jira synchronisation scripts.
 
 **Sync notes** — CI invokes the script names from `P0-T02`. They are a contract.
 
