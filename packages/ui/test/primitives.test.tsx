@@ -1,6 +1,10 @@
 import { BOOKING_STATUS } from '@quicktrimr/shared';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import type { PropsWithChildren } from 'react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import { Alert, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -20,6 +24,8 @@ import {
   TextInput,
   UNKNOWN_BOOKING_STATUS_PRESENTATION,
 } from '../src';
+
+import type { PropsWithChildren } from 'react';
 
 function SafeAreaTestProvider({ children }: PropsWithChildren) {
   return (
@@ -42,7 +48,7 @@ test('Button renders and a loading button cannot be pressed', async () => {
   expect(button).toBeDisabled();
   expect(button).toBeBusy();
   expect(screen.getByTestId('button-loading-indicator')).toBeOnTheScreen();
-  fireEvent.press(button);
+  await fireEvent.press(button);
   expect(onPress).not.toHaveBeenCalled();
 });
 
@@ -57,9 +63,11 @@ test('TextInput renders its label, value and accessible error', async () => {
     />,
   );
 
-  fireEvent.changeText(screen.getByLabelText('Display name'), 'Tony');
+  await fireEvent.changeText(screen.getByLabelText('Display name'), 'Tony');
   expect(onChangeText).toHaveBeenCalledWith('Tony');
-  expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid display name');
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Enter a valid display name',
+  );
 });
 
 test('Screen renders content inside its safe-area and keyboard wrapper', async () => {
@@ -92,27 +100,39 @@ test('Badge renders its label and tone', async () => {
 });
 
 test('StatusBadge covers every shared booking status and has an unknown fallback', async () => {
-  expect(Object.keys(BOOKING_STATUS_PRESENTATION).sort()).toEqual([...BOOKING_STATUS].sort());
+  expect(Object.keys(BOOKING_STATUS_PRESENTATION).sort()).toEqual(
+    [...BOOKING_STATUS].sort(),
+  );
 
   for (const status of BOOKING_STATUS) {
     const { unmount } = await render(<StatusBadge status={status} />);
-    expect(screen.getByText(BOOKING_STATUS_PRESENTATION[status].label)).toBeOnTheScreen();
+    expect(
+      screen.getByText(BOOKING_STATUS_PRESENTATION[status].label),
+    ).toBeOnTheScreen();
     await unmount();
   }
 
   await render(<StatusBadge status="future_status" />);
-  expect(screen.getByText(UNKNOWN_BOOKING_STATUS_PRESENTATION.label)).toBeOnTheScreen();
+  expect(
+    screen.getByText(UNKNOWN_BOOKING_STATUS_PRESENTATION.label),
+  ).toBeOnTheScreen();
 });
 
 test('Avatar renders initials when no image source exists', async () => {
-  await render(<Avatar accessibilityLabel="Andrew profile photo" initials="AG" />);
-  expect(screen.getByRole('image', { name: 'Andrew profile photo' })).toBeOnTheScreen();
+  await render(
+    <Avatar accessibilityLabel="Andrew profile photo" initials="AG" />,
+  );
+  expect(
+    screen.getByRole('image', { name: 'Andrew profile photo' }),
+  ).toBeOnTheScreen();
   expect(screen.getByText('AG')).toBeOnTheScreen();
 });
 
 test('LoadingState exposes an accessible progress state', async () => {
   await render(<LoadingState message="Loading bookings" />);
-  expect(screen.getByRole('progressbar', { name: 'Loading bookings' })).toBeOnTheScreen();
+  expect(
+    screen.getByRole('progressbar', { name: 'Loading bookings' }),
+  ).toBeOnTheScreen();
 });
 
 test('EmptyState wires its optional action', async () => {
@@ -124,15 +144,17 @@ test('EmptyState wires its optional action', async () => {
     />,
   );
 
-  fireEvent.press(screen.getByRole('button', { name: 'Find a barber' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Find a barber' }));
   expect(onPress).toHaveBeenCalledTimes(1);
 });
 
 test('ErrorState wires its retry callback', async () => {
   const onRetry = jest.fn();
-  await render(<ErrorState message="Bookings could not be loaded." onRetry={onRetry} />);
+  await render(
+    <ErrorState message="Bookings could not be loaded." onRetry={onRetry} />,
+  );
 
-  fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
   expect(onRetry).toHaveBeenCalledTimes(1);
 });
 
@@ -148,7 +170,7 @@ test('BottomSheet renders presented content and wires dismissal', async () => {
 
   const sheet = screen.getByTestId('bottom-sheet');
   expect(screen.getByText('Sheet content')).toBeOnTheScreen();
-  fireEvent(sheet, 'dismiss');
+  await fireEvent(sheet, 'dismiss');
   expect(onDismiss).toHaveBeenCalledTimes(1);
 });
 
@@ -170,10 +192,15 @@ test('ConfirmDialog includes the consequence and a destructive confirmation', as
   );
 
   await waitFor(() => expect(alert).toHaveBeenCalledTimes(1));
-  const [, message, buttons] = alert.mock.calls[0];
+  const call = alert.mock.calls[0];
+  if (!call) throw new Error('Expected the confirmation alert to be shown');
+  const [, message, buttons] = call;
   expect(message).toBe('You will receive a partial refund.');
-  expect(buttons?.[1]).toMatchObject({ text: 'Cancel booking', style: 'destructive' });
-  buttons?.[1].onPress?.();
+  expect(buttons?.[1]).toMatchObject({
+    text: 'Cancel booking',
+    style: 'destructive',
+  });
+  buttons?.[1]?.onPress?.();
   expect(onConfirm).toHaveBeenCalledTimes(1);
 
   alert.mockRestore();

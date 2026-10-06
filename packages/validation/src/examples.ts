@@ -51,7 +51,8 @@ const requestPending = REQUEST_STATUS_VALUE.PENDING;
 const requestAccepted = REQUEST_STATUS_VALUE.ACCEPTED;
 const requestDeclined = REQUEST_STATUS_VALUE.DECLINED;
 const requestCancelled = REQUEST_STATUS_VALUE.CANCELLED;
-const bookingAcceptedPendingPayment = BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT;
+const bookingAcceptedPendingPayment =
+  BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT;
 const bookingOnTheWay = BOOKING_STATUS_VALUE.ON_THE_WAY;
 const bookingCompletedByBarber = BOOKING_STATUS_VALUE.COMPLETED_BY_BARBER;
 const bookingCompleted = BOOKING_STATUS_VALUE.COMPLETED;
@@ -124,7 +125,11 @@ export const CONTRACT_EXAMPLES = {
       ['lng', 181],
       ['locationSource', 'satellite'],
     ],
-    { ...availableNowSessionResponse, locationSource: manualLocationSource, radiusKm: 10 },
+    {
+      ...availableNowSessionResponse,
+      locationSource: manualLocationSource,
+      radiusKm: 10,
+    },
     [
       ['id', 'not-a-uuid'],
       ['status', 'paused'],
@@ -146,7 +151,11 @@ export const CONTRACT_EXAMPLES = {
     ],
   ),
   'upsert-barber-service': contractExamples(
-    { serviceCategoryId: SERVICE_CATEGORY_ID, priceCents: 4_500, enabled: true },
+    {
+      serviceCategoryId: SERVICE_CATEGORY_ID,
+      priceCents: 4_500,
+      enabled: true,
+    },
     [
       ['serviceCategoryId', 'not-a-uuid'],
       ['priceCents', 45.5],
@@ -374,7 +383,12 @@ export const CONTRACT_EXAMPLES = {
       ['rating', 6],
       ['text', ''],
     ],
-    { reviewId: REVIEW_ID, rating: 5, barberRating: 4.83, barberRatingCount: 38 },
+    {
+      reviewId: REVIEW_ID,
+      rating: 5,
+      barberRating: 4.83,
+      barberRatingCount: 38,
+    },
     [
       ['reviewId', 'not-a-uuid'],
       ['rating', 0],

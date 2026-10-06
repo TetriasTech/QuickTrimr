@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -10,6 +9,8 @@ import {
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { colors, spacing, useTheme } from '../theme';
+
+import type { ReactNode } from 'react';
 
 export interface ScreenProps {
   children: ReactNode;
@@ -44,7 +45,11 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView edges={[...edges]} style={[styles.safeArea, style]} testID={testID}>
+    <SafeAreaView
+      edges={[...edges]}
+      style={[styles.safeArea, style]}
+      testID={testID}
+    >
       <KeyboardAvoidingView
         behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboard}

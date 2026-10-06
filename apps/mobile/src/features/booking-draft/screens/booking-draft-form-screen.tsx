@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BOOKING_TYPE_VALUE } from '@quicktrimr/shared';
+import { Button, Card, Screen, TextInput, useTheme } from '@quicktrimr/ui';
 import {
   createBookingRequestRequestSchema,
   type CreateBookingRequestRequest,
 } from '@quicktrimr/validation';
-import { Button, Card, Screen, TextInput, useTheme } from '@quicktrimr/ui';
-import { Controller, useForm } from 'react-hook-form';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Text, View } from 'react-native';
 
 import { useBookingDraftStore } from '@/stores/booking-draft-store';
@@ -20,7 +20,9 @@ const exampleRequest = {
 export function BookingDraftFormScreen() {
   const { colors, spacing, typography } = useTheme();
   const draft = useBookingDraftStore();
-  const [feedback, setFeedback] = useState('Nothing has been submitted to the server.');
+  const [feedback, setFeedback] = useState(
+    'Nothing has been submitted to the server.',
+  );
   const {
     control,
     formState: { errors, isSubmitting },
@@ -30,7 +32,8 @@ export function BookingDraftFormScreen() {
   } = useForm<CreateBookingRequestRequest>({
     defaultValues: {
       barberId: draft.selectedBarberId ?? '',
-      bookingType: draft.selectedBookingType ?? BOOKING_TYPE_VALUE.AVAILABLE_NOW,
+      bookingType:
+        draft.selectedBookingType ?? BOOKING_TYPE_VALUE.AVAILABLE_NOW,
       clientAddressId: draft.selectedAddressId ?? '',
       serviceCategoryId: draft.selectedServiceCategoryId ?? '',
     },
@@ -47,9 +50,12 @@ export function BookingDraftFormScreen() {
         selectedBookingType: values.bookingType,
         selectedServiceCategoryId: values.serviceCategoryId,
       });
-      setFeedback('Validated selections saved locally. No booking request was sent.');
+      setFeedback(
+        'Validated selections saved locally. No booking request was sent.',
+      );
     },
-    () => setFeedback('Draft not saved. Fix the highlighted fields and try again.'),
+    () =>
+      setFeedback('Draft not saved. Fix the highlighted fields and try again.'),
   );
 
   const loadExample = () => {
@@ -63,15 +69,18 @@ export function BookingDraftFormScreen() {
     setValue('bookingType', BOOKING_TYPE_VALUE.AVAILABLE_NOW, {
       shouldValidate: true,
     });
-    setFeedback('Example values loaded. Save to put them in the local draft store.');
+    setFeedback(
+      'Example values loaded. Save to put them in the local draft store.',
+    );
   };
 
   return (
     <Screen edges={['right', 'bottom', 'left']} scroll>
       <Text style={typography.title}>Booking draft form</Text>
       <Text selectable style={typography.subhead}>
-        This Phase 0 screen demonstrates React Hook Form, the shared booking-request
-        schema, and local draft state. It does not call the backend.
+        This Phase 0 screen demonstrates React Hook Form, the shared
+        booking-request schema, and local draft state. It does not call the
+        backend.
       </Text>
 
       <Card>
@@ -87,7 +96,9 @@ export function BookingDraftFormScreen() {
             }}
             style={{ flex: 1 }}
             variant={
-              bookingType === BOOKING_TYPE_VALUE.AVAILABLE_NOW ? 'primary' : 'secondary'
+              bookingType === BOOKING_TYPE_VALUE.AVAILABLE_NOW
+                ? 'primary'
+                : 'secondary'
             }
           />
           <Button
@@ -98,7 +109,11 @@ export function BookingDraftFormScreen() {
               })
             }
             style={{ flex: 1 }}
-            variant={bookingType === BOOKING_TYPE_VALUE.SCHEDULED ? 'primary' : 'secondary'}
+            variant={
+              bookingType === BOOKING_TYPE_VALUE.SCHEDULED
+                ? 'primary'
+                : 'secondary'
+            }
           />
         </View>
         {errors.bookingType ? (
@@ -170,18 +185,31 @@ export function BookingDraftFormScreen() {
         ) : null}
       </Card>
 
-      <Button label="Load valid example values" onPress={loadExample} variant="secondary" />
-      <Button label="Save validated selections" loading={isSubmitting} onPress={saveDraft} />
+      <Button
+        label="Load valid example values"
+        onPress={loadExample}
+        variant="secondary"
+      />
+      <Button
+        label="Save validated selections"
+        loading={isSubmitting}
+        onPress={saveDraft}
+      />
       <Button
         label="Clear local draft"
         onPress={() => {
           draft.resetDraft();
-          setFeedback('Local draft cleared. Form edits remain until this screen closes.');
+          setFeedback(
+            'Local draft cleared. Form edits remain until this screen closes.',
+          );
         }}
         variant="ghost"
       />
 
-      <Text selectable style={[typography.caption, { color: colors.textMuted }]}>
+      <Text
+        selectable
+        style={[typography.caption, { color: colors.textMuted }]}
+      >
         {feedback}
       </Text>
     </Screen>

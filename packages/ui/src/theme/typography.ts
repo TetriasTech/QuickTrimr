@@ -1,6 +1,6 @@
-import type { TextStyle } from 'react-native';
-
 import { colors } from './colors';
+
+import type { TextStyle } from 'react-native';
 
 export const typography = {
   title: {

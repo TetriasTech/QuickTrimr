@@ -4,10 +4,7 @@ import { dirname, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import {
-  SHARED_ENUMS,
-  assertPostgresEnumValuesMatch,
-} from '../src/index.ts';
+import { SHARED_ENUMS, assertPostgresEnumValuesMatch } from '../src/index.ts';
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const knowledgeBase = await readFile(
@@ -25,7 +22,10 @@ function knowledgeBaseValues(id) {
   assert.notEqual(blockStart, -1, id + ' must have a txt code block');
   assert.notEqual(blockEnd, -1, id + ' txt code block must close');
 
-  return knowledgeBase.slice(blockStart + 6, blockEnd).trim().split(/\s+/);
+  return knowledgeBase
+    .slice(blockStart + 6, blockEnd)
+    .trim()
+    .split(/\s+/);
 }
 
 for (const [id, values] of Object.entries(SHARED_ENUMS)) {

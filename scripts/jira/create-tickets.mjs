@@ -26,10 +26,10 @@
  * JIRA_ACCOUNT_ANDREW are needed regardless of who runs it.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const BACKLOG = resolve(root, 'QUICKTRIMR_BACKLOG_README.md');
@@ -41,10 +41,16 @@ const update = args.includes('--update');
 const phase = args[args.indexOf('--phase') + 1];
 
 if (!whoami && (!args.includes('--phase') || phase === undefined)) {
-  console.error('Usage: create-tickets.mjs --phase <0-7> [--dry-run]   # create missing issues');
+  console.error(
+    'Usage: create-tickets.mjs --phase <0-7> [--dry-run]   # create missing issues',
+  );
   console.error('       create-tickets.mjs --update --phase <0-7> [--dry-run]');
-  console.error('                                          # re-push changed issues, backfill links');
-  console.error('       create-tickets.mjs --whoami        # find accountIds and AC field id');
+  console.error(
+    '                                          # re-push changed issues, backfill links',
+  );
+  console.error(
+    '       create-tickets.mjs --whoami        # find accountIds and AC field id',
+  );
   process.exit(1);
 }
 
@@ -83,21 +89,25 @@ const cfg = {
 if (cfg.projectKey && cfg.projectKey !== EXPECTED_PROJECT_KEY) {
   console.error(
     `\nREFUSING TO RUN — wrong Jira project.\n\n` +
-    `  JIRA_PROJECT_KEY is "${cfg.projectKey}", expected "${EXPECTED_PROJECT_KEY}".\n\n` +
-    `This repo files tickets into ${EXPECTED_PROJECT_KEY} only. "${cfg.projectKey}" is a\n` +
-    `different project — most likely myClean (MC) from a .env sourced in this shell.\n\n` +
-    `Fix it with:\n` +
-    `  set -a && source scripts/jira/.env && set +a\n\n` +
-    `Nothing was sent.`
+      `  JIRA_PROJECT_KEY is "${cfg.projectKey}", expected "${EXPECTED_PROJECT_KEY}".\n\n` +
+      `This repo files tickets into ${EXPECTED_PROJECT_KEY} only. "${cfg.projectKey}" is a\n` +
+      `different project — most likely myClean (MC) from a .env sourced in this shell.\n\n` +
+      `Fix it with:\n` +
+      `  set -a && source scripts/jira/.env && set +a\n\n` +
+      `Nothing was sent.`,
   );
   process.exit(1);
 }
 
 // Update dry runs inspect live issue fields and properties, so they still need Jira.
 if (!dryRun || update) {
-  const missing = ['baseUrl', 'email', 'token', 'projectKey'].filter((k) => !cfg[k]);
+  const missing = ['baseUrl', 'email', 'token', 'projectKey'].filter(
+    (k) => !cfg[k],
+  );
   if (missing.length) {
-    console.error(`Missing env: ${missing.join(', ')}. Use --dry-run to render without them.`);
+    console.error(
+      `Missing env: ${missing.join(', ')}. Use --dry-run to render without them.`,
+    );
     process.exit(1);
   }
 }
@@ -136,7 +146,8 @@ const PHASE_TITLES = {
  */
 function parseTickets(md) {
   const out = [];
-  const re = /^#### (P[\dA-Z-]+) — (.+?)\n\n```yaml\n([\s\S]*?)```\n([\s\S]*?)(?=\n^#### P|\n^## |\n^<!-- TICKETS-END)/gm;
+  const re =
+    /^#### (P[\dA-Z-]+) — (.+?)\n\n```yaml\n([\s\S]*?)```\n([\s\S]*?)(?=\n^#### P|\n^## |\n^<!-- TICKETS-END)/gm;
   let m;
   while ((m = re.exec(md)) !== null) {
     const [, id, heading, yaml, body] = m;
@@ -147,7 +158,11 @@ function parseTickets(md) {
       const [, key, raw] = kv;
       const v = raw.trim();
       if (v.startsWith('[')) {
-        t[key] = v.slice(1, -1).split(',').map((s) => s.trim()).filter(Boolean);
+        t[key] = v
+          .slice(1, -1)
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
       } else if (v === 'null' || v === '') {
         t[key] = null;
       } else {
@@ -173,22 +188,36 @@ function extractAcceptanceCriteria(body) {
 /** The References block appended to every description — the KB links (backlog §4.1). */
 function referencesBlock(t) {
   const lines = ['', '---', '', '**References**', ''];
-  lines.push(`- Backlog ticket: \`${t.id}\` in \`QUICKTRIMR_BACKLOG_README.md\` (source of truth)`);
+  lines.push(
+    `- Backlog ticket: \`${t.id}\` in \`QUICKTRIMR_BACKLOG_README.md\` (source of truth)`,
+  );
   if (t.knowledgeBase?.length) {
-    lines.push(`- Knowledge base: ${t.knowledgeBase.map((k) => `\`${k}\``).join(', ')}`);
+    lines.push(
+      `- Knowledge base: ${t.knowledgeBase.map((k) => `\`${k}\``).join(', ')}`,
+    );
   }
   if (t.blockedByTbc?.length) {
-    lines.push(`- **Blocked by unresolved:** ${t.blockedByTbc.map((k) => `\`${k}\``).join(', ')}`);
+    lines.push(
+      `- **Blocked by unresolved:** ${t.blockedByTbc.map((k) => `\`${k}\``).join(', ')}`,
+    );
   }
   if (t.dependsOn?.length) {
-    lines.push(`- Depends on: ${t.dependsOn.map((k) => `\`${k}\``).join(', ')}`);
+    lines.push(
+      `- Depends on: ${t.dependsOn.map((k) => `\`${k}\``).join(', ')}`,
+    );
   }
   if (t.affects?.length) {
-    lines.push(`- Affects (revisit if this ticket's contract changes): ${t.affects.map((k) => `\`${k}\``).join(', ')}`);
+    lines.push(
+      `- Affects (revisit if this ticket's contract changes): ${t.affects.map((k) => `\`${k}\``).join(', ')}`,
+    );
   }
   lines.push('');
-  lines.push('To implement: paste `QUICKTRIMR_TICKET_PROMPT.md` into a fresh agent session and name this ticket id.');
-  lines.push('Do not work from this Jira description alone — it is a projection. The backlog is authoritative.');
+  lines.push(
+    'To implement: paste `QUICKTRIMR_TICKET_PROMPT.md` into a fresh agent session and name this ticket id.',
+  );
+  lines.push(
+    'Do not work from this Jira description alone — it is a projection. The backlog is authoritative.',
+  );
   return lines.join('\n');
 }
 
@@ -216,15 +245,24 @@ function toAdf(md) {
     }
 
     const lines = block.split('\n');
-    if (lines.every((l) => /^\s*[-*]\s+/.test(l) || /^\s*- \[[ x]\]\s+/.test(l))) {
+    if (
+      lines.every((l) => /^\s*[-*]\s+/.test(l) || /^\s*- \[[ x]\]\s+/.test(l))
+    ) {
       content.push({
         type: 'bulletList',
         content: lines.map((l) => ({
           type: 'listItem',
-          content: [{
-            type: 'paragraph',
-            content: [{ type: 'text', text: l.replace(/^\s*[-*]\s+(\[[ x]\]\s*)?/, '') }],
-          }],
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: l.replace(/^\s*[-*]\s+(\[[ x]\]\s*)?/, ''),
+                },
+              ],
+            },
+          ],
         })),
       });
       continue;
@@ -251,7 +289,8 @@ function toAdf(md) {
 
 // ---------------------------------------------------------------- jira api
 
-const auth = () => 'Basic ' + Buffer.from(`${cfg.email}:${cfg.token}`).toString('base64');
+const auth = () =>
+  'Basic ' + Buffer.from(`${cfg.email}:${cfg.token}`).toString('base64');
 
 async function jira(path, method = 'GET', body) {
   const res = await fetch(`${cfg.baseUrl}/rest/api/3${path}`, {
@@ -264,7 +303,8 @@ async function jira(path, method = 'GET', body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(`Jira ${method} ${path} → ${res.status}\n${text}`);
+  if (!res.ok)
+    throw new Error(`Jira ${method} ${path} → ${res.status}\n${text}`);
   return text ? JSON.parse(text) : null;
 }
 
@@ -272,14 +312,14 @@ function assertTargetProject(project) {
   if (project.key !== EXPECTED_PROJECT_KEY) {
     throw new Error(
       `Jira returned project "${project.key}" (${project.name}) for key ` +
-      `"${cfg.projectKey}", expected stable key "${EXPECTED_PROJECT_KEY}".`
+        `"${cfg.projectKey}", expected stable key "${EXPECTED_PROJECT_KEY}".`,
     );
   }
   if (project.name !== EXPECTED_PROJECT_NAME) {
     throw new Error(
       `Jira project ${EXPECTED_PROJECT_KEY} still has display name "${project.name}". ` +
-      `Rename it to "${EXPECTED_PROJECT_NAME}" in Project settings before the live sync; ` +
-      `the stable project key must remain "${EXPECTED_PROJECT_KEY}".`
+        `Rename it to "${EXPECTED_PROJECT_NAME}" in Project settings before the live sync; ` +
+        `the stable project key must remain "${EXPECTED_PROJECT_KEY}".`,
     );
   }
 }
@@ -288,29 +328,45 @@ async function findPhaseEpic() {
   const found = await jira(
     `/search/jql?jql=${encodeURIComponent(
       `project = ${cfg.projectKey} AND issuetype = Epic AND ` +
-      `(summary ~ "${EXPECTED_PROJECT_NAME} Phase ${phase}" OR ` +
-      `summary ~ "${LEGACY_PRODUCT_NAME} Phase ${phase}")`
-    )}&fields=key,summary,labels`
+        `(summary ~ "${EXPECTED_PROJECT_NAME} Phase ${phase}" OR ` +
+        `summary ~ "${LEGACY_PRODUCT_NAME} Phase ${phase}")`,
+    )}&fields=key,summary,labels`,
   );
   const epics = found?.issues ?? [];
-  return epics.find((e) => e.fields.summary === `${EXPECTED_PROJECT_NAME} Phase ${phase} — ${PHASE_TITLES[phase]}`)
-    ?? epics.find((e) => e.fields.summary === `${LEGACY_PRODUCT_NAME} Phase ${phase} — ${PHASE_TITLES[phase]}`)
-    ?? null;
+  return (
+    epics.find(
+      (e) =>
+        e.fields.summary ===
+        `${EXPECTED_PROJECT_NAME} Phase ${phase} — ${PHASE_TITLES[phase]}`,
+    ) ??
+    epics.find(
+      (e) =>
+        e.fields.summary ===
+        `${LEGACY_PRODUCT_NAME} Phase ${phase} — ${PHASE_TITLES[phase]}`,
+    ) ??
+    null
+  );
 }
 
 async function reconcilePhaseEpic(epic) {
   const summary = `${EXPECTED_PROJECT_NAME} Phase ${phase} — ${PHASE_TITLES[phase]}`;
-  const labels = [...new Set([
-    ...(epic.fields.labels ?? []).filter((label) => label !== 'trimr'),
-    'quicktrimr',
-    `phase-${phase}`,
-  ])];
-  const changed = epic.fields.summary !== summary ||
-    [...(epic.fields.labels ?? [])].sort().join(',') !== [...labels].sort().join(',');
+  const labels = [
+    ...new Set([
+      ...(epic.fields.labels ?? []).filter((label) => label !== 'trimr'),
+      'quicktrimr',
+      `phase-${phase}`,
+    ]),
+  ];
+  const changed =
+    epic.fields.summary !== summary ||
+    [...(epic.fields.labels ?? [])].sort().join(',') !==
+      [...labels].sort().join(',');
   if (!changed) return;
 
   if (dryRun) {
-    console.log(`  ${epic.key}  WOULD UPDATE epic identity to "${summary}" labels=[${labels.join(', ')}]`);
+    console.log(
+      `  ${epic.key}  WOULD UPDATE epic identity to "${summary}" labels=[${labels.join(', ')}]`,
+    );
     return;
   }
   await jira(`/issue/${epic.key}`, 'PUT', { fields: { summary, labels } });
@@ -324,7 +380,10 @@ function buildIssue(t, epicKey) {
   // If the project has no dedicated AC field, the criteria stay in the description
   // where they already are. Otherwise they move, so Jira renders them properly.
   if (cfg.acField && ac) {
-    description = description.replace(/\*\*Acceptance criteria\*\*\n\n[\s\S]*?(?=\n\*\*|$)/, '');
+    description = description.replace(
+      /\*\*Acceptance criteria\*\*\n\n[\s\S]*?(?=\n\*\*|$)/,
+      '',
+    );
   }
   description += referencesBlock(t);
 
@@ -334,7 +393,13 @@ function buildIssue(t, epicKey) {
     description: toAdf(description),
     issuetype: { name: ISSUE_TYPE_MAP[t.issueType] ?? t.issueType },
     // Deduped: tickets already carry phase-N in their own labels.
-    labels: [...new Set([...(t.labels ?? []), `phase-${t.phase}`, `owner-${t.owner.toLowerCase()}`])],
+    labels: [
+      ...new Set([
+        ...(t.labels ?? []),
+        `phase-${t.phase}`,
+        `owner-${t.owner.toLowerCase()}`,
+      ]),
+    ],
     priority: { name: t.priority },
   };
 
@@ -363,20 +428,28 @@ function buildIssue(t, epicKey) {
 const SYNC_PROPERTY = 'quicktrimr-backlog-sync';
 
 function fingerprint(t) {
-  const labels = [...new Set([...(t.labels ?? []), `phase-${t.phase}`, `owner-${t.owner.toLowerCase()}`])];
+  const labels = [
+    ...new Set([
+      ...(t.labels ?? []),
+      `phase-${t.phase}`,
+      `owner-${t.owner.toLowerCase()}`,
+    ]),
+  ];
   return createHash('sha256')
-    .update(JSON.stringify({
-      title: t.title,
-      body: t.body,
-      issueType: ISSUE_TYPE_MAP[t.issueType] ?? t.issueType,
-      priority: t.priority,
-      owner: t.owner,
-      labels: labels.sort(),
-      dependsOn: [...(t.dependsOn ?? [])].sort(),
-      affects: [...(t.affects ?? [])].sort(),
-      knowledgeBase: [...(t.knowledgeBase ?? [])].sort(),
-      blockedByTbc: [...(t.blockedByTbc ?? [])].sort(),
-    }))
+    .update(
+      JSON.stringify({
+        title: t.title,
+        body: t.body,
+        issueType: ISSUE_TYPE_MAP[t.issueType] ?? t.issueType,
+        priority: t.priority,
+        owner: t.owner,
+        labels: labels.sort(),
+        dependsOn: [...(t.dependsOn ?? [])].sort(),
+        affects: [...(t.affects ?? [])].sort(),
+        knowledgeBase: [...(t.knowledgeBase ?? [])].sort(),
+        blockedByTbc: [...(t.blockedByTbc ?? [])].sort(),
+      }),
+    )
     .digest('hex');
 }
 
@@ -397,7 +470,8 @@ async function storedFingerprint(key) {
 function writeBackKey(id, key) {
   const md = readFileSync(BACKLOG, 'utf8');
   const re = new RegExp(`(id: ${id}\\n(?:.*\\n)*?jiraKey: )null`);
-  if (!re.test(md)) throw new Error(`Could not write jiraKey back for ${id} — aborting.`);
+  if (!re.test(md))
+    throw new Error(`Could not write jiraKey back for ${id} — aborting.`);
   writeFileSync(BACKLOG, md.replace(re, `$1${key}`));
 }
 
@@ -406,7 +480,9 @@ function writeBackKey(id, key) {
 // Discovers the two things you cannot guess: assignable accountIds, and whether the
 // project has a dedicated Acceptance Criteria field.
 if (whoami) {
-  const missing = ['baseUrl', 'email', 'token', 'projectKey'].filter((k) => !cfg[k]);
+  const missing = ['baseUrl', 'email', 'token', 'projectKey'].filter(
+    (k) => !cfg[k],
+  );
   if (missing.length) {
     console.error(`Missing env: ${missing.join(', ')}`);
     process.exit(1);
@@ -416,29 +492,39 @@ if (whoami) {
   console.log(`Authenticated as ${me.displayName} <${me.emailAddress}>\n`);
 
   const users = await jira(
-    `/user/assignable/search?project=${cfg.projectKey}&maxResults=50`
+    `/user/assignable/search?project=${cfg.projectKey}&maxResults=50`,
   );
   console.log('Assignable users — copy the accountId for Tony and Andrew:');
   for (const u of users) {
-    console.log(`  ${u.accountId}  ${u.displayName} <${u.emailAddress ?? 'hidden'}>`);
+    console.log(
+      `  ${u.accountId}  ${u.displayName} <${u.emailAddress ?? 'hidden'}>`,
+    );
   }
 
   const fields = await jira('/field');
   const candidates = fields.filter(
-    (f) => f.custom && /acceptance|criteria/i.test(f.name)
+    (f) => f.custom && /acceptance|criteria/i.test(f.name),
   );
   console.log('\nAcceptance Criteria field candidates:');
   if (candidates.length) {
     for (const f of candidates) console.log(`  ${f.id}  "${f.name}"`);
   } else {
-    console.log('  none found — leave JIRA_AC_FIELD unset and criteria stay in the description');
+    console.log(
+      '  none found — leave JIRA_AC_FIELD unset and criteria stay in the description',
+    );
   }
 
-  const types = await jira(`/issuetype/project?projectId=${
-    (await jira(`/project/${cfg.projectKey}`)).id
-  }`);
-  console.log(`\nIssue types in ${cfg.projectKey}: ${types.map((t) => t.name).join(', ')}`);
-  console.log('(The backlog uses Story, Task and Spike. Decision maps to Task.)');
+  const types = await jira(
+    `/issuetype/project?projectId=${
+      (await jira(`/project/${cfg.projectKey}`)).id
+    }`,
+  );
+  console.log(
+    `\nIssue types in ${cfg.projectKey}: ${types.map((t) => t.name).join(', ')}`,
+  );
+  console.log(
+    '(The backlog uses Story, Task and Spike. Decision maps to Task.)',
+  );
   process.exit(0);
 }
 
@@ -475,7 +561,9 @@ if (update) {
   console.log(`Phase ${phase} — ${PHASE_TITLES[phase] ?? ''}  [update]`);
   console.log(`  ${live.length} in Jira, ${missing.length} not yet created`);
   if (missing.length) {
-    console.log(`  not created (run without --update first): ${missing.map((t) => t.id).join(', ')}`);
+    console.log(
+      `  not created (run without --update first): ${missing.map((t) => t.id).join(', ')}`,
+    );
   }
   if (!live.length) process.exit(0);
 
@@ -492,7 +580,9 @@ if (update) {
   if (phaseEpic) {
     await reconcilePhaseEpic(phaseEpic);
   } else {
-    console.warn(`  WARNING: no Phase ${phase} epic found under the current or former product name.`);
+    console.warn(
+      `  WARNING: no Phase ${phase} epic found under the current or former product name.`,
+    );
   }
 
   let changed = 0;
@@ -508,22 +598,36 @@ if (update) {
     // Report the fields a human can actually eyeball, by diffing against Jira's
     // current state. The description is compared by fingerprint, not by text — see
     // the note on SYNC_PROPERTY.
-    const cur = await jira(`/issue/${t.jiraKey}?fields=summary,priority,labels,assignee`);
+    const cur = await jira(
+      `/issue/${t.jiraKey}?fields=summary,priority,labels,assignee`,
+    );
     const want = buildIssue(t).fields;
     const diffs = [];
     if (cur.fields.summary !== want.summary) {
       diffs.push(`summary: "${cur.fields.summary}" → "${want.summary}"`);
     }
     if (cur.fields.priority?.name !== want.priority.name) {
-      diffs.push(`priority: ${cur.fields.priority?.name} → ${want.priority.name}`);
+      diffs.push(
+        `priority: ${cur.fields.priority?.name} → ${want.priority.name}`,
+      );
     }
     const curLabels = [...(cur.fields.labels ?? [])].sort().join(',');
     const wantLabels = [...want.labels].sort().join(',');
-    if (curLabels !== wantLabels) diffs.push(`labels: [${curLabels}] → [${wantLabels}]`);
-    if ((cur.fields.assignee?.accountId ?? null) !== (want.assignee?.id ?? null)) {
-      diffs.push(`assignee: ${cur.fields.assignee?.displayName ?? 'none'} → ${t.owner}`);
+    if (curLabels !== wantLabels)
+      diffs.push(`labels: [${curLabels}] → [${wantLabels}]`);
+    if (
+      (cur.fields.assignee?.accountId ?? null) !== (want.assignee?.id ?? null)
+    ) {
+      diffs.push(
+        `assignee: ${cur.fields.assignee?.displayName ?? 'none'} → ${t.owner}`,
+      );
     }
-    if (!diffs.length) diffs.push(stored === null ? 'baseline fingerprint (first update run)' : 'description / body');
+    if (!diffs.length)
+      diffs.push(
+        stored === null
+          ? 'baseline fingerprint (first update run)'
+          : 'description / body',
+      );
 
     if (dryRun) {
       console.log(`  ${t.id} → ${t.jiraKey}  WOULD UPDATE`);
@@ -536,31 +640,40 @@ if (update) {
     // Team-managed project is rejected. Nothing here should move an issue's epic.
     const { parent, project: _p, issuetype: _i, ...mutable } = want;
     await jira(`/issue/${t.jiraKey}`, 'PUT', { fields: mutable });
-    await jira(`/issue/${t.jiraKey}/properties/${SYNC_PROPERTY}`, 'PUT', { hash });
+    await jira(`/issue/${t.jiraKey}/properties/${SYNC_PROPERTY}`, 'PUT', {
+      hash,
+    });
     console.log(`  ${t.id} → ${t.jiraKey}  updated`);
     for (const d of diffs) console.log(`      ${d}`);
     changed++;
   }
 
   // --- link backfill ---
-  const keyOf = new Map(tickets.map((t) => [t.id, t.jiraKey]).filter(([, k]) => k));
+  const keyOf = new Map(
+    tickets.map((t) => [t.id, t.jiraKey]).filter(([, k]) => k),
+  );
   let added = 0;
   let possible = 0;
   for (const t of live) {
     const existing = await jira(`/issue/${t.jiraKey}?fields=issuelinks`);
     const have = new Set(
       (existing.fields.issuelinks ?? []).map(
-        (l) => `${l.type.name}:${(l.outwardIssue ?? l.inwardIssue)?.key}`
-      )
+        (l) => `${l.type.name}:${(l.outwardIssue ?? l.inwardIssue)?.key}`,
+      ),
     );
-    for (const [rel, ids] of [['Blocks', t.dependsOn], ['Relates', t.affects]]) {
+    for (const [rel, ids] of [
+      ['Blocks', t.dependsOn],
+      ['Relates', t.affects],
+    ]) {
       for (const id of ids ?? []) {
         const outward = keyOf.get(id);
         if (!outward) continue;
         possible++;
         if (have.has(`${rel}:${outward}`)) continue;
         if (dryRun) {
-          console.log(`  link ${t.id} ${rel} ${id} (${t.jiraKey} → ${outward})  WOULD ADD`);
+          console.log(
+            `  link ${t.id} ${rel} ${id} (${t.jiraKey} → ${outward})  WOULD ADD`,
+          );
           added++;
           continue;
         }
@@ -573,7 +686,9 @@ if (update) {
           console.log(`  link ${t.id} ${rel} ${id}  added`);
           added++;
         } catch (e) {
-          console.error(`  link ${t.id}→${id} failed: ${e.message.split('\n')[0]}`);
+          console.error(
+            `  link ${t.id}→${id} failed: ${e.message.split('\n')[0]}`,
+          );
         }
       }
     }
@@ -581,7 +696,7 @@ if (update) {
 
   console.log(
     `\n${dryRun ? 'Would update' : 'Updated'} ${changed} issue(s), ${unchanged} unchanged. ` +
-    `${dryRun ? 'Would add' : 'Added'} ${added} link(s) of ${possible} resolvable.`
+      `${dryRun ? 'Would add' : 'Added'} ${added} link(s) of ${possible} resolvable.`,
   );
   if (dryRun) console.log('Nothing was sent.');
   process.exit(0);
@@ -593,9 +708,13 @@ const todo = inPhase.filter((t) => !t.jiraKey);
 const skipped = inPhase.filter((t) => t.jiraKey);
 
 console.log(`Phase ${phase} — ${PHASE_TITLES[phase] ?? ''}`);
-console.log(`  ${inPhase.length} tickets, ${todo.length} to create, ${skipped.length} already in Jira`);
+console.log(
+  `  ${inPhase.length} tickets, ${todo.length} to create, ${skipped.length} already in Jira`,
+);
 if (skipped.length) {
-  console.log(`  skipping: ${skipped.map((t) => `${t.id}→${t.jiraKey}`).join(', ')}`);
+  console.log(
+    `  skipping: ${skipped.map((t) => `${t.id}→${t.jiraKey}`).join(', ')}`,
+  );
 }
 
 // Blocked tickets are still created — the blocker is recorded in the description and
@@ -603,30 +722,50 @@ if (skipped.length) {
 // job (QUICKTRIMR_TICKET_PROMPT.md §3), not this script's.
 const blocked = todo.filter((t) => t.blockedByTbc?.length);
 if (blocked.length) {
-  console.log(`  note: ${blocked.length} ticket(s) cite unresolved TBCs; created but not startable`);
+  console.log(
+    `  note: ${blocked.length} ticket(s) cite unresolved TBCs; created but not startable`,
+  );
 }
 
 if (dryRun) {
   console.log(`\n--- DRY RUN — no API calls ---\n`);
-  console.log(`EPIC  ensure QuickTrimr Phase ${phase} — ${PHASE_TITLES[phase]}`);
-  console.log(`      project=${cfg.projectKey ?? '<JIRA_PROJECT_KEY unset>'}  labels=[quicktrimr, phase-${phase}]\n`);
+  console.log(
+    `EPIC  ensure QuickTrimr Phase ${phase} — ${PHASE_TITLES[phase]}`,
+  );
+  console.log(
+    `      project=${cfg.projectKey ?? '<JIRA_PROJECT_KEY unset>'}  labels=[quicktrimr, phase-${phase}]\n`,
+  );
   for (const t of todo) {
     const issue = buildIssue(t, 'EPIC-KEY');
     const ac = extractAcceptanceCriteria(t.body);
     console.log(`ISSUE ${t.id}  ${issue.fields.summary}`);
-    console.log(`      type=${issue.fields.issuetype.name}  priority=${t.priority}  assignee=${
-      issue.fields.assignee ? `${t.owner} (${issue.fields.assignee.id})` : `UNASSIGNED — no JIRA_ACCOUNT_${t.owner.toUpperCase()}`
-    }`);
+    console.log(
+      `      type=${issue.fields.issuetype.name}  priority=${t.priority}  assignee=${
+        issue.fields.assignee
+          ? `${t.owner} (${issue.fields.assignee.id})`
+          : `UNASSIGNED — no JIRA_ACCOUNT_${t.owner.toUpperCase()}`
+      }`,
+    );
     console.log(`      labels=[${issue.fields.labels.join(', ')}]`);
-    console.log(`      description=${JSON.stringify(issue.fields.description).length} bytes ADF`);
-    console.log(`      acceptance criteria=${ac ? ac.split('\n').length : 0} items → ${
-      cfg.acField ? `field ${cfg.acField}` : 'description (no JIRA_AC_FIELD set)'
-    }`);
-    if (t.dependsOn?.length) console.log(`      link "is blocked by": ${t.dependsOn.join(', ')}`);
-    if (t.affects?.length) console.log(`      link "relates to":     ${t.affects.join(', ')}`);
+    console.log(
+      `      description=${JSON.stringify(issue.fields.description).length} bytes ADF`,
+    );
+    console.log(
+      `      acceptance criteria=${ac ? ac.split('\n').length : 0} items → ${
+        cfg.acField
+          ? `field ${cfg.acField}`
+          : 'description (no JIRA_AC_FIELD set)'
+      }`,
+    );
+    if (t.dependsOn?.length)
+      console.log(`      link "is blocked by": ${t.dependsOn.join(', ')}`);
+    if (t.affects?.length)
+      console.log(`      link "relates to":     ${t.affects.join(', ')}`);
     console.log('');
   }
-  console.log(`Would reuse or create the Phase ${phase} epic and create ${todo.length} issue(s). Nothing was sent.`);
+  console.log(
+    `Would reuse or create the Phase ${phase} epic and create ${todo.length} issue(s). Nothing was sent.`,
+  );
   process.exit(0);
 }
 
@@ -635,16 +774,20 @@ if (dryRun) {
 // State the authoring account. Expected to be the shared service account — every
 // issue below is attributed to it, and that is the intended design.
 const me = await jira('/myself');
-console.log(`\nAuthoring as: ${me.displayName} <${me.emailAddress ?? 'hidden'}>`);
+console.log(
+  `\nAuthoring as: ${me.displayName} <${me.emailAddress ?? 'hidden'}>`,
+);
 
 // If someone sourced their personal token by mistake, the issues would be authored
 // by them instead of the bot. Harmless but wrong, and confusing six months later.
-const personal = Object.entries(cfg.accounts).find(([, id]) => id === me.accountId);
+const personal = Object.entries(cfg.accounts).find(
+  ([, id]) => id === me.accountId,
+);
 if (personal) {
   console.log(
     `              → WARNING: this is ${personal[0]}'s personal account, not the service account.\n` +
-    `                Issues will be authored by ${personal[0]}. Expected info@tetriastech.com.au.\n` +
-    `                Check JIRA_EMAIL / JIRA_API_TOKEN if that wasn't intended.`
+      `                Issues will be authored by ${personal[0]}. Expected info@tetriastech.com.au.\n` +
+      `                Check JIRA_EMAIL / JIRA_API_TOKEN if that wasn't intended.`,
   );
 }
 
@@ -665,16 +808,18 @@ try {
 console.log(`Target project: ${project.key} — ${project.name}`);
 
 const available = new Set(
-  (await jira(`/issuetype/project?projectId=${project.id}`)).map((t) => t.name)
+  (await jira(`/issuetype/project?projectId=${project.id}`)).map((t) => t.name),
 );
-const needed = new Set(todo.map((t) => ISSUE_TYPE_MAP[t.issueType] ?? t.issueType));
+const needed = new Set(
+  todo.map((t) => ISSUE_TYPE_MAP[t.issueType] ?? t.issueType),
+);
 needed.add('Epic');
 const absent = [...needed].filter((n) => !available.has(n));
 if (absent.length) {
   console.error(
     `\nProject ${cfg.projectKey} has no issue type: ${absent.join(', ')}\n` +
-    `Available: ${[...available].join(', ')}\n` +
-    `Add a mapping to ISSUE_TYPE_MAP, or create the type in Jira. Nothing was created.`
+      `Available: ${[...available].join(', ')}\n` +
+      `Add a mapping to ISSUE_TYPE_MAP, or create the type in Jira. Nothing was created.`,
   );
   process.exit(1);
 }
@@ -713,20 +858,29 @@ for (const t of todo) {
         hash: fingerprint(t),
       });
     } catch (error) {
-      console.warn(`      sync fingerprint failed; run --update after creation: ${error.message.split('\n')[0]}`);
+      console.warn(
+        `      sync fingerprint failed; run --update after creation: ${error.message.split('\n')[0]}`,
+      );
     }
   } catch (e) {
     console.error(`  ${t.id} FAILED: ${e.message}`);
-    console.error(`\nStopped. ${created.length} created and written back; re-run to continue.`);
+    console.error(
+      `\nStopped. ${created.length} created and written back; re-run to continue.`,
+    );
     process.exit(1);
   }
 }
 
 // Links last: every ticket needs its key before any link can resolve.
-const keyOf = new Map(tickets.map((t) => [t.id, t.jiraKey]).filter(([, k]) => k));
+const keyOf = new Map(
+  tickets.map((t) => [t.id, t.jiraKey]).filter(([, k]) => k),
+);
 let links = 0;
 for (const t of created) {
-  for (const [rel, ids] of [['Blocks', t.dependsOn], ['Relates', t.affects]]) {
+  for (const [rel, ids] of [
+    ['Blocks', t.dependsOn],
+    ['Relates', t.affects],
+  ]) {
     for (const id of ids ?? []) {
       const outward = keyOf.get(id);
       if (!outward) continue;
@@ -738,11 +892,17 @@ for (const t of created) {
         });
         links++;
       } catch (e) {
-        console.error(`  link ${t.id}→${id} failed: ${e.message.split('\n')[0]}`);
+        console.error(
+          `  link ${t.id}→${id} failed: ${e.message.split('\n')[0]}`,
+        );
       }
     }
   }
 }
 
-console.log(`\nCreated ${created.length} issues, ${links} links, under ${epicKey}.`);
-console.log('jiraKey written back to QUICKTRIMR_BACKLOG_README.md — commit it, or the next run duplicates.');
+console.log(
+  `\nCreated ${created.length} issues, ${links} links, under ${epicKey}.`,
+);
+console.log(
+  'jiraKey written back to QUICKTRIMR_BACKLOG_README.md — commit it, or the next run duplicates.',
+);

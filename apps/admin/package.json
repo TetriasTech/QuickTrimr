@@ -8,8 +8,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "eslint .",
-    "format": "prettier --check .",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --ignore-path ../../.prettierignore --write .",
+    "format:check": "prettier --ignore-path ../../.prettierignore --check .",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },

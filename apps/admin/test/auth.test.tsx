@@ -1,6 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { USER_ROLE_VALUE } from '@quicktrimr/shared';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { requireAdmin } from '@/lib/auth/require-admin';
+import { readAdminSession } from '@/lib/auth/session';
+
+import AdminLayout from '../app/(admin)/layout';
+import AdminPage from '../app/(admin)/page';
+
 import type { AdminSession } from '@/lib/auth/session';
 
 vi.mock('server-only', () => ({}));
@@ -10,11 +17,6 @@ vi.mock('next/navigation', () => ({
     throw new Error(`REDIRECT:${path}`);
   },
 }));
-
-import { readAdminSession } from '@/lib/auth/session';
-import { requireAdmin } from '@/lib/auth/require-admin';
-import AdminLayout from '../app/(admin)/layout';
-import AdminPage from '../app/(admin)/page';
 
 const sessionReader = vi.mocked(readAdminSession);
 afterEach(() => vi.resetAllMocks());

@@ -11,7 +11,7 @@ import { colors, radius, sizes, spacing, typography, useTheme } from '../theme';
 
 export interface TextInputProps extends NativeTextInputProps {
   label: string;
-  error?: string;
+  error?: string | undefined;
   containerStyle?: StyleProp<ViewStyle>;
 }
 

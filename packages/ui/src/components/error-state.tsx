@@ -1,6 +1,7 @@
 import { Text, View, type ViewStyle } from 'react-native';
 
 import { colors, spacing, typography, useTheme } from '../theme';
+
 import { Button } from './button';
 
 export interface ErrorStateProps {

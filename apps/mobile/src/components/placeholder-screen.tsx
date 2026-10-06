@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+
+import type { ReactNode } from 'react';
 
 type PlaceholderScreenProps = {
   title: string;
@@ -15,7 +16,11 @@ export function PlaceholderScreen({
   children,
 }: PlaceholderScreenProps) {
   return (
-    <View accessibilityRole="summary" style={styles.container} testID="placeholder-screen">
+    <View
+      accessibilityRole="summary"
+      style={styles.container}
+      testID="placeholder-screen"
+    >
       <Text style={styles.eyebrow}>QuickTrimr</Text>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>

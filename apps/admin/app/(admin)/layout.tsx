@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
 import { requireAdmin } from '@/lib/auth/require-admin';
+
+import type { ReactNode } from 'react';
 
 // Do not prerender protected content or cache it across users.
 export const dynamic = 'force-dynamic';

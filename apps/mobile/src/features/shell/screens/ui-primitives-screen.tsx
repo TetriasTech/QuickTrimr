@@ -33,7 +33,10 @@ export function UiPrimitivesScreen() {
 
       <Card>
         <Text style={typography.headline}>Buttons and input</Text>
-        <Button label="Primary action" onPress={() => setFeedback('Primary action pressed.')} />
+        <Button
+          label="Primary action"
+          onPress={() => setFeedback('Primary action pressed.')}
+        />
         <Button
           label="Secondary action"
           onPress={() => setFeedback('Secondary action pressed.')}
@@ -49,8 +52,17 @@ export function UiPrimitivesScreen() {
 
       <Card variant="outlined">
         <Text style={typography.headline}>Identity and status</Text>
-        <View style={{ alignItems: 'center', flexDirection: 'row', gap: spacing.md }}>
-          <Avatar accessibilityLabel="Andrew profile placeholder" initials="AG" />
+        <View
+          style={{
+            alignItems: 'center',
+            flexDirection: 'row',
+            gap: spacing.md,
+          }}
+        >
+          <Avatar
+            accessibilityLabel="Andrew profile placeholder"
+            initials="AG"
+          />
           <View style={{ gap: spacing.sm }}>
             <Badge label="Available" tone="success" />
             <StatusBadge status={BOOKING_STATUS_VALUE.PAID_CONFIRMED} />
@@ -88,7 +100,10 @@ export function UiPrimitivesScreen() {
         />
       </Card>
 
-      <Text selectable style={[typography.caption, { color: colors.textMuted }]}>
+      <Text
+        selectable
+        style={[typography.caption, { color: colors.textMuted }]}
+      >
         {feedback}
       </Text>
 
@@ -99,7 +114,9 @@ export function UiPrimitivesScreen() {
       >
         <View style={{ gap: spacing.md }}>
           <Text style={typography.headline}>Native bottom sheet</Text>
-          <Text style={typography.body}>This content is composed with shared primitives.</Text>
+          <Text style={typography.body}>
+            This content is composed with shared primitives.
+          </Text>
           <Button label="Close" onPress={() => setSheetPresented(false)} />
         </View>
       </BottomSheet>

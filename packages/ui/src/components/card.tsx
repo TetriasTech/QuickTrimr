@@ -1,4 +1,9 @@
-import { View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import {
+  View,
+  type StyleProp,
+  type ViewProps,
+  type ViewStyle,
+} from 'react-native';
 
 import { colors, radius, shadows, spacing, useTheme } from '../theme';
 
@@ -26,7 +31,9 @@ const variants = {
 
 export function Card({ variant = 'filled', style, ...viewProps }: CardProps) {
   useTheme();
-  return <View {...viewProps} style={[styles.card, variants[variant], style]} />;
+  return (
+    <View {...viewProps} style={[styles.card, variants[variant], style]} />
+  );
 }
 
 const styles = {

@@ -14,8 +14,10 @@ import { colors, radius, sizes, spacing, typography, useTheme } from '../theme';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type ButtonSize = 'small' | 'medium' | 'large';
 
-export interface ButtonProps
-  extends Omit<PressableProps, 'children' | 'disabled' | 'style'> {
+export interface ButtonProps extends Omit<
+  PressableProps,
+  'children' | 'disabled' | 'style'
+> {
   label: string;
   variant?: ButtonVariant;
   size?: ButtonSize;

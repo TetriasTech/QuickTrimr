@@ -1,5 +1,6 @@
-import type { BookingType } from '@quicktrimr/shared';
 import { create } from 'zustand';
+
+import type { BookingType } from '@quicktrimr/shared';
 
 type BookingDraftValues = {
   selectedAddressId: string | null;

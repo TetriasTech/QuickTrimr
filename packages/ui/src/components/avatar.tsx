@@ -41,7 +41,12 @@ export function Avatar({
       accessible
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="image"
-      style={[styles.avatar, !source ? styles.fallback : undefined, sharedStyle, style]}
+      style={[
+        styles.avatar,
+        !source ? styles.fallback : undefined,
+        sharedStyle,
+        style,
+      ]}
       testID={testID}
     >
       {source ? (

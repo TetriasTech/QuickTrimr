@@ -30,7 +30,11 @@ test('incomplete authenticated sessions can access only onboarding', () => {
 
 test('complete client sessions reach the client journey and shared modals', () => {
   assert.deepEqual(
-    getRouteAccess({ status: 'signed-in', role: 'client', onboardingComplete: true }),
+    getRouteAccess({
+      status: 'signed-in',
+      role: 'client',
+      onboardingComplete: true,
+    }),
     {
       auth: false,
       onboarding: false,
@@ -43,7 +47,11 @@ test('complete client sessions reach the client journey and shared modals', () =
 
 test('complete barber sessions reach the barber journey and shared modals', () => {
   assert.deepEqual(
-    getRouteAccess({ status: 'signed-in', role: 'barber', onboardingComplete: true }),
+    getRouteAccess({
+      status: 'signed-in',
+      role: 'barber',
+      onboardingComplete: true,
+    }),
     {
       auth: false,
       onboarding: false,

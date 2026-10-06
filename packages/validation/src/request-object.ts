@@ -36,10 +36,12 @@ export function ignoreServerControlledFields<Schema extends z.ZodType>(
   schema: Schema,
 ): z.ZodType<z.output<Schema>, z.input<Schema>> {
   return z.preprocess((input) => {
-    if (input === null || typeof input !== 'object' || Array.isArray(input)) return input;
+    if (input === null || typeof input !== 'object' || Array.isArray(input))
+      return input;
 
     const sanitized = { ...(input as Record<string, unknown>) };
-    for (const field of SERVER_CONTROLLED_REQUEST_FIELDS) delete sanitized[field];
+    for (const field of SERVER_CONTROLLED_REQUEST_FIELDS)
+      delete sanitized[field];
     return sanitized;
   }, schema) as z.ZodType<z.output<Schema>, z.input<Schema>>;
 }

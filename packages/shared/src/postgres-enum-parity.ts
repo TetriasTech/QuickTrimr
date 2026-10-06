@@ -1,4 +1,5 @@
 import { SHARED_ENUMS } from './enums/registry.ts';
+
 import type { SharedEnumId } from './enums/registry.ts';
 
 export function assertPostgresEnumValuesMatch(

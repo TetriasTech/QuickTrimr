@@ -11,8 +11,8 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const BACKLOG = resolve(root, 'QUICKTRIMR_BACKLOG_README.md');
@@ -85,7 +85,9 @@ function parsePendingRules(md) {
   const pending = new Map();
   const section = md.split('### Pending rules')[1]?.split('\n## ')[0] ?? '';
   for (const line of section.split('\n')) {
-    const m = line.match(/^\|\s*`(RULE-[A-Z0-9-]+)`\s*\|[^|]*\|\s*`(P0-D\d+)`\s*\|/);
+    const m = line.match(
+      /^\|\s*`(RULE-[A-Z0-9-]+)`\s*\|[^|]*\|\s*`(P0-D\d+)`\s*\|/,
+    );
     if (m) pending.set(m[1], m[2]);
   }
   return pending;
@@ -117,26 +119,34 @@ const warnings = [];
 
 for (const t of tickets) {
   if (!['Tony', 'Andrew'].includes(t.owner)) {
-    errors.push(`${t.id}: owner must be exactly Tony or Andrew (got "${t.owner}")`);
+    errors.push(
+      `${t.id}: owner must be exactly Tony or Andrew (got "${t.owner}")`,
+    );
   }
   for (const dep of t.dependsOn ?? []) {
-    if (!byId.has(dep)) errors.push(`${t.id}: dependsOn references unknown ticket ${dep}`);
+    if (!byId.has(dep))
+      errors.push(`${t.id}: dependsOn references unknown ticket ${dep}`);
   }
   for (const aff of t.affects ?? []) {
-    if (!byId.has(aff)) errors.push(`${t.id}: affects references unknown ticket ${aff}`);
+    if (!byId.has(aff))
+      errors.push(`${t.id}: affects references unknown ticket ${aff}`);
   }
   for (const kb of t.knowledgeBase ?? []) {
     if (kb.endsWith('-NONE') || kb.endsWith('-*')) continue;
-    if (!kbIds.has(kb)) errors.push(`${t.id}: knowledgeBase references unknown ${kb}`);
+    if (!kbIds.has(kb))
+      errors.push(`${t.id}: knowledgeBase references unknown ${kb}`);
   }
   for (const tbc of t.blockedByTbc ?? []) {
-    if (!kbIds.has(tbc)) errors.push(`${t.id}: blockedByTbc references unknown ${tbc}`);
+    if (!kbIds.has(tbc))
+      errors.push(`${t.id}: blockedByTbc references unknown ${tbc}`);
   }
   // A ticket citing an unresolved TBC in knowledgeBase, without declaring it as
   // a blocker, will start against a rule that does not exist yet.
   for (const kb of t.knowledgeBase ?? []) {
     if (openTbcs.has(kb) && !(t.blockedByTbc ?? []).includes(kb)) {
-      warnings.push(`${t.id}: cites unresolved ${kb} but does not list it in blockedByTbc`);
+      warnings.push(
+        `${t.id}: cites unresolved ${kb} but does not list it in blockedByTbc`,
+      );
     }
   }
   // A ticket citing a reserved-but-undecided rule must depend on the decision that
@@ -145,7 +155,9 @@ for (const t of tickets) {
     const decision = pendingRules.get(kb);
     if (!decision || t.id === decision) continue;
     if (!ancestors(t.id).has(decision)) {
-      errors.push(`${t.id}: cites pending ${kb} but does not depend on ${decision} that writes it`);
+      errors.push(
+        `${t.id}: cites pending ${kb} but does not depend on ${decision} that writes it`,
+      );
     }
   }
 }
@@ -174,7 +186,9 @@ for (const t of tickets) {
   for (const dep of t.dependsOn ?? []) {
     const d = byId.get(dep);
     if (d && Number(d.phase) > Number(t.phase)) {
-      errors.push(`${t.id} (phase ${t.phase}) depends on ${dep} (phase ${d.phase}) — later phase`);
+      errors.push(
+        `${t.id} (phase ${t.phase}) depends on ${dep} (phase ${d.phase}) — later phase`,
+      );
     }
   }
 }
@@ -261,7 +275,9 @@ that is what rotted \`canRunInParallelWith\` in the previous backlog (§3.1).
     } |\n`;
   }
 
-  const leaves = tickets.filter((t) => !dependedOnBy.has(t.id) && !affectedBy.has(t.id));
+  const leaves = tickets.filter(
+    (t) => !dependedOnBy.has(t.id) && !affectedBy.has(t.id),
+  );
   out += `
 **Blocks nothing and is changed by nothing** (${leaves.length}): ${
     leaves.map((t) => `\`${t.id}\``).join(', ') || '—'
@@ -272,13 +288,28 @@ that is what rotted \`canRunInParallelWith\` in the previous backlog (§3.1).
 
 // ---------------------------------------------------------------- report
 
-const owners = tickets.reduce((a, t) => ((a[t.owner] = (a[t.owner] ?? 0) + 1), a), {});
-const phases = tickets.reduce((a, t) => ((a[t.phase] = (a[t.phase] ?? 0) + 1), a), {});
+const owners = tickets.reduce(
+  (a, t) => ((a[t.owner] = (a[t.owner] ?? 0) + 1), a),
+  {},
+);
+const phases = tickets.reduce(
+  (a, t) => ((a[t.phase] = (a[t.phase] ?? 0) + 1), a),
+  {},
+);
 const unlinked = tickets.filter((t) => !t.jiraKey).length;
 
 console.log(`tickets:   ${tickets.length}`);
-console.log(`owners:    ${Object.entries(owners).map(([k, v]) => `${k} ${v}`).join(', ')}`);
-console.log(`phases:    ${Object.entries(phases).sort().map(([k, v]) => `P${k}:${v}`).join(' ')}`);
+console.log(
+  `owners:    ${Object.entries(owners)
+    .map(([k, v]) => `${k} ${v}`)
+    .join(', ')}`,
+);
+console.log(
+  `phases:    ${Object.entries(phases)
+    .sort()
+    .map(([k, v]) => `P${k}:${v}`)
+    .join(' ')}`,
+);
 console.log(`kb ids:    ${kbIds.size} defined, ${openTbcs.size} TBC open`);
 console.log(`jira:      ${unlinked}/${tickets.length} not yet created`);
 

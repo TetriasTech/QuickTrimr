@@ -13,12 +13,20 @@ export function estimate(bookings, activeSeconds = 2) {
   const inngestExecutions = lifecycleRuns * 3 + reconciliationRuns * 2;
   const triggerUsage = totalRuns * (250 + activeSeconds * 338);
   return {
-    bookings, activeSeconds, lifecycleRuns, reconciliationRuns, totalRuns,
+    bookings,
+    activeSeconds,
+    lifecycleRuns,
+    reconciliationRuns,
+    totalRuns,
     pgCronTicksAtTenSeconds: 30 * 24 * 60 * 6,
-    supabaseEdgeOverageUsdIfQuotaUnused: Math.ceil(Math.max(0, totalRuns - 2_000_000) / 1_000_000) * 2,
-    supabaseEdgeOverageUsdIfQuotaAlreadyUsed: Math.ceil(totalRuns / 1_000_000) * 2,
+    supabaseEdgeOverageUsdIfQuotaUnused:
+      Math.ceil(Math.max(0, totalRuns - 2_000_000) / 1_000_000) * 2,
+    supabaseEdgeOverageUsdIfQuotaAlreadyUsed:
+      Math.ceil(totalRuns / 1_000_000) * 2,
     inngestExecutions,
-    inngestProUsdUpperEstimate: usd(99 * unitsPerDollar + Math.max(0, inngestExecutions - 1_000_000) * 500),
+    inngestProUsdUpperEstimate: usd(
+      99 * unitsPerDollar + Math.max(0, inngestExecutions - 1_000_000) * 500,
+    ),
     triggerUsageUsd: usd(triggerUsage),
     triggerProUsd: usd(Math.max(50 * unitsPerDollar, triggerUsage)),
   };
@@ -31,4 +39,15 @@ assert.equal(estimate(10_000).triggerUsageUsd, 15.1123);
 assert.equal(estimate(100_000, 5).triggerUsageUsd, 241.1808);
 assert.throws(() => estimate(-1));
 assert.throws(() => estimate(1, 0));
-console.log(JSON.stringify({ currency: 'USD', excludes: 'common Supabase baseline, worker hosting, database resizing, network, log overages, retries, tax and operator time', scenarios: [estimate(10_000), estimate(100_000), estimate(100_000, 5)] }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      currency: 'USD',
+      excludes:
+        'common Supabase baseline, worker hosting, database resizing, network, log overages, retries, tax and operator time',
+      scenarios: [estimate(10_000), estimate(100_000), estimate(100_000, 5)],
+    },
+    null,
+    2,
+  ),
+);
