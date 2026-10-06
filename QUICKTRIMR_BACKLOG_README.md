@@ -533,7 +533,7 @@ phase: 0
 priority: Highest
 jiraKey: TRIMR-8
 dependsOn: []
-affects: [P2-T03, P2-T15, P3-T11, P4-T05, P4-T11, P6-T02]
+affects: [P2-T03, P2-T15, P3-T11, P3-T12, P4-T05, P4-T11, P6-T02]
 knowledgeBase: [ADR-011]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, decision, spike, backend]
@@ -541,7 +541,12 @@ labels: [quicktrimr, phase-0, decision, spike, backend]
 
 **Context**
 
-`TBC-WORKFLOW-ENGINE`. QuickTrimr is a timer product wearing a marketplace: a 5-minute Available Now expiry, a 2-hour Scheduled expiry, a session available-until, a 1-hour completion window, a 6-hour no-action warning, a further 1-hour dispute window, throttled ETA refreshes, and a payout run. Six tickets cannot be built until something runs delayed work reliably.
+`TBC-WORKFLOW-ENGINE`, now resolved to `ADR-011`. QuickTrimr is a timer product wearing a marketplace: a 5-minute Available Now expiry, a 2-hour Scheduled expiry, a session available-until, a 1-hour completion window, a 6-hour no-action warning, a further 1-hour dispute window, throttled ETA refreshes, and a payout run. Seven downstream tickets consume this architecture, including reliability recovery.
+
+**Approved by Andrew on 2026-10-03: Option A — Supabase `pg_cron` with bounded indexed
+database-backed sweeps.** Approval explicitly includes documentation-only evaluation of the
+unselected Trigger.dev candidate. Supabase and Inngest have local runtime evidence; Trigger.dev
+has not been run. This amendment is limited to this spike's comparison, not production tests.
 
 The previous backlog never decided this. `P2-E04-T04` said "cron scheduling infrastructure beyond what is required for this rule" was out of scope — which left the scheduling of every timed rule owned by nobody.
 
@@ -554,7 +559,7 @@ Evaluate the realistic options — Supabase scheduled functions / `pg_cron`, Inn
 | Criterion | Why it matters here |
 |---|---|
 | Sub-minute delay accuracy | `CFG-AVAIL-EXPIRY-MIN` is 5 minutes. A scheduler with 15-minute granularity cannot implement it, and a client watching a countdown will see it expire late. |
-| Per-entity scheduling | Every request needs its own timer, not one sweep. Decide whether the model is a scheduled job per entity or a periodic sweep query. |
+| Per-entity scheduling | Every request needs its own persisted deadline. The approved model is a bounded periodic due-state sweep, not a recurring cron job per entity. |
 | Idempotency and replay | It will fire twice. `ADR-011` requires the second fire to be a no-op. |
 | Cancellation | An accepted request must cancel its own expiry job, or the sweep must re-check state. |
 | Reconciliation | What catches a dropped schedule. A request that silently never expires holds a client's authorisation. |
@@ -568,7 +573,7 @@ Note the fallback honestly. A periodic sweep query on `pg_cron` — "expire ever
 
 **Acceptance criteria**
 
-- [ ] Each option evaluated against every criterion above, with evidence rather than documentation claims.
+- [ ] Each option evaluated against every criterion above, with measured local Supabase/Inngest evidence and clearly labelled documentation-only Trigger.dev evaluation, as explicitly approved by Andrew on 2026-10-03. Never report unexecuted cloud/vendor behavior as tested.
 - [ ] A working proof of the 5-minute expiry case, including cancel-on-accept, duplicate fire, and reconciliation.
 - [ ] Cost modelled at a stated booking volume.
 - [ ] Local development story demonstrated — how an engineer tests a 6-hour rule without waiting 6 hours.
@@ -576,9 +581,30 @@ Note the fallback honestly. A periodic sweep query on `pg_cron` — "expire ever
 - [ ] Confirmed by Tony or Andrew, then written into `ADR-011` naming the chosen engine.
 - [ ] `TBC-WORKFLOW-ENGINE` in `KB §14` rewritten as `RESOLVED → ADR-011`. Not deleted.
 
+**Tests**
+
+- Reproduce the isolated proof in `scripts/spikes/P0-D07/README.md`; capture engine versions,
+  actual deadline/delivery timestamps and per-check results. Label documentation-only claims
+  and unexecuted vendor/cloud paths explicitly; they do not satisfy runtime evidence.
+- Exact deadline boundaries; a real configured five-minute expiry; accepted-state stale no-op;
+  repeated parallel duplicate calls with one effect; accept/expiry race with one atomic outcome;
+  a deliberately omitted schedule recovered by reconciliation; paused-sweep recovery and visible
+  failed-run history. The synthetic proof does not decide acceptance priority at the boundary.
+- RLS read/insert/update/delete denial through the API for anonymous and two signed users on
+  every fixture table; private time-injection RPCs unavailable to mobile roles; append-only effects.
+- Demonstrate the six-hour case using a private controlled clock, not a production config change.
+- Recompute stated-volume costs, including reconciliation, paid-plan floors and step/compute
+  sensitivity. Re-run the graph check; do not resolve the TBC before human confirmation.
+- Guard the approved engine, scope amendment, TBC resolution, deadline/idempotency/recovery
+  contract and all seven downstream consumers in `scripts/decisions.test.mjs`.
+
 **Out of scope** — implementing any actual scheduled rule (`P2-T15`, `P4-T11`, `P3-T11`).
 
-**Sync notes** — six tickets across four phases depend on this engine's shape. Choosing per-entity scheduling versus a periodic sweep changes how each of them is written, not just which library they import.
+**Sync notes** — seven tickets across four phases inherit the approved `ADR-011` sweep model.
+Each owning vertical slice delivers its actual schedules, protected handlers, durable recovery,
+monitoring and live tests; reuse shared patterns rather than defer integration to an unowned
+engine ticket. The disposable proof is not a production implementation. Research/decision and
+runtime evidence: `docs/decisions/P0-D07.md`, `docs/qa/P0-D07.md`.
 
 ---
 
@@ -2752,7 +2778,12 @@ Four triggers, each setting a distinct status and reason:
 | Barber accepts an Available Now booking | `busy` (`RULE-AVAIL-05`) |
 | Barber toggles off | `manually_disabled` |
 
-The expiry trigger runs on the workflow engine from `P0-D07`, re-checking state at execution and behaving idempotently (`ADR-011`).
+The expiry trigger uses Supabase `pg_cron` with a bounded indexed due-session sweep (`ADR-011`),
+not one recurring job per session. Persist the available-until deadline; re-check current state
+atomically and behave idempotently. This slice owns its versioned schedule setup, server-only
+handler permissions, safe run evidence, independent stale-heartbeat/overdue-session alerts and
+recovery of missed ticks/interrupted claims. Reuse shared patterns; do not build or defer to an
+unowned generic workflow engine. Record operational settings and prove peak-load expiry timing.
 
 A consecutive-miss counter that **resets on a response** — accept or decline. Counting non-consecutive misses over a session would disable a busy barber who answered nine of eleven requests.
 
@@ -2770,8 +2801,9 @@ Audit log for each transition, with the reason (`ADR-013`).
 - [ ] Missed and declined requests produce no reliability offence (`RULE-RELY-06`); test repeated expiry/delivery and the unchanged two-consecutive-miss auto-disable rule.
 - [ ] Threshold values are read from config; no literal appears in the logic.
 - [ ] Each transition writes an audit log with its reason.
+- [ ] The pg_cron sweep and its independent monitoring work in the deployed test environment; missing ticks/interrupted claims recover without overwriting stopped or busy sessions, including under a stated peak workload (`ADR-011`).
 
-**Tests** — expiry firing once and again as a no-op; consecutive-miss counter reset on decline; a manually stopped session not resurrected or overwritten by a later expiry job; config value change altering behaviour without a code change.
+**Tests** — expiry firing once and again as a no-op; consecutive-miss counter reset on decline; a manually stopped session not resurrected or overwritten by a later expiry job; config value change altering behaviour without a code change; repeated parallel sweep/transition calls; stopped cron and interrupted-claim recovery; server-only API denial; independent heartbeat/overdue alerts and peak-load timing.
 
 **Out of scope** — the reliability engine (`P3-T12`); the toggle UI (`P2-T02`); acceptance (`P2-T12`).
 
@@ -3531,7 +3563,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D07, P2-T03, P2-T08]
 affects: [P3-T06, P4-T01]
-knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-06, RULE-SCHED-02, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS]
+knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-06, RULE-SCHED-02, RULE-REQUEST-05, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend]
 ```
@@ -3546,7 +3578,11 @@ It stops short of releasing the hold — `RULE-REQUEST-06` cancels the authorisa
 
 **Scope**
 
-Expiry on the engine from `P0-D07`, using `CFG-AVAIL-EXPIRY-MIN` and `CFG-SCHED-EXPIRY-HOURS` from config.
+Expiry through Supabase `pg_cron` bounded indexed due-request sweeps (`ADR-011`), using
+persisted deadlines from `CFG-AVAIL-EXPIRY-MIN` and `CFG-SCHED-EXPIRY-HOURS`. Own the
+versioned schedule, protected handler, safe run evidence and operational configuration in this
+slice. Prove sub-minute scheduling lateness under a stated peak workload without changing the
+business expiry deadline; no recurring cron row per request or mobile-supplied clock.
 
 Transition `pending → expired` **conditionally**, so a request accepted a second before the job fires is not overwritten. The schedule is a hint; the database is the truth (`ADR-011`).
 
@@ -3554,7 +3590,11 @@ Idempotent: firing twice leaves identical state.
 
 Increment the consecutive-miss counter via `P2-T03` — an expiry is a miss.
 
-**A reconciliation sweep** that catches requests past expiry which the primary mechanism missed. Whatever `P0-D07` chose, a dropped schedule must not strand a client's hold, and this sweep is what makes that guarantee real.
+**A reconciliation sweep** that catches requests past expiry which the primary sweep missed,
+including missing work records and interrupted claims. Recover from authoritative request state,
+not only existing job rows, and monitor oldest overdue requests plus an independent scheduler
+heartbeat. Reuse the original operation identity. `P3-T06` integrates durable authorisation
+release; this ticket must expose the recoverable expiry outcome without making a Stripe call.
 
 Audit log per expiry.
 
@@ -3570,11 +3610,19 @@ Audit log per expiry.
 - [ ] An audit log is written per expiry.
 - [ ] No Stripe call is made.
 
-**Tests** — expiry boundary at, just inside and just outside; a race between accept and expiry, repeated, asserting the accept always wins; duplicate fire idempotency; a dropped schedule recovered by reconciliation; config change altering timing without a code change.
+**Tests** — expiry boundary at, just inside and just outside; committed acceptance survives a
+stale expiry; repeated real parallel accept/expiry races assert one legal committed outcome,
+never unconditional acceptance priority or a new grace period; duplicate fire and miss-counter
+idempotency; deliberately skipped primary work and missing work records recovered by
+reconciliation; stopped-cron/interrupted-claim recovery; config change altering timing without
+a code change; peak-load latency, independent heartbeat/overdue alerts and worker API denial.
 
 **Out of scope** — authorisation cancellation (`P3-T06`); auto-completion, a different workflow (`P4-T11`).
 
-**Sync notes** — this and `P4-T11` are the two scheduled-work tickets; both inherit whatever `P0-D07` chose. `P3-T06` adds the authorisation release to this path.
+**Sync notes** — this is one of seven scheduled-work consumers of `ADR-011`, not a separate
+engine. The race-test correction follows the existing conditional transition and
+`RULE-REQUEST-05`; it does not permit acceptance of expired requests. `P3-T06` adds durable,
+idempotent authorisation release and provider reconciliation to this path.
 
 ---
 ## Phase 3 — Payments, Earnings, Cancellations & Payouts
@@ -4330,7 +4378,13 @@ Everything here is idempotent on a server-derived key, no lock is held across a 
 
 **Scope**
 
-`process-payout-batch` on the engine from `P0-D07`, per `RULE-EARN-07`. Own the server-side weekly trigger, recovery of dropped/late runs and integration with `P3-T10`; use the persisted scheduled cut-off, never a client clock or fixed UTC offset.
+`process-payout-batch` through Supabase `pg_cron` bounded due-work scans (`ADR-011`), per
+`RULE-EARN-07`. Own the server-side weekly trigger, recovery of dropped/late runs and integration
+with `P3-T10`; use the persisted scheduled cut-off, never a client clock or fixed UTC offset.
+Version schedules/permissions, persist and recover interrupted claims/attempts, and inspect
+authoritative queued obligations even when a dispatch record is missing. Independent heartbeat,
+overdue-batch and held-item monitoring must detect a stopped scheduler. Record operational
+settings and prove the actual protected worker path, not just a direct call to its handler.
 
 Per barber, recheck earning/refund/dispute eligibility and `RULE-ONBOARD-04` before movement. Use `P0-T18`/`P1-T07`'s verified payout controls. Persist a **deterministic idempotency key derived from the batch item id**, operation and durable attempt identity for each external call. Persist/reconcile transfer and bank-payout IDs separately, including crashes between provider success and local persistence. A weekly retry cannot rely on Stripe retaining a key forever; reconcile unknown outcomes first. If already funded, never transfer those funds again when retrying the bank payout. A replacement payout requires confirmed failure/cancellation and reconciled returned funds; reserve/check the obligation under concurrency so two replacements cannot win.
 
@@ -4403,7 +4457,15 @@ An append-only `barber_reliability_events` log — offence type, booking, server
 
 Pure level calculation in `packages/domain` (`KB §7`): given events and a window, return the level. Unit-testable with no database, which is what makes `P0-D04`'s thresholds tunable without fear.
 
-A scheduled recovery pass on the engine from `P0-D07` implementing `RULE-RELY-06` — automatic levels improve as offences age out, using the exact open-lower/closed-upper rolling window. Idempotent, reconcilable and re-checking current state; no pass may reinstate an admin-suspended barber. Cooldown deadlines are anchored to qualifying offences, never recovery/login/retry time. Preserve the evidence for prior decisions rather than rewriting historical levels.
+A Supabase `pg_cron` bounded indexed recovery sweep (`ADR-011`) implementing `RULE-RELY-06` —
+automatic levels improve as offences age out, using the exact open-lower/closed-upper rolling
+window. Idempotent, reconcilable and re-checking current state;
+no pass may reinstate an admin-suspended barber. Cooldown deadlines are anchored to qualifying offences, never
+recovery/login/retry time. Preserve the evidence for prior decisions rather than rewriting
+historical levels. Own versioned schedule/permissions and operational settings, interrupted-claim
+recovery, and independent heartbeat/overdue-recovery monitoring in this slice. Test a stopped
+scheduler and missing work record against authoritative event/state deadlines; read-side
+eligibility checks must still enforce the existing rule while a materialized projection catches up.
 
 Consequences applied per level from `RULE-RELY-06`: Available Now cooldown, restricted search demotion in both types and human-approved suspension. Automatic counts at or above the suspension-review threshold still produce `restricted`. Integrate live state/recovery into the shared read-side helper from `P2-T01` and re-run direct session/request/acceptance and search tests; stale stored levels cannot extend a penalty after recovery or bypass a current restriction. Coordinate event/admin writers with acceptance transactions. Existing bookings are not automatically cancelled and earned money is not confiscated.
 
@@ -4717,7 +4779,13 @@ Store the ETA and its `updated_at` together (`RULE-ETA-03`) — an ETA without a
 
 Throttle to `CFG-ETA-REFRESH-MIN`. A call inside the window returns the cached value rather than calling Routes.
 
-Refresh scheduled on the engine from `P0-D07`, re-checking booking state at execution.
+Refresh through Supabase `pg_cron` bounded indexed due-ETA sweeps (`ADR-011`), re-checking
+booking state and the configured throttle at execution. This slice owns versioned schedule
+setup, server-only handler permissions, interrupted-work recovery and independent heartbeat/
+overdue-refresh alerts. Concurrent claims must not turn one due refresh into multiple Routes
+calls. Empty ticks make no Routes calls, and recovery does not replay missed historical refreshes
+in a burst; it requests only a currently eligible update under the existing throttle. Record
+operational settings and exercise the actual scheduled path in the deployed test environment.
 
 **Stop when the booking leaves `on_the_way` or `arrived`** — completed, cancelled or disputed all halt refreshes, and the stop is verified rather than assumed.
 
@@ -4742,7 +4810,7 @@ only the ETA and its last-updated timestamp.
 - [ ] The raw client response contains no barber coordinate, route origin or route polyline.
 - [ ] No PII or coordinate is written to logs.
 
-**Tests** — immediate first calculation on `on_the_way`; outbound Routes call counting under rapid repeat calls, asserting the fixed three-minute throttle; refreshes ceasing after each terminal transition; raw response asserted field by field for absence of coordinates, origin and polyline; a foreign barber's location update rejected; Routes failure preserving the last ETA; the bundle check asserting key absence.
+**Tests** — immediate first calculation on `on_the_way`; outbound Routes call counting under rapid repeat calls, asserting the fixed three-minute throttle; refreshes ceasing after each terminal transition; raw response asserted field by field for absence of coordinates, origin and polyline; a foreign barber's location update rejected; Routes failure preserving the last ETA; the bundle check asserting key absence; parallel due claims, stopped-cron/missing-work recovery without a refresh burst, no outbound calls on empty ticks, worker API denial and independent alerts.
 
 **Out of scope** — the client display (`P4-T06`); live tracking, forbidden by `ADR-004`.
 
@@ -5093,7 +5161,9 @@ Everything here re-checks state at execution and is idempotent (`ADR-011`, `RULE
 
 **Scope**
 
-Both flows on the engine from `P0-D07`.
+Both flows use Supabase `pg_cron` bounded indexed due-booking sweeps (`ADR-011`) with persisted
+stage deadlines, not one recurring cron job per booking. Own versioned schedules/permissions,
+operational settings, protected handlers and independent heartbeat/overdue-stage monitoring.
 
 Flow 1: at the deadline, if still `completed_by_barber`, complete and release the earning.
 
@@ -5105,7 +5175,12 @@ Idempotent: a duplicate fire releases the earning once.
 
 **An open dispute always blocks release** (`RULE-EARN-03`), checked at the moment of release, not at scheduling.
 
-A reconciliation sweep catching bookings past their deadline that no job completed.
+A reconciliation sweep catching bookings past their deadline that no primary sweep completed,
+including missing work records and interrupted claims. Recover from authoritative booking state;
+preserve the original operation identity and stage deadline. Persist prompt-dispatch work with
+the prompting transition and dispatch after commit. Recovery must still perform the warning
+stage and preserve its full configured final dispute window, never skip straight to release
+because a scheduler was late. This does not make earning eligibility depend on a mobile timer.
 
 Audit log for every automatic transition, marked as system-actioned so it is distinguishable from a user action in `booking_status_history`.
 
@@ -5122,7 +5197,7 @@ Audit log for every automatic transition, marked as system-actioned so it is dis
 - [ ] A reconciliation sweep catches a deliberately dropped schedule.
 - [ ] Automatic transitions are audit logged and marked system-actioned.
 
-**Tests** — both flows end to end with time controlled; duplicate fire asserted on the earning; a dispute-versus-auto-complete race at the boundary, repeated; state re-check for each intervening status; the prompt asserted as sent before every flow-2 completion; a dropped schedule recovered.
+**Tests** — both flows end to end with time controlled plus a real scheduled smoke test; duplicate fire asserted on the earning; a dispute-versus-auto-complete race at the boundary, repeated; state re-check for each intervening status; the prompt asserted as sent before every flow-2 completion, including late recovery preserving the final dispute window; skipped primary work/missing work rows/interrupted claims recovered; stopped-cron independent alerts and worker API denial.
 
 **Out of scope** — manual completion (`P4-T07`, `P4-T09`); disputes (`P4-T12`); payouts (`P3-T11`).
 
@@ -6249,7 +6324,13 @@ Integrate `P3-T11`'s durable payout/balance-change events and action-required/un
 
 Payloads carrying an identifier and minimal display text, with detail fetched in-app on open.
 
-**Sends are fire-and-forget relative to the state change** — the transaction commits, then the notification is dispatched. A send failure is logged, never rolled back.
+**Sends are asynchronous relative to the state change, not lossy fire-and-forget.** Persist a
+durable notification intent with the triggering change, commit, then dispatch. Supabase
+`pg_cron` bounded indexed due-notification sweeps (`ADR-011`) drive retries/recovery; missing
+dispatch work is rediscovered from durable intents. A send failure is logged, never rolled back.
+This slice owns its versioned schedule, server-only handler permissions, operational settings,
+interrupted-claim recovery and independent heartbeat/oldest-unsent alerts. Reuse durable event
+identities from each triggering slice; do not invent a new identity on every retry.
 
 Notification records stored, so "the barber says they never got it" has an answer.
 
@@ -6269,7 +6350,7 @@ Copy compliant with `RULE-COPY-01` — nothing implying a charge that is only a 
 - [ ] No SMS is sent (`RULE-NOTIF-04`).
 - [ ] The helper is reused by every triggering ticket rather than reimplemented.
 
-**Tests** — payload content asserted per type for absence of personal data; a forced send failure leaving the state change committed; duplicate trigger producing one notification; every `RULE-NOTIF-01` event covered.
+**Tests** — payload content asserted per type for absence of personal data; a forced send failure leaving the state change committed; duplicate trigger producing one logical notification; every `RULE-NOTIF-01` event covered; crash after state commit before dispatch, missing dispatch work and interrupted claims; repeated concurrent dispatch; stopped-cron heartbeat/oldest-unsent alerts and worker API denial; no business-state rollback on push failure.
 
 **Out of scope** — token registration (`P6-T01`); notification preferences; SMS and email.
 

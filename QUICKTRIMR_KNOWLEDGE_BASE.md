@@ -126,7 +126,7 @@ Wix must not power authentication, bookings, payments, admin, booking lifecycle,
 | Maps | Google Maps SDK |
 | Address search | Google Places API |
 | ETA | Google Routes API |
-| Workflows / timers | `TBC-WORKFLOW-ENGINE` (`ADR-011`) |
+| Workflows / timers | Supabase `pg_cron` with database-backed due-state sweeps (`ADR-011`) |
 | Mobile builds | Expo EAS |
 | Admin hosting | Vercel |
 | Marketing | Wix |
@@ -244,7 +244,7 @@ Every transition writes a row to `booking_status_history` with the actor, the pr
 
 Illegal transitions are rejected server-side, not merely hidden in the UI.
 
-### ADR-011 — A workflow engine is required
+### ADR-011 — Supabase pg_cron with database-backed due-state sweeps
 
 QuickTrimr's core rules are timers, and there are a lot of them: a 5-minute Available Now expiry, a 2-hour Scheduled expiry, a 1-hour client completion window, a 6-hour no-action warning, a further 1-hour dispute window, throttled ETA refreshes, and a batched payout run.
 
@@ -256,7 +256,51 @@ Scheduled work must:
 - be idempotent, because it will fire twice;
 - have a reconciliation path that catches a dropped schedule.
 
-Which engine runs it is `TBC-WORKFLOW-ENGINE`, resolved by `P0-D07`.
+**Confirmed by Andrew on 2026-10-03 (P0-D07, Option A):** use Supabase `pg_cron` for
+server-side wake-ups, with bounded, indexed scans of authoritative due state and server-side
+handlers. Each entity has a persisted server-derived deadline; **do not create a recurring cron
+job per entity**. A fixed set of schedules drives the work. Inngest and Trigger.dev are not launch
+runtime dependencies. This selects the architecture, not a deployed production engine.
+
+- **The database decides eligibility.** Recheck current state and the authoritative deadline
+  inside the conditional transition. Early wake-ups must not apply an effect or discard the
+  pending obligation; stale/cancelled work no-ops. Cancelling a wake-up is an optimization, not
+  access control or the protection against a stale expiry overwriting committed acceptance.
+- **Durable effects, not exactly-once scheduling.** Database-local state changes and their
+  append-only history/audit records commit together. Persist operation identity and recoverable
+  work/attempt state for external effects. Claim and commit before a provider call, release the
+  lock, then reconcile/persist the result. Never hold a database lock across a network call
+  (`RULE-PAY-09`). Money calls retain deterministic server-derived keys and durable provider
+  references; an unknown result must not become a blind retry or a false success.
+- **Recovery scans authoritative entities as well as work records.** A missing work row,
+  dropped wake-up, expired worker claim or interrupted run must not strand an obligation.
+  Recovery reuses the original operation identity and current state guards. Notifications are
+  durably recorded with the triggering change and dispatched after commit; send failure never
+  rolls back that change (`RULE-NOTIF-03`).
+- **Operations are part of each vertical slice.** Version schedule/permission setup in migrations
+  or deployment configuration; authenticate server-only handlers and deny mobile access to
+  worker controls. Record safe run/outcome evidence, monitor oldest overdue work and failed runs,
+  and independently alert on a stale worker heartbeat so a stopped scheduler can be detected.
+  Bound/index claims and avoid outbound calls on empty ticks. Keep business-rule calculations
+  pure in `packages/domain`; reuse shared worker/auth/logging patterns rather than a second
+  copy of policy in SQL or each controller.
+- **Timing and configuration remain explicit.** Product deadlines come from their existing
+  `CFG-*` values; preserve deadline/config evidence across retries. Weekly payouts retain
+  `CFG-PAYOUT-SCHEDULE`'s Australia/Sydney calendar, DST and original scheduled cut-off
+  (`RULE-EARN-07`), never fixed-UTC or worker-start-time substitution. The lab's one-second
+  cadence and the cost model's ten-second/minute intervals are not production defaults.
+  Owning build tickets must record and validate operational cadence, batch/concurrency and
+  alert/retention settings before deployment, including sub-minute expiry behavior under a
+  stated peak workload; they must not silently change a business deadline to meet that test.
+- **Test the real mechanism and the boundaries.** Use private controlled-clock tests plus a
+  real-time scheduler smoke test, repeated parallel delivery, cancellation/stale-state denial,
+  dropped-work and interrupted-run recovery. Production accepts no client-supplied clock.
+
+The `P0-D07` decision record contains measured local Supabase/Inngest proofs and the cost and
+switching analysis. Andrew also explicitly approved **documentation-only evaluation of the
+unselected Trigger.dev candidate**; it was not run. This scope amendment does not waive live
+integration, security, recovery, monitoring or capacity tests in the owning build tickets.
+The choice resolves `TBC-WORKFLOW-ENGINE`; it does not assert a production latency SLA.
 
 ### ADR-012 — Vertical feature ownership
 
@@ -694,7 +738,8 @@ These IDs are cited by tickets but the rule does not exist yet. The decision tic
 | Reserved ID | What it will say | Written by |
 |---|---|---|
 
-No reserved business-rule IDs remain. `TBC-WORKFLOW-ENGINE` still gates the scheduling architecture.
+No reserved business-rule IDs remain. The scheduling architecture is decided in `ADR-011`;
+its production implementations remain with the owning build tickets.
 
 ---
 
@@ -940,7 +985,7 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-PAYOUT-SCHEDULE` | **RESOLVED → `RULE-EARN-07`** — Option A: Monday 10:00 Australia/Sydney, strict cut-off, every positive AUD balance, global batch/per-barber processing, next-run retry or action-required hold, visible processing/estimated arrival and QuickTrimr-borne standard Connect/payout fees; confirmed by Andrew on 2026-10-02. | Payout batching and processing | `P0-D05` |
 | `TBC-LOCATION-PRECISION` | **RESOLVED → `RULE-DISCOVERY-05`** | Discovery, map view, search function | `P0-D06` |
 | `TBC-ETA-INTERVAL` | **RESOLVED → `RULE-DISCOVERY-05`** | ETA update function and display | `P0-D06` |
-| `TBC-WORKFLOW-ENGINE` | What runs scheduled and delayed work — Supabase cron, Inngest, Trigger.dev, or another? | Every expiry, auto-completion, prompt and payout run | `P0-D07` |
+| `TBC-WORKFLOW-ENGINE` | **RESOLVED → `ADR-011`** — Option A: Supabase `pg_cron` with bounded indexed due-state sweeps, durable effects and reconciliation; confirmed by Andrew on 2026-10-03, including documentation-only comparison of unselected Trigger.dev. | Every expiry, auto-completion, prompt and payout run | `P0-D07` |
 | `TBC-SCHED-LEAD-TIME` | **RESOLVED → `RULE-SCHED-04`** | Scheduled request validation and discovery | `P0-D08` |
 | `TBC-REVIEW-ELIGIBILITY` | **RESOLVED → `RULE-REVIEW-06`** | Review creation and prompts | `P0-D08` |
 

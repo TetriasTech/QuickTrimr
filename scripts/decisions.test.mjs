@@ -566,3 +566,118 @@ test('P0-D05 surfaces timing, aged holds and notifications without manual payout
   assert.match(notifications, /P3-T11.*durable payout\/balance-change events/);
   assert.match(notifications, /transfer success is never announced as bank payment/);
 });
+
+// Decision/specification guards, not substitutes for the executable scheduler laboratories.
+const workflowAdr = section(kb, '### ADR-011 —', '### ADR-012 —').replace(/\s+/g, ' ');
+const workflowDecision = section(backlog, '#### P0-D07 —', '#### P0-D08 —').replace(/\s+/g, ' ');
+const workflowRecord = (await readFile(new URL('../docs/decisions/P0-D07.md', import.meta.url), 'utf8')).replace(/\s+/g, ' ');
+const workflowConsumerIds = ['P2-T03', 'P2-T15', 'P3-T11', 'P3-T12', 'P4-T05', 'P4-T11', 'P6-T02'];
+const workflowConsumers = Object.fromEntries(workflowConsumerIds.map((id) => [
+  id, section(backlog, `#### ${id} —`, '\n#### ').replace(/\s+/g, ' '),
+]));
+
+test('P0-D07 records the human-approved Supabase sweep architecture upstream', () => {
+  assert.match(workflowAdr, /Confirmed by Andrew on 2026-10-03 \(P0-D07, Option A\)/);
+  assert.match(workflowAdr, /Supabase `pg_cron`/);
+  assert.match(workflowAdr, /bounded, indexed scans of authoritative due state/);
+  assert.match(workflowAdr, /do not create a recurring cron job per entity/);
+  assert.match(workflowAdr, /Inngest and Trigger.dev are not launch runtime dependencies/);
+  assert.match(workflowDecision, /Approved by Andrew on 2026-10-03: Option A/);
+  assert.match(workflowRecord, /Status: APPROVED by Andrew on 2026-10-03/);
+});
+
+test('P0-D07 records the explicit Trigger.dev comparison amendment without claiming a runtime pass', () => {
+  for (const document of [workflowAdr, workflowDecision, workflowRecord]) {
+    assert.match(document, /documentation-only/);
+    assert.match(document, /Trigger\.dev/);
+  }
+  assert.match(workflowAdr, /it was not run/);
+  assert.match(workflowDecision, /Trigger\.dev has not been run/);
+  assert.match(workflowRecord, /still untested/);
+  assert.match(workflowAdr, /does not waive live integration, security, recovery, monitoring or capacity tests/);
+  assert.match(workflowDecision, /measured local Supabase\/Inngest evidence/);
+});
+
+test('P0-D07 resolves its TBC in place and updates stack and pending-rule projections', () => {
+  const rows = kb.split('\n').filter((line) => line.startsWith('| `TBC-WORKFLOW-ENGINE` |'));
+  assert.equal(rows.length, 1);
+  assert.match(rows[0], /RESOLVED → `ADR-011`/);
+  const stackRow = kb.split('\n').find((line) => line.startsWith('| Workflows / timers |'));
+  assert.match(stackRow, /Supabase `pg_cron`.*`ADR-011`/);
+  assert.doesNotMatch(stackRow, /TBC-/);
+  assert.doesNotMatch(section(kb, '### Pending rules', '## 10.'), /still gates the scheduling/);
+});
+
+test('P0-D07 makes deadlines authoritative and recovers missing or interrupted work', () => {
+  assert.match(workflowAdr, /No client-side timers/);
+  assert.match(workflowAdr, /Recheck current state and the authoritative deadline inside the conditional transition/);
+  assert.match(workflowAdr, /Early wake-ups must not apply an effect or discard the pending obligation/);
+  assert.match(workflowAdr, /stale\/cancelled work no-ops/);
+  assert.match(workflowAdr, /missing work row, dropped wake-up, expired worker claim or interrupted run/);
+  assert.match(workflowAdr, /original operation identity and current state guards/);
+  assert.match(workflowAdr, /Production accepts no client-supplied clock/);
+});
+
+test('P0-D07 preserves atomic history and external-call idempotency without network locks', () => {
+  assert.match(workflowAdr, /append-only history\/audit records commit together/);
+  assert.match(workflowAdr, /Claim and commit before a provider call, release the lock/);
+  assert.match(workflowAdr, /Never hold a database lock across a network call/);
+  assert.match(workflowAdr, /deterministic server-derived keys and durable provider references/);
+  assert.match(workflowAdr, /unknown result must not become a blind retry or a false success/);
+  assert.match(workflowAdr, /Keep business-rule calculations pure in `packages\/domain`/);
+});
+
+test('P0-D07 requires operational evidence without turning lab settings into production defaults', () => {
+  assert.match(workflowAdr, /independently alert on a stale worker heartbeat/);
+  assert.match(workflowAdr, /oldest overdue work and failed runs/);
+  assert.match(workflowAdr, /deny mobile access to worker controls/);
+  assert.match(workflowAdr, /avoid outbound calls on empty ticks/);
+  assert.match(workflowAdr, /not production defaults/);
+  assert.match(workflowAdr, /cadence, batch\/concurrency and alert\/retention settings before deployment/);
+  assert.match(workflowAdr, /sub-minute expiry behavior under a stated peak workload/);
+  assert.match(workflowAdr, /Australia\/Sydney calendar, DST and original scheduled cut-off/);
+});
+
+test('P0-D07 names all seven affected workflow families', () => {
+  const affects = workflowDecision.match(/affects: \[([^\]]+)\]/)?.[1].split(', ');
+  assert.deepEqual(affects, workflowConsumerIds);
+});
+
+for (const id of workflowConsumerIds) {
+  test(`P0-D07 synchronizes ${id} schedule, protection and independent monitoring ownership`, () => {
+    const ticket = workflowConsumers[id];
+    assert.match(ticket, /dependsOn: \[[^\]]*P0-D07/);
+    assert.match(ticket, /knowledgeBase: \[[^\]]*ADR-011/);
+    assert.match(ticket, /Supabase `pg_cron`/);
+    assert.match(ticket, /bounded/);
+    assert.match(ticket, /versioned schedule|Version schedules/);
+    assert.match(ticket, /permissions|protected handler/);
+    assert.match(ticket, /independent heartbeat|Independent heartbeat|independent stale-heartbeat/);
+    assert.match(ticket, /interrupted/);
+  });
+}
+
+test('P0-D07 expiry synchronization preserves committed acceptance without inventing race priority', () => {
+  const expiry = workflowConsumers['P2-T15'];
+  assert.match(expiry, /committed acceptance survives a stale expiry/);
+  assert.match(expiry, /one legal committed outcome/);
+  assert.match(expiry, /never unconditional acceptance priority or a new grace period/);
+  assert.match(expiry, /does not permit acceptance of expired requests/);
+  assert.match(expiry, /knowledgeBase: \[[^\]]*RULE-REQUEST-05/);
+  assert.doesNotMatch(expiry, /accept always wins/);
+});
+
+test('P0-D07 delayed recovery preserves warning stages and throttled current ETA work', () => {
+  assert.match(workflowConsumers['P4-T11'], /preserve its full configured final dispute window/);
+  assert.match(workflowConsumers['P4-T11'], /never skip straight to release/);
+  assert.match(workflowConsumers['P4-T05'], /recovery does not replay missed historical refreshes in a burst/);
+  assert.match(workflowConsumers['P4-T05'], /Empty ticks make no Routes calls/);
+  assert.match(workflowConsumers['P3-T12'], /no pass may reinstate an admin-suspended barber/);
+});
+
+test('P0-D07 notification recovery uses durable intent rather than lossy fire-and-forget', () => {
+  assert.match(workflowConsumers['P6-T02'], /durable notification intent with the triggering change, commit, then dispatch/);
+  assert.match(workflowConsumers['P6-T02'], /missing dispatch work is rediscovered from durable intents/);
+  assert.match(workflowConsumers['P6-T02'], /do not invent a new identity on every retry/);
+  assert.match(workflowConsumers['P6-T02'], /no business-state rollback on push failure/);
+});
