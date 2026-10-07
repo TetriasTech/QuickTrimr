@@ -62,11 +62,19 @@ async function checkProbe() {
   const server = spawn(
     process.execPath,
     [resolve(root, 'scripts/db/local.mjs'), 'serve'],
-    { cwd: root, stdio: 'ignore', detached: true },
+    { cwd: root, stdio: ['ignore', 'ignore', 'pipe'], detached: true },
   );
   let spawnFailed = false;
+  let serverReady = false;
+  let readinessText = '';
   server.on('error', () => {
     spawnFailed = true;
+  });
+  // Wait for the pinned CLI's actual route reload, rather than accepting a response
+  // from the runtime already started by db:start. Do not forward captured log text.
+  server.stderr.on('data', (chunk) => {
+    readinessText = (readinessText + chunk.toString()).slice(-256);
+    if (readinessText.includes('Kong reloaded')) serverReady = true;
   });
   const request = (options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(5000) });
@@ -76,6 +84,10 @@ async function checkProbe() {
     for (let attempt = 0; attempt < 30; attempt++) {
       if (spawnFailed || server.exitCode !== null)
         throw new Error('Local function server exited before verification.');
+      if (!serverReady) {
+        await setTimeout(500);
+        continue;
+      }
       try {
         response = await request({ headers: { authorization } });
         if (response.status === 200) break;
