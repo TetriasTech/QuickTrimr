@@ -1125,7 +1125,7 @@ priority: Highest
 jiraKey: TRIMR-18
 dependsOn: [P0-T01, P0-T03]
 affects: [P0-T10, P0-T11, P0-T12]
-knowledgeBase: [ADR-001, ADR-002, KB-NONE]
+knowledgeBase: [ADR-001, ADR-002, ADR-008]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation, database, supabase]
 ```
@@ -1138,7 +1138,7 @@ The discipline this establishes: a schema change is a file in a PR. A schema cha
 
 **Scope**
 
-`supabase/config.toml` with PostGIS enabled locally, since every discovery query depends on it (`ADR-008`) and a local database without it fails differently from production.
+`supabase/config.toml` and an infrastructure-only migration enabling PostGIS, since every discovery query depends on it (`ADR-008`) and a local database without it fails differently from production. The extension is enabled by the migration, not a manual dashboard step. Use a distinct QuickTrimr project ID and local ports so another project's stack can run alongside it.
 
 Document and script: start and stop local Supabase, create a migration, apply migrations, reset to a clean state, and serve Edge Functions locally.
 
@@ -1147,6 +1147,12 @@ Root scripts: `db:start`, `db:reset`, `db:migrate`, `db:new`, `functions:serve`.
 Migration naming and review conventions, and the rule that a migration is never edited after merge — a correction is a new migration.
 
 Document how to link and push to the hosted project, and that only `main` does so.
+
+Make the existing `workspace-contract` foundation probe invokable through the local Edge runtime, reusing its shared workspace identity. It returns no user, booking or financial data, and does not add a marketplace API. Keep gateway JWT verification enabled; no production credentials or role-specific access are needed for this constant-only probe.
+
+**Contract example — local foundation probe**
+
+`GET /functions/v1/workspace-contract` with the local stack's valid anon JWT in `Authorization: Bearer <local-anon-jwt>` returns `200` and `{"product":"QuickTrimr","surface":"function"}`. Missing or forged JWTs are denied by the gateway with `401`. An authenticated non-GET request returns `405` with `{"error":"Use GET."}`. The probe accepts no request fields and accesses no data or external service.
 
 **Acceptance criteria**
 
@@ -1158,9 +1164,17 @@ Document how to link and push to the hosted project, and that only `main` does s
 - [ ] Migration naming convention documented, including that merged migrations are never edited.
 - [ ] No production credentials are required for any local workflow.
 
+**Tests**
+
+- Exercise the local command runner with a fake CLI: verify fixed local targets, reject remote/unknown flags, validate migration names, and propagate child failures. These tests run without Docker or credentials.
+- From a clean checkout, start the isolated local stack; query `PostGIS_Full_Version()` and perform a geography calculation, then create and apply a scratch migration using the root commands.
+- Reset twice and compare normalized schema fingerprints and migration history, with seed loading disabled for this foundation ticket. Confirm the same extension-only schema returns without a dashboard edit.
+- Serve and invoke the real local foundation probe; assert its exact response, missing/forged JWT denial and method rejection. Do not print local private keys.
+- Keep live Docker checks explicit and separate from the existing credential-free CI suite; document commands and observed outputs in `docs/qa/P0-T09.md`.
+
 **Out of scope** — the schema itself (`P0-T10`); RLS (`P0-T11`); seed data (`P0-T12`); staging (`P6-T09`).
 
-**Sync notes** — `P0-T10` through `P0-T12` all run through this workflow.
+**Sync notes** — `P0-T10` through `P0-T12` all run through this workflow. `P0-T10` follows the extension migration and uses `extensions`-qualified PostGIS types/functions; `P0-T11` adds application RLS; `P0-T12` enables committed seed paths in config when it adds seed data. Local command wrappers never accept a hosted target. Generated traceability is left to the reviewed automation PR after merge.
 
 ---
 

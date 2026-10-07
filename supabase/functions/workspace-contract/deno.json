@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@quicktrimr/shared": "../../../packages/shared/src/index.ts"
+  }
+}
