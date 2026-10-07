@@ -1346,7 +1346,7 @@ priority: Medium
 jiraKey: TRIMR-21
 dependsOn: [P0-D01, P0-T10, P0-T11]
 affects: [P0-T17, P5-T01, P5-T04]
-knowledgeBase: [RULE-SERVICE-05, ENUM-BOOKING-STATUS, ENUM-DISPUTE-STATUS]
+knowledgeBase: [ADR-001, ADR-008, ADR-009, ADR-010, ADR-013, RULE-SERVICE-05, RULE-PAY-11, ENUM-USER-ROLE, ENUM-VERIFICATION-STATUS, ENUM-BOOKING-TYPE, ENUM-BOOKING-STATUS, ENUM-REQUEST-STATUS, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, ENUM-AVAIL-STATUS, ENUM-DISPUTE-STATUS, ENUM-RELIABILITY-LEVEL]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation, database]
 ```
@@ -1359,29 +1359,35 @@ Admin pages and mobile screens are built against seed data long before real book
 
 **Scope**
 
-Idempotent, re-runnable seed under `supabase/seed/`, with deterministic UUIDs so a screenshot from last week still refers to the same booking.
+User-confirmed foundation-only scope (Option A, 2026-10-08), consistent with P0-T10/P0-T11's Sync notes. Idempotent, re-runnable SQL under `supabase/seed/`, loaded by local `db:reset`, with name-derived deterministic UUIDs and fixed timestamps. A non-destructive `db:seed` applies the same committed file to the named local QuickTrimr database. Existing IDs are never updated or deleted, including immutable evidence; reset is how to restore modified fixtures.
 
-Cover: clients with addresses; barbers at varying Stripe Connect states — not started, pending, verified, and one restricted so `RULE-ONBOARD-04` exclusion is visible; service categories from `RULE-SERVICE-05`; barber services and prices; active, expired and busy Available Now sessions; booking requests pending, accepted, declined, expired and cancelled; bookings across **every** value of `ENUM-BOOKING-STATUS`; payments across every payment status including `capture_failed`; earnings in all five states; a payout batch with items; open and resolved disputes; reviews including a hidden one; reliability events and states across levels; and audit logs.
+Populate all 21 delivered tables: synthetic Auth/profile identities including an admin, two clients, and barbers spanning every verification/reliability level; address geography; five category identities explicitly mapped to the approved `RULE-SERVICE-05` slugs in the fixture source; barber services with in-bound example prices; every request, booking, payment, earning, payout, Available Now and dispute status; booking-service snapshots; a history row per booking; payout items; reviews; notifications; reliability events; and audit logs. Share enum tuples and SQL serialization with the existing verifiers. Amounts are illustrative snapshots of the documented worked example, not a second financial rules engine or defaults.
 
-Geographic data clustered realistically so PostGIS radius queries return believable results — barbers in one metro area at varying distances, not random global points.
+Geography is synthetic, clustered around one Sydney metro origin at varying offsets. A documented test-only radius query uses PostGIS and returns some but not all fixture barbers, with a bounded result. It does not implement discovery eligibility, precision or production radius rules.
 
-No real personal information: synthetic names, `@example.com` addresses, obviously-fake phone numbers, and real-looking but non-existent street addresses.
+Auth emails use `@example.com`; no passwords, provider IDs, credentials, real names, phones or street/unit addresses are committed. Seed Auth rows are relationship fixtures, not login-ready accounts. Tests obtain disposable, real local Auth sessions without committed passwords. No client policies, role assignment API, schema columns or provider integrations are added.
+
+Explicitly deferred until their owning feature migrations: catalogue slug/name/order/bounds columns (`P1-T10`), profile/contact fields (`P1-T04`/`P1-T06`), address text (`P1-T05`), Connect IDs/capabilities/restrictions (`P1-T07`/`P1-T09`), and review content/visibility (`P4-T14`). Verification and reliability enum fixtures do not prove Stripe eligibility, restricted-Connect exclusion or hidden-review behaviour. Those tickets must extend the seed and its tests in the same feature PR.
 
 **Acceptance criteria**
 
-- [ ] Seed runs from a clean `db:reset` and is idempotent — running twice produces the same database.
-- [ ] Service categories match `RULE-SERVICE-05`.
+- [ ] Local `db:reset` loads the committed seed; a second `db:seed` changes no seeded row, count or timestamp, proven by a full application/Auth-fixture data fingerprint. A second clean reset reproduces that fingerprint.
+- [ ] Exactly five category IDs map to the approved `RULE-SERVICE-05` slugs in the fixture source, and seeded service prices lie within those approved bounds. No absent catalogue fields are invented or claimed.
 - [ ] **Every value of `ENUM-BOOKING-STATUS` has at least one booking.** A status with no seed row is a UI state nobody sees before production.
 - [ ] Every value of `ENUM-PAYMENT-STATUS` and `ENUM-EARNING-STATUS` is represented, including `capture_failed` and `reversed`.
-- [ ] Barbers exist at each `ENUM-VERIFICATION-STATUS`, including one who must be excluded from discovery by `RULE-ONBOARD-04`.
-- [ ] Barber locations are geographically clustered so a radius query returns a sensible mix.
-- [ ] No real personal information — names, emails, phones and addresses are all synthetic.
-- [ ] UUIDs are deterministic across runs.
-- [ ] The seed is documented, including how to add a case.
+- [ ] Every verification, request, Available Now, payout, dispute and reliability enum value is represented; every delivered table has at least one row. No fixture claims to enforce future Connect/discovery/review behaviour.
+- [ ] A bounded PostGIS radius query on clustered fixture geography returns both in-radius and out-of-radius cases; the live plan can use the existing GiST index.
+- [ ] All Auth-fixture emails are synthetic `@example.com`; no committed passwords, tokens, real contact fields or provider identifiers. Geography is generated from documented synthetic offsets, not copied from customer data.
+- [ ] UUIDs derive from stable case names, not enum order/randomness; timestamps are fixed. Regeneration and two resets preserve identities.
+- [ ] RLS/column grants and append-only guards remain unchanged. Real local authenticated own/admin positive and cross-user read/write denial checks run on seeded rows; immutable records reject privileged mutation.
+- [ ] Re-running the seed preserves an edited mutable fixture, an appended correction, and unrelated rows. A failed seed application rolls back atomically; seed commands reject target overrides.
+- [ ] The seed is documented, including restoring fixtures, adding a case, verifier cleanup and the feature-owned deferred coverage.
 
-**Out of scope** — production or staging data; performance-volume data.
+**Tests** — credential-free deterministic generation/committed-SQL parity, enum coverage, approved catalogue mapping/bounds, FK/snapshot consistency and local-command safety; explicit Docker reset/reseed/reset full-data fingerprints, non-destructive rerun/atomic rollback, bounded PostGIS/plan evidence, real authenticated seeded-row RLS/API checks and immutable-evidence denials. Preserve and re-run core/RLS/replay checks; they use an explicit unseeded local reset and clean up disposable rows. Record per-criterion output in `docs/qa/P0-T12.md`.
 
-**Sync notes** — admin list and detail screens are built against this. Adding a status to an enum means adding a seed row, or that status ships unrendered. `P0-T10` delivers only the core relationships/statuses/geography/money, not future feature fields. Seed only the schema actually present; seed coverage for catalogue content, contact fields, Connect restrictions and review visibility must accompany the owning feature migration, not invent those columns or claim those behaviours exist. Revisit this ticket's planned coverage against `docs/architecture/core-schema.md` at pickup.
+**Out of scope** — production or staging data; performance-volume data; feature schema, APIs/UI, business transitions, Stripe calls, discovery eligibility and review moderation.
+
+**Sync notes** — `P0-T17`/`P5-T01`/`P5-T04` consume stable IDs, core relationships and full status coverage only; rendered contact/catalogue/provider/review fields remain feature-owned. Adding an enum value requires a coherent seed case and tests, not automatically inventing its financial meaning. `P1-T04`/`P1-T05`/`P1-T06`/`P1-T07`/`P1-T09`/`P1-T10`/`P4-T14` extend the committed seed with their delivered fields and safe grants; preserve category IDs and existing evidence. Reruns insert missing IDs only, never repair evidence by mutation. P0-T10/P0-T11 verifiers explicitly reset without seed data so their isolated constraint/denial fixtures remain meaningful. No upstream product rule changes; generated indexes remain for the reviewed main automation.
 
 ---
 

@@ -410,7 +410,11 @@ try {
   verifyPostgis();
   const status = localStatus();
   resetAllowed = true;
-  assert.equal(runLocal('reset'), 0, 'Initial local reset failed.');
+  assert.equal(
+    runLocal('reset-empty'),
+    0,
+    'Initial unseeded local reset failed.',
+  );
   checkCatalog();
   const { users, tokens } = await makeUsers(status, {
     additional: ['admin', 'unprofiled'],
@@ -444,7 +448,7 @@ try {
   process.exitCode = 1;
 } finally {
   if (resetAllowed) {
-    if (runLocal('reset') !== 0) {
+    if (runLocal('reset-empty') !== 0) {
       console.error(
         'Final local reset failed; disposable fixtures may remain.',
       );

@@ -20,3 +20,17 @@ The [RLS contract](../../docs/architecture/baseline-rls.md) describes owned/admi
 projections, future-column grants and denied writes. `api-test-helpers.mjs` supplies reusable
 local Auth/HTTP/raw-response denial helpers to the core and RLS verifiers; its safety tests run
 without Docker in `pnpm test`.
+
+`seed-data.mjs` builds deterministic foundation cases from shared enums and SQL serialization;
+`--write` regenerates the committed `supabase/seed/foundation.sql`, and `--check` detects drift.
+`seed.mjs` (`pnpm db:seed`) applies that insert-only transaction to the fixed local container,
+rejecting target overrides. Default `db:reset` loads seeds; the internal `reset-empty` command
+passes `--local --no-seed` for the core/replay verifiers and their cleanup.
+
+`verify-seed.mjs` (`pnpm db:test:seed --allow-local-reset`) tests complete reset/reseed/reset
+fingerprints, enum/relationship/money coverage, preservation of edited/unrelated/append-only
+data, atomic rollback, PostGIS index eligibility, and raw seeded-row RLS/API positives/denials.
+It uses real local Auth links without committed passwords and restores pristine seeds on exit.
+Do not run reset verifiers concurrently: they own the same disposable QuickTrimr database.
+See [seed usage and deferred fields](../../supabase/seed/README.md) and
+[P0-T12 evidence](../../docs/qa/P0-T12.md).

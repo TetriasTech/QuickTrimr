@@ -129,7 +129,11 @@ try {
     .map((name) => name.slice(0, 14))
     .sort()
     .join('\n');
-  assert.equal(runLocal('reset'), 0, 'First local reset failed.');
+  assert.equal(
+    runLocal('reset-empty'),
+    0,
+    'First unseeded local reset failed.',
+  );
   const first = schemaFingerprint();
   assert.equal(
     queryLocal(
@@ -137,7 +141,11 @@ try {
     ),
     expected,
   );
-  assert.equal(runLocal('reset'), 0, 'Second local reset failed.');
+  assert.equal(
+    runLocal('reset-empty'),
+    0,
+    'Second unseeded local reset failed.',
+  );
   assert.equal(
     schemaFingerprint(),
     first,

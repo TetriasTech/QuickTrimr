@@ -83,9 +83,11 @@ fixtures first pass a privileged insert rolled back in PostgreSQL, excluding inv
 false positives. The verifier resets again on completion/failure to remove its users and rows.
 
 The 12 committed-SQL enum tests run in normal credential-free `pnpm test` / CI. Docker checks
-remain explicit. `db:test:core` is this foundation's deny-all contract; it must be updated when
-`P0-T11` intentionally introduces policies, preserving negative coverage and adding own-user
-positive checks rather than treating every future authorised response as a regression.
+remain explicit. `db:test:core` now verifies P0-T11's ownership policies with positives and
+negatives. Core/replay verifiers explicitly use an unseeded local reset for isolation.
+P0-T12's [foundation seed](../../supabase/seed/README.md) populates only these delivered fields;
+its own verifier restores pristine synthetic seeds on completion. Catalogue/contact/Connect/
+review fields stay with their owning feature migrations and seed extensions.
 
 References: [PostgreSQL 17 RLS](https://www.postgresql.org/docs/17/ddl-rowsecurity.html),
 [foreign-key deletion behavior](https://www.postgresql.org/docs/17/ddl-constraints.html),

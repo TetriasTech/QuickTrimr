@@ -144,13 +144,19 @@ pnpm functions:serve
 The API is at `http://127.0.0.1:55321` and Studio at `http://127.0.0.1:55323`; these ports keep
 the stack separate from myClean/default Supabase projects. No hosted account or production
 credentials are needed. `pnpm db:stop` preserves local data; `pnpm db:reset` erases only the
-QuickTrimr local database and replays migrations. Use `pnpm db:new <lower_snake_case_name>` and
+QuickTrimr local database and replays migrations plus [synthetic foundation seeds](supabase/seed/README.md).
+Use `pnpm db:seed` to insert missing seed cases without overwriting existing data.
+Use `pnpm db:new <lower_snake_case_name>` and
 `pnpm db:migrate` for migration work. See the [local workflow](docs/architecture/local-supabase.md)
 for naming/review conventions, function invocation, live verification and main-only hosted pushes.
 Schema changes belong in committed migrations; never replace one with a hosted dashboard edit.
 The [core schema contract](docs/architecture/core-schema.md) documents the 21-table deny-all
 foundation, followed by [read-only RLS policies](docs/architecture/baseline-rls.md). On a disposable local stack, run `pnpm db:test:core --allow-local-reset` for its
 catalog, concurrency, retention and API-denial evidence; this command erases local data.
+`pnpm db:test:seed --allow-local-reset` verifies full seed replay, preservation, geography and
+real authenticated seeded-row denial/positive reads, then restores pristine seeds. Core/replay
+checks instead leave an unseeded database. No feature-specific contact/catalogue/Connect/review
+fields or customer access are provisioned by the foundation seed.
 
 ## Repository map
 
