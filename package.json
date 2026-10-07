@@ -20,6 +20,7 @@
     "db:new": "node scripts/db/local.mjs new",
     "db:verify": "node scripts/db/verify.mjs",
     "db:test:live": "node scripts/db/verify-live.mjs",
+    "db:test:core": "node scripts/db/verify-core.mjs",
     "functions:serve": "node scripts/db/local.mjs serve",
     "build": "pnpm --recursive --if-present build"
   },

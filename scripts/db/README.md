@@ -5,5 +5,14 @@ It rejects target overrides so a local reset cannot become a hosted reset. `veri
 PostGIS in the named QuickTrimr container. `verify-live.mjs` is an explicit, destructive local
 replay/runtime check; it requires `--allow-local-reset` and is not included in `pnpm test`.
 
+`verify-core.mjs` (`pnpm db:test:core --allow-local-reset`) verifies P0-T10's live catalogs,
+unique constraints under real contention, retention/append-only enforcement and deny-all API
+contract. It creates synthetic local Auth users/rows and resets again to remove them. Never run
+either reset verifier against local data you need to retain. `core-fixtures.mjs` is test-only;
+it is not seed data or a production write path. `core-schema.test.mjs` checks committed SQL enum
+parity in credential-free CI. `local-api.mjs` shares the fixed local status lookup without logging
+its in-memory private keys.
+
 See the [workflow](../../docs/architecture/local-supabase.md) and
 [ticket evidence](../../docs/qa/P0-T09.md). Run from the repository root.
+See also the [core schema contract](../../docs/architecture/core-schema.md).

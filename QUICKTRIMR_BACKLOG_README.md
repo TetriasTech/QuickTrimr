@@ -1190,14 +1190,14 @@ priority: Highest
 jiraKey: TRIMR-19
 dependsOn: [P0-T06, P0-T09]
 affects: [P0-T11, P0-T12, P1-T03, P2-T01, P2-T08, P3-T01, P3-T04, P4-T12, P4-T14]
-knowledgeBase: [ADR-001, ADR-008, ADR-009, ADR-010, ADR-013, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS, ENUM-AVAIL-STATUS, ENUM-DISPUTE-STATUS, ENUM-RELIABILITY-LEVEL]
+knowledgeBase: [ADR-001, ADR-005, ADR-008, ADR-009, ADR-010, ADR-013, RULE-AVAIL-01, RULE-EARN-01, RULE-EARN-07, RULE-REVIEW-02, RULE-RELY-01, ENUM-USER-ROLE, ENUM-VERIFICATION-STATUS, ENUM-BOOKING-TYPE, ENUM-BOOKING-STATUS, ENUM-REQUEST-STATUS, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, ENUM-AVAIL-STATUS, ENUM-DISPUTE-STATUS, ENUM-RELIABILITY-LEVEL]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation, database, supabase]
 ```
 
 **Context**
 
-The table shapes and every enum are decided (`KB §10`, `KB §11`), so this is buildable now, and both engineers are blocked without it.
+The starting tables, core relationships and enum sets are decided (`KB §10`, `KB §11`), so this is buildable now. This is the minimal foundation, not a full feature schema: profile/contact fields, catalogue content, deadlines, provider references and payout allocation/retry mappings ship with their owning features (`KB §6.3`).
 
 What is **not** baked in here: any undecided number. No commission default, no refund percentage, no reliability threshold. Those are config (`KB §13`) and per-booking snapshots (`ADR-009`), and a column default is not the place to record a business rule nobody has agreed — a default silently becomes the rule, and nobody reviews a default.
 
@@ -1223,6 +1223,13 @@ Shape requirements:
 - `created_at` / `updated_at` on every table, with an `updated_at` trigger.
 - Unique constraints that enforce a rule rather than describing one: one earning per booking (`RULE-EARN-01`), one review per booking (`RULE-REVIEW-02`), one active Available Now session per barber (`RULE-AVAIL-01`, partial unique index on status).
 - Indexes for the access patterns in `KB §11`: booking status, barber id, client id, booking type, created date, session status, payment status, dispute status.
+- Enable RLS immediately on all 21 tables, with no access policies yet: deny-all is the foundation (`ADR-001`). `P0-T11` adds authorised access, not the first moment data becomes protected. Revoke client `TRUNCATE`, which RLS does not govern.
+- Enforce append-only `booking_status_history`, `audit_logs` and `barber_reliability_events`; reject update, delete and truncate, including through privileged application paths. They still carry both timestamps, but a correction is another row, never an update.
+- Use conservative `ON DELETE RESTRICT` relationships. This prevents accidental loss, not a completed account-erasure workflow. Actor references may be null for server-originated events; do not invent a fourth user role or attribute a timer to a human. Later handlers must record truthful reasons/metadata.
+
+**Contract example — baseline API denial**
+
+With a real local authenticated user A's JWT, `GET /rest/v1/bookings?select=*&id=eq.<user-B-booking-id>` returns `200 []`; `PATCH`/`DELETE` of that row with `Prefer: return=representation` return `200 []` and leave the stored row unchanged. `POST` of an otherwise valid new row returns `403` with PostgreSQL code `42501`. The same deny-all contract applies to every starting table, including a user's own rows, until `P0-T11` introduces access policies. The verifier uses disposable local users/fixtures and never hosted credentials.
 
 **Acceptance criteria**
 
@@ -1236,12 +1243,14 @@ Shape requirements:
 - [ ] `booking_status_history` and `audit_logs` carry every field listed in `ADR-010` and `ADR-013`.
 - [ ] No column default encodes an undecided value — no commission, refund, or reliability number appears anywhere in the migration.
 - [ ] Foreign keys exist with deliberate delete behaviour; deleting a user does not cascade-delete bookings or payments.
+- [ ] All 21 tables have RLS enabled; real authenticated cross-user API requests cannot read, insert, update or delete rows, and denied writes leave the database unchanged.
+- [ ] History, audit and reliability events reject privileged update/delete/truncate; mutable tables' update triggers advance `updated_at`.
 
-**Tests** — enum parity against `packages/shared`; a column-type assertion that no money column is non-integer; insertion tests proving each unique constraint fires.
+**Tests** — enum parity against `packages/shared` both in committed SQL and live PostgreSQL catalogs; column-type assertions; duplicate inserts and repeated genuinely parallel inserts proving each unique constraint; live FK/delete-retention tests, timestamp and append-only checks; authenticated API denial for all 21 tables/every verb, asserting raw bodies and unchanged database state. Keep Docker tests explicit, separate from credential-free CI; record reset/replay and test output in `docs/qa/P0-T10.md`.
 
 **Out of scope** — RLS policies (`P0-T11`); seed data (`P0-T12`); any feature-specific column, which ships with its feature (`KB §6.3`).
 
-**Sync notes** — nine tickets write to these tables. Later tickets add columns via their own migrations; this one establishes the shape and the conventions they follow.
+**Sync notes** — nine tickets write to these tables. Later tickets add columns via their own migrations; this one establishes the shape and the conventions they follow. `P0-T11` must preserve immediate deny-all protection and append-only enforcement while adding policies; `P0-T12` seeds only fields actually delivered. Payout items are per-barber obligations (`RULE-EARN-07`); `P3-T10` owns their earning-allocation and retry guards, not this foundation. Generated sections 8/9 remain untouched on this feature branch.
 
 ---
 
@@ -1303,7 +1312,7 @@ A reusable test helper that runs a query as a given user and asserts denial.
 
 **Out of scope** — feature-specific policies, which ship with their feature; admin dashboard implementation (Phase 5).
 
-**Sync notes** — every later ticket that adds a table adds its policies and its denial test. This ticket establishes the helper and the pattern they follow.
+**Sync notes** — every later ticket that adds a table adds its policies and its denial test. This ticket establishes the helper and the pattern they follow. `P0-T10` already enables RLS, revokes application `TRUNCATE`, and enforces append-only history/audit/reliability events. Preserve those guards; reuse/adapt the real local Auth fixture and API checks in `scripts/db/verify-core.mjs`. Replace its foundation-wide deny-all assertions with own-user positive and cross-user negative policy tests when adding access, without weakening evidence-table protection.
 
 ---
 
@@ -1354,7 +1363,7 @@ No real personal information: synthetic names, `@example.com` addresses, obvious
 
 **Out of scope** — production or staging data; performance-volume data.
 
-**Sync notes** — admin list and detail screens are built against this. Adding a status to an enum means adding a seed row, or that status ships unrendered.
+**Sync notes** — admin list and detail screens are built against this. Adding a status to an enum means adding a seed row, or that status ships unrendered. `P0-T10` delivers only the core relationships/statuses/geography/money, not future feature fields. Seed only the schema actually present; seed coverage for catalogue content, contact fields, Connect restrictions and review visibility must accompany the owning feature migration, not invent those columns or claim those behaviours exist. Revisit this ticket's planned coverage against `docs/architecture/core-schema.md` at pickup.
 
 ---
 

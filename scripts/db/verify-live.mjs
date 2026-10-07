@@ -5,6 +5,7 @@ import { readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 
+import { localStatus } from './local-api.mjs';
 import { projectId, root, runLocal } from './local.mjs';
 import { queryLocal, verifyPostgis } from './verify.mjs';
 
@@ -24,6 +25,7 @@ function schemaFingerprint() {
       '--no-privileges',
       '--schema=public',
       '--schema=extensions',
+      '--schema=private',
     ],
     { encoding: 'utf8' },
   );
@@ -31,20 +33,6 @@ function schemaFingerprint() {
   // Newer pg_dump adds a random psql restriction nonce; it is not schema state.
   const schema = dump.stdout.replace(/^\\(?:un)?restrict .*\n/gm, '');
   return createHash('sha256').update(schema).digest('hex');
-}
-
-function localStatus() {
-  const status = spawnSync(
-    resolve(root, 'node_modules/.bin/supabase'),
-    ['status', '--output', 'json'],
-    { cwd: root, encoding: 'utf8' },
-  );
-  assert.equal(status.status, 0, 'Could not obtain local stack status.');
-  try {
-    return JSON.parse(status.stdout);
-  } catch {
-    throw new Error('Local status was not JSON; credential values suppressed.');
-  }
 }
 
 async function checkProbe() {
