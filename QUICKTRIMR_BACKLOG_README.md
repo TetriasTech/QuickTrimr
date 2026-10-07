@@ -1266,7 +1266,7 @@ priority: Highest
 jiraKey: TRIMR-20
 dependsOn: [P0-T10]
 affects: [P0-T12, P1-T01, P1-T02, P1-T03, P2-T10, P4-T01, P4-T02, P5-T02]
-knowledgeBase: [ADR-001, ROLE-CLIENT, ROLE-BARBER, ROLE-ADMIN, RULE-ADMIN-01, RULE-ONBOARD-05]
+knowledgeBase: [ADR-001, ADR-013, ROLE-CLIENT, ROLE-BARBER, ROLE-ADMIN, RULE-ADMIN-01, RULE-ONBOARD-01, RULE-ONBOARD-05]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation, database, security]
 ```
@@ -1294,6 +1294,22 @@ Baseline policies per `KB §11`:
 - **No table is broadly readable.** `payments`, `payout_batches`, `payout_batch_items`, `audit_logs`, `booking_status_history`, `barber_reliability_events` are not client- or barber-readable except where a rule says so.
 - **`audit_logs` has no update or delete policy at all** (`ADR-013`). The absent policy is the enforcement.
 
+This baseline is **read-only** for authenticated application users, including admins. There are no insert/update/delete policies: identity, role, verification, status, money and sensitive writes remain with authorised server handlers. Feature-specific non-sensitive write policies, if required, ship with their feature. Preserve P0-T10's append-only triggers and revoked `TRUNCATE`.
+
+Use explicit read grants for the columns delivered by P0-T10, not a table-wide grant that silently exposes a later private column. `public_barber_profiles` is a read-only, security-barrier projection of barber IDs only: no public name/photo fields exist yet, and exact service-area coordinates are private. This is not discovery or a claim of Connect eligibility. Future profile fields require explicit publication in their owning migration.
+
+`client_payments` is a read-only, security-barrier projection of the caller's own booking-linked payments: `id`, `booking_id`, `status`, `gross_cents`, `refunded_cents`, `created_at`, `updated_at`. Clients have no base-table payment read policy; provider/private fields added later cannot leak through a direct select or this explicit projection. Admin reads the base table through its role-gated policy.
+
+Other non-admin baseline reads are exactly the lists above. Categories, booking services, notifications, reliability tables and payout internals stay deny-all for non-admins until their owning feature adds the required policy. Client addresses/contact are never exposed to barbers by this foundation; the accepted-active projection belongs to booking-view features once those fields/relationships exist.
+
+**Contract examples — actual local PostgREST**
+
+- Authenticated client A: `GET /rest/v1/bookings?id=eq.<own-booking-id>&select=*&limit=1` returns `200 [{...own booking...}]`; the same query for B's booking returns `200 []`.
+- A: `GET /rest/v1/client_payments?booking_id=eq.<own-booking-id>&select=*&limit=1` returns only the seven safe columns above; B's payment returns `200 []`. Direct `GET /rest/v1/payments?select=*&limit=1` returns `200 []` for clients/barbers.
+- Client/barber with a database profile: `GET /rest/v1/public_barber_profiles?id=eq.<barber-id>&select=*&limit=1` returns `200 [{"id":"<barber-id>"}]`, never service area or private fields. A missing profile is fail-closed; anonymous access is denied.
+- Database-authorised admin: `GET /rest/v1/audit_logs?select=*&limit=1` can return operational rows. Client/barber A returns `200 []`, even with signed JWT user/app metadata claiming admin.
+- Every authenticated role: direct `POST` of a structurally valid table row returns `403`, code `42501`; `PATCH`/`DELETE` with `Prefer: return=representation` return `200 []`, leaving rows unchanged, including own rows. Views grant SELECT only and reject all writes. Forged JWTs fail authentication with `401`.
+
 A reusable test helper that runs a query as a given user and asserts denial.
 
 **Acceptance criteria**
@@ -1307,12 +1323,14 @@ A reusable test helper that runs a query as a given user and asserts denial.
 - [ ] **No client can update or delete an `audit_logs` row** — no such policy exists.
 - [ ] No policy reads a role from a client-settable JWT claim.
 - [ ] A cross-user denial test helper exists and is reused by later tickets.
+- [ ] Own-user and admin positive reads are proven alongside denials; no-profile, anonymous and forged-JWT callers fail closed, and signed metadata cannot elevate a role.
+- [ ] All direct writes remain denied, even for own rows/admins; view writes and newly added private-column reads fail closed, with unchanged stored-row evidence.
 
-**Tests** — cross-user denial for every table and every verb, run at the API as a real authenticated user. A test that asserts denial by checking the UI does not count.
+**Tests** — real authenticated cross-user denial for every table/every verb plus own-user/admin positives, including HEAD count privacy and denied PUT/merge-upsert routes; raw projection field allowlists and base-table/embedding bypass attempts; signed user/app metadata privilege forgery, database role grant/revocation without JWT refresh, missing profiles, anon and invalid JWTs; denied own/admin writes and unchanged database snapshots; read-only view grants, private-column additions and preserved immutable evidence. Reuse local target/reset/Auth/HTTP tooling; keep Docker tests explicit, with commands/output in `docs/qa/P0-T11.md`. A UI-only denial does not count.
 
 **Out of scope** — feature-specific policies, which ship with their feature; admin dashboard implementation (Phase 5).
 
-**Sync notes** — every later ticket that adds a table adds its policies and its denial test. This ticket establishes the helper and the pattern they follow. `P0-T10` already enables RLS, revokes application `TRUNCATE`, and enforces append-only history/audit/reliability events. Preserve those guards; reuse/adapt the real local Auth fixture and API checks in `scripts/db/verify-core.mjs`. Replace its foundation-wide deny-all assertions with own-user positive and cross-user negative policy tests when adding access, without weakening evidence-table protection.
+**Sync notes** — every later ticket that adds a table adds its policies and its denial test. This ticket establishes the helper and the pattern they follow. `P0-T10` already enables RLS, revokes application `TRUNCATE`, and enforces append-only history/audit/reliability events. Preserve those guards; the core verifier now exercises own-user/admin positives and cross-user negatives through the reusable `scripts/db/api-test-helpers.mjs`. The role helper is private, not a public RPC: `P1-T02` can query its verified caller's own profile role, with RLS invoking that same database-backed resolver. New fields need deliberate column grants and public/safe projections. Any feature enabling direct writes must narrow writable columns before adding a policy; never let a profile form update role/verification or a booking form update status/money. `P0-T12` seeds with privileged local SQL, not by relaxing client policies. `P2-T10`/`P4-T01`/`P4-T02` must preserve raw embedding/contact/location boundaries; accepted-active contact exposure remains with its owning feature. Generated indexes update only through the reviewed main automation.
 
 ---
 

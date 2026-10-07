@@ -22,7 +22,6 @@ function schemaFingerprint() {
       'postgres',
       '--schema-only',
       '--no-owner',
-      '--no-privileges',
       '--schema=public',
       '--schema=extensions',
       '--schema=private',

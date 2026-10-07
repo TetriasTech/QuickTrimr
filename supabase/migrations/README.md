@@ -10,5 +10,7 @@ prove both apply and replay before merge; hosted dashboard edits are never the s
 P0-T09's first migration enables PostGIS in `extensions`, outside the exposed API schemas.
 P0-T10 adds the core application schema with RLS already enabled (deny-all), P0-T11 adds
 authorised policies, and P0-T12 adds the committed seed data.
+P0-T11's [read-only baseline](../../docs/architecture/baseline-rls.md) grants owned/admin reads,
+narrow projections and explicit column access; every direct application write remains denied.
 See the [core contract](../../docs/architecture/core-schema.md), including append-only enforcement.
 See the [local workflow](../../docs/architecture/local-supabase.md).
