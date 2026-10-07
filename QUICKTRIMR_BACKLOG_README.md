@@ -948,6 +948,13 @@ Vertical ownership (`ADR-012`) means one person delivers migration through UI, a
 - [ ] Template includes the out-of-scope confirmation.
 - [ ] `docs/qa/review-checklist.md` exists and is linked.
 
+**Tests**
+
+- Check that GitHub's default template discovery locations contain exactly one PR template, at `.github/pull_request_template.md`, with unchecked checkboxes.
+- Resolve the template's review-guide link and the guide's repository links; fail on a missing target.
+- Review the rendered template against each acceptance criterion and the ticket prompt's Definition of Done; record the evidence in `docs/qa/P0-T05.md`.
+- After merge to the default branch, open a new PR form without a `template` query parameter or supplied body and confirm GitHub inserts the template automatically. Record this separately from local structural checks.
+
 **Out of scope** — automated review bots; CI checks (`P0-T04`).
 
 ---
