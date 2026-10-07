@@ -133,10 +133,21 @@ No `.env` file or credentials are needed for this shell. See
 
 ## Run Supabase locally
 
-P0-T09 owns the local Supabase CLI and migration workflow. Once it lands, use the root database
-scripts it documents to start, stop, and reset the local stack. Schema changes belong in
-`supabase/migrations`; local seed data belongs in `supabase/seed`. Never make an untracked schema
-change in the hosted dashboard.
+With a running Docker-compatible runtime, start the isolated QuickTrimr stack:
+
+```bash
+pnpm db:start
+pnpm db:verify
+pnpm functions:serve
+```
+
+The API is at `http://127.0.0.1:55321` and Studio at `http://127.0.0.1:55323`; these ports keep
+the stack separate from myClean/default Supabase projects. No hosted account or production
+credentials are needed. `pnpm db:stop` preserves local data; `pnpm db:reset` erases only the
+QuickTrimr local database and replays migrations. Use `pnpm db:new <lower_snake_case_name>` and
+`pnpm db:migrate` for migration work. See the [local workflow](docs/architecture/local-supabase.md)
+for naming/review conventions, function invocation, live verification and main-only hosted pushes.
+Schema changes belong in committed migrations; never replace one with a hosted dashboard edit.
 
 ## Repository map
 

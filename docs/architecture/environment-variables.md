@@ -87,14 +87,20 @@ The Supabase template leaves runtime-provided names commented out so blank assig
 override injected credentials. A local file must be passed explicitly:
 
 ```sh
-# After P0-T09 establishes the local CLI workflow:
-supabase functions serve --env-file supabase/.env.local
+pnpm functions:serve --env-file supabase/.env.local
 ```
 
 Supabase supplies its own `SUPABASE_*` variables in Edge Functions. Do not upload those names
 as custom secrets, and do not assume a root `.env` automatically reaches functions. Hosted
 custom values belong in the selected project's Edge Function secret store, not app settings.
 [Supabase function environment reference](https://supabase.com/docs/guides/functions/secrets)
+
+The [local Supabase workflow](local-supabase.md) needs no hosted credentials. Its command runner
+does not forward inherited `SUPABASE_*` overrides such as `SUPABASE_ACCESS_TOKEN`,
+`SUPABASE_DB_PASSWORD`, `SUPABASE_DB_URL` or `SUPABASE_PROJECT_REF` from an operator shell.
+Those are CLI/operator inputs for
+deliberate hosted work only, never app or local-function configuration. Local private keys are
+not printed by the wrappers or live verifier.
 
 Runtime-owned `CI`, `PATH`, `EXPO_OS`, `NODE_ENV` and the historical spike's `INNGEST_DEV`
 are explained in the root template; engineers do not copy values for them. `MODULE` in the

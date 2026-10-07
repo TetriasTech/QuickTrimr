@@ -6,6 +6,8 @@ allowBuilds:
   esbuild@0.28.2: true
   # Use the lockfile's platform package; do not run its download fallback.
   unrs-resolver: false
+  # Official CLI binary installer, pinned to the verified Go-based release.
+  supabase@2.98.1: true
 # Exact versions only: 16.3.7 is the September security patch, published 2026-09-29.
 # https://nextjs.org/blog (September 2026 security release)
 minimumReleaseAgeExclude:

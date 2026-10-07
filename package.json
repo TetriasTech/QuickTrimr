@@ -11,8 +11,16 @@
     "lint": "pnpm --recursive --if-present lint && eslint scripts *.mjs --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs scripts/decisions.test.mjs scripts/quality/quality.test.mjs scripts/environment/*.test.mjs scripts/ci/*.test.mjs scripts/qa/*.test.mjs",
+    "test": "pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs scripts/decisions.test.mjs scripts/quality/quality.test.mjs scripts/environment/*.test.mjs scripts/ci/*.test.mjs scripts/qa/*.test.mjs scripts/db/*.test.mjs",
     "check:client-env": "node scripts/check-client-env.mjs",
+    "db:start": "node scripts/db/local.mjs start",
+    "db:stop": "node scripts/db/local.mjs stop",
+    "db:reset": "node scripts/db/local.mjs reset",
+    "db:migrate": "node scripts/db/local.mjs migrate",
+    "db:new": "node scripts/db/local.mjs new",
+    "db:verify": "node scripts/db/verify.mjs",
+    "db:test:live": "node scripts/db/verify-live.mjs",
+    "functions:serve": "node scripts/db/local.mjs serve",
     "build": "pnpm --recursive --if-present build"
   },
   "devDependencies": {
@@ -25,6 +33,7 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "16.4.0",
     "prettier": "3.9.9",
+    "supabase": "2.98.1",
     "typescript": "6.0.3",
     "typescript-eslint": "8.70.1",
     "yaml": "2.9.1"
