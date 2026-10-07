@@ -6989,10 +6989,10 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `ADR-002` | `P0-T08`, `P0-T09`, `P1-T03`, `P1-T07`, `P6-T05` |
 | `ADR-003` | `P0-T13`, `P0-T15`, `P2-T05` |
 | `ADR-004` | `P0-D06`, `P2-T07`, `P4-T03`, `P4-T04`, `P4-T05`, `P4-T06` |
-| `ADR-005` | `P1-T04` |
+| `ADR-005` | `P0-T10`, `P1-T04` |
 | `ADR-006` | `P0-D08`, `P0-T18`, `P2-T08`, `P2-T09`, `P3-T01`, `P3-T02`, `P3-T06` |
 | `ADR-007` | `P0-T01`, `P0-T02`, `P0-T04`, `P0-T06`, `P0-T07`, `P0-T13`, `P0-T14`, `P0-T16`, `P0-T17`, `P6-T10` |
-| `ADR-008` | `P0-D06`, `P0-T03`, `P0-T10`, `P0-T18`, `P1-T05`, `P1-T06`, `P2-T01`, `P2-T04`, `P2-T07`, `P4-T05` |
+| `ADR-008` | `P0-D06`, `P0-T03`, `P0-T09`, `P0-T10`, `P0-T18`, `P1-T05`, `P1-T06`, `P2-T01`, `P2-T04`, `P2-T07`, `P4-T05` |
 | `ADR-009` | `P0-D02`, `P0-D03`, `P0-T10`, `P1-T11`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P3-T10`, `P5-T07`, `P5-T08`, `P5-T09`, `P5-T10` |
 | `ADR-010` | `P0-T06`, `P0-T10`, `P2-T12`, `P3-T02`, `P3-T06`, `P4-T01`, `P4-T02`, `P4-T03`, `P4-T07`, `P4-T09`, `P4-T12`, `P5-T04`, `P5-T05` |
 | `ADR-011` | `P0-D07`, `P2-T03`, `P2-T15`, `P3-T11`, `P3-T12`, `P4-T05`, `P4-T11`, `P6-T02` |
@@ -7003,7 +7003,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-ADMIN-02` | `P5-T05`, `P6-T08` |
 | `RULE-ADMIN-03` | `P5-T07`, `P5-T08` |
 | `RULE-ADMIN-04` | `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T06`, `P5-T09` |
-| `RULE-AVAIL-01` | `P2-T01`, `P2-T02` |
+| `RULE-AVAIL-01` | `P0-T10`, `P2-T01`, `P2-T02` |
 | `RULE-AVAIL-02` | `P2-T01`, `P2-T02` |
 | `RULE-AVAIL-03` | `P0-D04`, `P2-T02`, `P2-T03`, `P2-T13`, `P2-T15` |
 | `RULE-AVAIL-04` | `P2-T08` |
@@ -7035,13 +7035,13 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-DISPUTE-04` | `P5-T07`, `P5-T08`, `P6-T08` |
 | `RULE-DISPUTE-05` | `P5-T07`, `P5-T08` |
 | `RULE-DISPUTE-06` | `P4-T12`, `P5-T07` |
-| `RULE-EARN-01` | `P0-D02`, `P3-T04`, `P3-T07` |
+| `RULE-EARN-01` | `P0-D02`, `P0-T10`, `P3-T04`, `P3-T07` |
 | `RULE-EARN-02` | `P0-D03`, `P3-T04`, `P3-T05`, `P3-T07`, `P3-T10`, `P3-T11`, `P4-T07`, `P4-T08`, `P4-T09`, `P4-T11`, `P5-T05`, `P5-T07` |
 | `RULE-EARN-03` | `P0-D03`, `P3-T04`, `P3-T07`, `P3-T10`, `P3-T11`, `P4-T09`, `P4-T11`, `P4-T12`, `P5-T06`, `P5-T07`, `P6-T07` |
 | `RULE-EARN-04` | `P0-D05`, `P3-T05`, `P3-T10`, `P3-T11`, `P4-T08`, `P6-T02`, `P6-T06`, `P7-T01` |
 | `RULE-EARN-05` | `P0-D05`, `P0-T18`, `P3-T03`, `P3-T05`, `P3-T10`, `P3-T11`, `P5-T10` |
 | `RULE-EARN-06` | `P0-D05`, `P3-T03`, `P3-T10`, `P3-T11`, `P5-T10`, `P6-T07` |
-| `RULE-EARN-07` | `P0-D05`, `P0-T18`, `P1-T07`, `P3-T03`, `P3-T05`, `P3-T10`, `P3-T11`, `P5-T10`, `P6-T02` |
+| `RULE-EARN-07` | `P0-D05`, `P0-T10`, `P0-T18`, `P1-T07`, `P3-T03`, `P3-T05`, `P3-T10`, `P3-T11`, `P5-T10`, `P6-T02` |
 | `RULE-ETA-01` | `P4-T03`, `P4-T04` |
 | `RULE-ETA-02` | `P0-D06`, `P0-T03`, `P0-T18`, `P4-T05`, `P6-T09`, `P6-T10`, `P6-T11` |
 | `RULE-ETA-03` | `P0-D06`, `P4-T05`, `P4-T06` |
@@ -7067,7 +7067,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-PAY-09` | `P3-T02`, `P3-T11` |
 | `RULE-PAY-10` | `P0-T03`, `P0-T18`, `P1-T07`, `P1-T09`, `P3-T01`, `P3-T03`, `P5-T09`, `P5-T10`, `P6-T03`, `P6-T05`, `P6-T09`, `P6-T10`, `P6-T11` |
 | `RULE-PAY-11` | `P0-D02`, `P0-D03`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P5-T07`, `P5-T08`, `P5-T09` |
-| `RULE-RELY-01` | `P0-D04`, `P3-T09`, `P3-T12`, `P5-T03`, `P5-T13` |
+| `RULE-RELY-01` | `P0-D04`, `P0-T10`, `P3-T09`, `P3-T12`, `P5-T03`, `P5-T13` |
 | `RULE-RELY-02` | `P0-D04`, `P3-T12`, `P5-T13` |
 | `RULE-RELY-03` | `P0-D04`, `P3-T09`, `P3-T12` |
 | `RULE-RELY-04` | `P0-D04`, `P3-T12` |
@@ -7080,7 +7080,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-REQUEST-05` | `P2-T12`, `P2-T14`, `P2-T15`, `P6-T07` |
 | `RULE-REQUEST-06` | `P2-T13`, `P2-T15`, `P3-T06` |
 | `RULE-REVIEW-01` | `P0-D08`, `P4-T14`, `P4-T15` |
-| `RULE-REVIEW-02` | `P0-D08`, `P4-T14`, `P4-T15` |
+| `RULE-REVIEW-02` | `P0-D08`, `P0-T10`, `P4-T14`, `P4-T15` |
 | `RULE-REVIEW-03` | `P4-T14`, `P4-T15` |
 | `RULE-REVIEW-04` | `P1-T12`, `P4-T14`, `P5-T12` |
 | `RULE-REVIEW-05` | `P4-T14`, `P5-T12` |
@@ -7118,15 +7118,15 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `CFG-SCHED-MIN-LEAD-MIN` | `P0-D08`, `P2-T05`, `P2-T08`, `P2-T09` |
 | `ENUM-AVAIL-STATUS` | `P0-T06`, `P0-T10`, `P2-T01`, `P2-T02`, `P2-T03` |
 | `ENUM-BOOKING-STATUS` | `P0-T06`, `P0-T10`, `P0-T12`, `P0-T14`, `P0-T17`, `P2-T12`, `P3-T02`, `P3-T06`, `P3-T07`, `P4-T01`, `P4-T02`, `P4-T03`, `P4-T07`, `P4-T09`, `P4-T11`, `P4-T12`, `P5-T01`, `P5-T04`, `P5-T05` |
-| `ENUM-BOOKING-TYPE` | `P0-T06`, `P2-T05`, `P2-T08` |
+| `ENUM-BOOKING-TYPE` | `P0-T06`, `P0-T10`, `P2-T05`, `P2-T08` |
 | `ENUM-DISPUTE-STATUS` | `P0-D08`, `P0-T06`, `P0-T10`, `P0-T12`, `P0-T17`, `P4-T12`, `P5-T01`, `P5-T06`, `P5-T07` |
 | `ENUM-EARNING-STATUS` | `P0-T06`, `P0-T10`, `P3-T04`, `P3-T05`, `P3-T10`, `P3-T11`, `P5-T04`, `P5-T07`, `P5-T09`, `P5-T10` |
 | `ENUM-PAYMENT-STATUS` | `P0-T06`, `P0-T10`, `P0-T17`, `P3-T01`, `P3-T02`, `P3-T03`, `P3-T06`, `P3-T07`, `P5-T01`, `P5-T04`, `P5-T09` |
-| `ENUM-PAYOUT-STATUS` | `P0-T06`, `P3-T10`, `P3-T11`, `P5-T10` |
+| `ENUM-PAYOUT-STATUS` | `P0-T06`, `P0-T10`, `P3-T10`, `P3-T11`, `P5-T10` |
 | `ENUM-RELIABILITY-LEVEL` | `P0-D04`, `P0-T06`, `P0-T10`, `P3-T12`, `P5-T03`, `P5-T13` |
-| `ENUM-REQUEST-STATUS` | `P0-T06`, `P2-T08`, `P2-T09`, `P2-T10`, `P2-T11`, `P2-T12`, `P2-T13`, `P2-T14`, `P2-T15` |
-| `ENUM-USER-ROLE` | `P0-T06`, `P1-T03` |
-| `ENUM-VERIFICATION-STATUS` | `P0-T06`, `P1-T03`, `P1-T04`, `P1-T07`, `P1-T08`, `P1-T09`, `P5-T03` |
+| `ENUM-REQUEST-STATUS` | `P0-T06`, `P0-T10`, `P2-T08`, `P2-T09`, `P2-T10`, `P2-T11`, `P2-T12`, `P2-T13`, `P2-T14`, `P2-T15` |
+| `ENUM-USER-ROLE` | `P0-T06`, `P0-T10`, `P1-T03` |
+| `ENUM-VERIFICATION-STATUS` | `P0-T06`, `P0-T10`, `P1-T03`, `P1-T04`, `P1-T07`, `P1-T08`, `P1-T09`, `P5-T03` |
 | `ROLE-ADMIN` | `P0-T11`, `P1-T02`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T06`, `P5-T09`, `P5-T10` |
 | `ROLE-BARBER` | `P0-T11`, `P1-T01`, `P1-T03`, `P2-T10`, `P4-T02`, `P4-T03` |
 | `ROLE-CLIENT` | `P0-T11`, `P1-T01`, `P1-T03`, `P1-T05` |
