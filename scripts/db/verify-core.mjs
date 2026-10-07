@@ -9,6 +9,7 @@ import {
   assertPostgresEnumValuesMatch,
 } from '../../packages/shared/src/index.ts';
 
+import { makeUsers } from './api-test-helpers.mjs';
 import { coreFixtures, insertSql, sqlValue } from './core-fixtures.mjs';
 import {
   appendOnlyTables,
@@ -17,6 +18,7 @@ import {
 } from './core-schema.mjs';
 import { localStatus } from './local-api.mjs';
 import { projectId, runLocal } from './local.mjs';
+import { verifyBaselineApi } from './rls-verification.mjs';
 import { queryLocal, verifyPostgis } from './verify.mjs';
 
 const tablesSql = coreTables.map(sqlValue).join(',');
@@ -33,10 +35,6 @@ function checkCatalog() {
   assert.ok(
     tables.every((table) => table.rls),
     'Every table must enable RLS.',
-  );
-  assert.equal(
-    queryLocal("select count(*) from pg_policies where schemaname = 'public';"),
-    '0',
   );
   const enums = catalog(`select json_object_agg(typname, labels) from (
     select t.typname, json_agg(e.enumlabel order by e.enumsortorder) labels from pg_type t
@@ -57,7 +55,7 @@ function checkCatalog() {
   const columns =
     catalog(`select json_agg(json_build_object('table', c.table_name, 'column', c.column_name,
     'type', c.udt_name, 'nullable', c.is_nullable, 'default', c.column_default) order by c.table_name, c.ordinal_position)
-    from information_schema.columns c where c.table_schema = 'public';`);
+    from information_schema.columns c where c.table_schema = 'public' and c.table_name in (${tablesSql});`);
   assert.ok(
     columns.every(
       (column) =>
@@ -196,13 +194,18 @@ function checkCatalog() {
   );
   const grants =
     catalog(`select json_agg(json_build_object('role', r, 'table', t,
-    'read', has_table_privilege(r, 'public.' || t, 'SELECT'),
+    'read', has_any_column_privilege(r, 'public.' || t, 'SELECT'),
     'write', has_table_privilege(r, 'public.' || t, 'INSERT') and has_table_privilege(r, 'public.' || t, 'UPDATE') and has_table_privilege(r, 'public.' || t, 'DELETE'),
     'truncate', has_table_privilege(r, 'public.' || t, 'TRUNCATE')))
     from unnest(array['anon','authenticated','service_role']) r cross join unnest(array[${tablesSql}]) t;`);
   assert.ok(
-    grants.every((grant) => grant.read && grant.write && !grant.truncate),
-    'DML grants exist: denial must come from RLS, not missing privileges. TRUNCATE must be revoked.',
+    grants.every(
+      (grant) =>
+        grant.read === (grant.role !== 'anon') &&
+        grant.write &&
+        !grant.truncate,
+    ),
+    'Authenticated column-read/DML grants must exist; anon reads and all TRUNCATE must be revoked.',
   );
   assert.equal(
     queryLocal(
@@ -347,9 +350,8 @@ async function checkConstraints(fixtures, users) {
     }),
   ])
     expectSqlState(sql, '23503');
-  assert.equal(
-    databaseSnapshot(),
-    before,
+  assert.ok(
+    databaseSnapshot() === before,
     'FK failures cannot lose financial records.',
   );
   for (const table of appendOnlyTables) {
@@ -361,9 +363,8 @@ async function checkConstraints(fixtures, users) {
       expectSqlState(sql, '55000'); // postgres owner bypasses RLS; trigger must still reject.
     }
   }
-  assert.equal(
-    databaseSnapshot(),
-    before,
+  assert.ok(
+    databaseSnapshot() === before,
     'Append-only failures cannot alter evidence.',
   );
   for (const table of coreTables.filter(
@@ -399,191 +400,6 @@ async function checkConstraints(fixtures, users) {
   );
 }
 
-async function apiJson(status, path, token, options = {}) {
-  const response = await fetch(new URL(path, status.API_URL), {
-    ...options,
-    headers: {
-      apikey: status.ANON_KEY,
-      authorization: `Bearer ${token}`,
-      'content-type': 'application/json',
-      prefer: 'return=representation',
-      ...options.headers,
-    },
-    signal: AbortSignal.timeout(10000),
-  });
-  let body;
-  try {
-    body = await response.json();
-  } catch {
-    throw new Error(
-      `Local ${options.method ?? 'GET'} returned non-JSON (${response.status}); body suppressed.`,
-    );
-  }
-  return { status: response.status, body };
-}
-
-async function makeUsers(status) {
-  const users = {};
-  const tokens = {};
-  for (const name of [
-    'clientA',
-    'clientB',
-    'barberA',
-    'barberB',
-    'candidateClient',
-    'candidateBarber',
-    'candidateProfile',
-  ]) {
-    const email = `core-${randomUUID()}@example.invalid`;
-    const password = randomUUID() + randomUUID();
-    const created = await apiJson(
-      status,
-      '/auth/v1/admin/users',
-      status.SERVICE_ROLE_KEY,
-      {
-        method: 'POST',
-        body: JSON.stringify({ email, password, email_confirm: true }),
-      },
-    );
-    assert.equal(
-      created.status,
-      200,
-      'Disposable local user creation failed; body suppressed.',
-    );
-    assert.match(created.body.id ?? '', /^[0-9a-f-]{36}$/);
-    users[name] = created.body.id;
-    if (['clientA', 'clientB', 'barberA', 'barberB'].includes(name)) {
-      const login = await apiJson(
-        status,
-        '/auth/v1/token?grant_type=password',
-        status.ANON_KEY,
-        {
-          method: 'POST',
-          body: JSON.stringify({ email, password }),
-        },
-      );
-      assert.equal(
-        login.status,
-        200,
-        'Local password authentication failed; body suppressed.',
-      );
-      assert.equal(
-        login.body.user?.id,
-        users[name],
-        'Login returned the wrong fixture user.',
-      );
-      assert.ok(
-        typeof login.body.access_token === 'string',
-        'Local user JWT missing.',
-      );
-      tokens[name] = login.body.access_token;
-    }
-  }
-  return { users, tokens };
-}
-
-async function checkApi(status, fixtures, tokens) {
-  const before = databaseSnapshot();
-  let checks = 0;
-  let privilegedMutationDenials = 0;
-  for (const table of coreTables) {
-    const row = fixtures.rows[table];
-    const path = `/rest/v1/${table}?select=*&id=eq.${row.id}`;
-    const control = await apiJson(status, path, status.SERVICE_ROLE_KEY);
-    assert.equal(
-      control.status,
-      200,
-      `${table}: privileged API control failed.`,
-    );
-    assert.equal(
-      control.body.length,
-      1,
-      `${table}: fixture must actually exist.`,
-    );
-    assert.equal(control.body[0].id, row.id);
-    if (appendOnlyTables.includes(table)) {
-      for (const method of ['PATCH', 'DELETE']) {
-        const result = await apiJson(status, path, status.SERVICE_ROLE_KEY, {
-          method,
-          ...(method === 'PATCH'
-            ? { body: JSON.stringify({ updated_at: '2000-01-01T00:00:00Z' }) }
-            : {}),
-        });
-        assert.equal(
-          result.status,
-          500,
-          `${table}: privileged ${method} must reject append-only mutation.`,
-        );
-        assert.equal(result.body.code, '55000');
-        assert.equal(
-          result.body.message,
-          'Append-only records cannot be changed; append a correction.',
-        );
-        privilegedMutationDenials++;
-      }
-    }
-    for (const [identity, token] of Object.entries({
-      ...tokens,
-      anon: status.ANON_KEY,
-    })) {
-      for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) {
-        const result = await apiJson(
-          status,
-          method === 'POST' ? `/rest/v1/${table}` : path,
-          token,
-          {
-            method,
-            ...(method === 'POST'
-              ? { body: JSON.stringify(fixtures.candidates[table]) }
-              : {}),
-            ...(method === 'PATCH'
-              ? { body: JSON.stringify({ updated_at: '2000-01-01T00:00:00Z' }) }
-              : {}),
-          },
-        );
-        if (method === 'POST') {
-          assert.equal(
-            result.status,
-            identity === 'anon' ? 401 : 403,
-            `${identity} ${table} POST must be denied.`,
-          );
-          assert.equal(
-            result.body.code,
-            '42501',
-            `${identity} ${table}: RLS error code expected.`,
-          );
-          assert.equal(result.body.details, null);
-          assert.equal(result.body.hint, null);
-          assert.ok(result.body.message.includes('row-level security'));
-        } else {
-          assert.equal(
-            result.status,
-            200,
-            `${identity} ${table} ${method}: expected filtered denial.`,
-          );
-          assert.deepEqual(
-            result.body,
-            [],
-            `${identity} ${table} ${method}: no fields may leak.`,
-          );
-        }
-        checks++;
-      }
-    }
-  }
-  assert.equal(
-    databaseSnapshot(),
-    before,
-    'Denied API writes cannot change any fixture.',
-  );
-  console.log(
-    `API: PASS (${checks} raw-response denials; 4 real authenticated users + anon × 21 tables × GET/POST/PATCH/DELETE; 21 privileged positive controls; ${privilegedMutationDenials} privileged append-only API denials; database unchanged).`,
-  );
-  console.log(
-    'Raw denial contract: GET/PATCH/DELETE = 200 []; POST = authenticated 403 / anon 401 {code:"42501",details:null,hint:null,message:"...row-level security..."}.',
-  );
-}
-
 let resetAllowed = false;
 try {
   assert.deepEqual(
@@ -596,7 +412,10 @@ try {
   resetAllowed = true;
   assert.equal(runLocal('reset'), 0, 'Initial local reset failed.');
   checkCatalog();
-  const { users, tokens } = await makeUsers(status);
+  const { users, tokens } = await makeUsers(status, {
+    additional: ['admin', 'unprofiled'],
+    adversarialMetadata: true,
+  });
   const fixtures = coreFixtures(users);
   queryLocal(
     `begin; ${[...fixtures.extra, ...Object.entries(fixtures.rows), ...fixtures.after].map(([table, row]) => insertSql(table, row)).join('\n')} commit;`,
@@ -609,7 +428,13 @@ try {
       .join('\n')} rollback;`,
   );
   await checkConstraints(fixtures, users);
-  await checkApi(status, fixtures, tokens);
+  await verifyBaselineApi({
+    status,
+    fixtures,
+    tokens,
+    users,
+    snapshot: databaseSnapshot,
+  });
   console.log('Core schema live verification: PASS.');
 } catch (error) {
   // No Auth responses, request headers, SQL fixture values or keys in failure logs.

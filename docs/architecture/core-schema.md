@@ -1,5 +1,9 @@
 # Core schema foundation — P0-T10
 
+P0-T11 now adds [read-only baseline policies](baseline-rls.md). The deny-all description below
+records the original P0-T10 boundary; `db:test:core` exercises the current policies while
+preserving the schema/constraint/immutable-evidence checks.
+
 Migration: `supabase/migrations/20261007100000_core_schema.sql`, following the merged
 PostGIS prerequisite. This is a **minimal schema foundation**, not a completed booking,
 payment, payout or account-deletion feature.

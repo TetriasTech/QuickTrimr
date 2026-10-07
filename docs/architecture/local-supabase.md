@@ -119,12 +119,15 @@ pnpm db:test:core --allow-local-reset
 ```
 
 The live check resets twice, compares normalized `public`/`extensions`/`private` schema SHA-256 fingerprints
+including grants (since P0-T11),
 and migration history, checks PostGIS geography, and serves/invokes the real probe with success,
 missing/forged JWT and method-rejection cases. It stops only the function-server process group
 it created. See [ticket evidence](../qa/P0-T09.md) for actual runs and outstanding checks.
 The core check exercises catalogs, constraints under real contention, append-only enforcement
 and authenticated cross-user API denial. It resets on completion to remove disposable fixtures;
 see the [core contract](core-schema.md) and [P0-T10 evidence](../qa/P0-T10.md).
+P0-T11 adapts that core verifier to [read-only ownership policies](baseline-rls.md), with live
+own/admin positive reads, forged-metadata and cross-user denial; see [P0-T11 evidence](../qa/P0-T11.md).
 
 ## Hosted project: main only
 
