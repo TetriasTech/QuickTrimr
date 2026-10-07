@@ -148,6 +148,9 @@ QuickTrimr local database and replays migrations. Use `pnpm db:new <lower_snake_
 `pnpm db:migrate` for migration work. See the [local workflow](docs/architecture/local-supabase.md)
 for naming/review conventions, function invocation, live verification and main-only hosted pushes.
 Schema changes belong in committed migrations; never replace one with a hosted dashboard edit.
+The [core schema contract](docs/architecture/core-schema.md) documents the 21-table deny-all
+foundation. On a disposable local stack, run `pnpm db:test:core --allow-local-reset` for its
+catalog, concurrency, retention and API-denial evidence; this command erases local data.
 
 ## Repository map
 
