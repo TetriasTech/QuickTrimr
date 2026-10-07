@@ -58,9 +58,10 @@ pnpm db:reset
 
 **Reset erases QuickTrimr's local database data** and recreates it from the committed migrations.
 It cannot target a linked/remote database through the wrapper. Keep irreplaceable data out of
-this disposable stack. Seed loading is disabled until P0-T12 adds committed seed files and
-updates config; P0-T09 includes only the PostGIS infrastructure migration. P0-T10 supplies the
-application schema, and P0-T11 supplies its RLS.
+this disposable stack. P0-T12 now loads the committed [foundation fixtures](../../supabase/seed/README.md)
+after migrations. `pnpm db:seed` inserts missing seed IDs without overwriting existing rows,
+including edited fixtures and append-only evidence. P0-T09 originally replayed PostGIS alone;
+P0-T10/P0-T11 supply the current schema and read-only RLS.
 
 Schema changes are files in a PR. A migration is immutable after merge: correct it with a new
 migration, never edit, rename, delete or squash the merged file. Review the diff against `main`,
@@ -116,6 +117,7 @@ pnpm db:verify
 # Destructive: use only on a disposable QuickTrimr local database.
 pnpm db:test:live --allow-local-reset
 pnpm db:test:core --allow-local-reset
+pnpm db:test:seed --allow-local-reset
 ```
 
 The live check resets twice, compares normalized `public`/`extensions`/`private` schema SHA-256 fingerprints
@@ -128,6 +130,11 @@ and authenticated cross-user API denial. It resets on completion to remove dispo
 see the [core contract](core-schema.md) and [P0-T10 evidence](../qa/P0-T10.md).
 P0-T11 adapts that core verifier to [read-only ownership policies](baseline-rls.md), with live
 own/admin positive reads, forged-metadata and cross-user denial; see [P0-T11 evidence](../qa/P0-T11.md).
+Core/replay verifiers explicitly reset without loading seeds and leave an empty database.
+The seed verifier exercises reset/reseed/reset full-data hashes, every enum, non-destructive
+reruns, atomic failure, geography/index eligibility and real seeded-row API access; it restores
+pristine seeds during cleanup. See [P0-T12 evidence](../qa/P0-T12.md).
+All three commands erase local data; never use them on fixtures you need to retain.
 
 ## Hosted project: main only
 
@@ -155,6 +162,8 @@ Do not run these from a feature branch or use an existing myClean project link. 
 and database credentials remain in the CLI credential store/operator environment, never tracked
 files or app bundles. Never use a remote reset to apply a migration. The local wrappers do not
 accept `--linked`, `--db-url`, `--all` or other target overrides.
+Do not add `--include-seed` to a hosted push: the committed foundation seed is local synthetic
+data, including a non-login-ready admin identity, not customer provisioning.
 
 References: [CLI installation](https://supabase.com/docs/guides/local-development/cli/getting-started),
 [local migration workflow](https://supabase.com/docs/guides/local-development/cli-workflows),

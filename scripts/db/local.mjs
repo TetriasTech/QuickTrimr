@@ -35,11 +35,18 @@ export function commandArgs(command, args = []) {
     start: ['start', '--yes'],
     stop: ['stop', '--project-id', projectId],
     reset: ['db', 'reset', '--local'],
+    'reset-empty': ['db', 'reset', '--local', '--no-seed'],
     migrate: ['migration', 'up', '--local'],
   };
   if (!Object.hasOwn(commands, command))
     throw new Error('Unknown local workflow command.');
   return commands[command];
+}
+
+export function assertLocalProject() {
+  const config = readFileSync(resolve(root, 'supabase/config.toml'), 'utf8');
+  if (!/^project_id = "quicktrimr"$/m.test(config))
+    throw new Error('Refusing to run with a different local project ID.');
 }
 
 export function runLocal(
@@ -48,9 +55,7 @@ export function runLocal(
   { run = spawnSync, env = process.env } = {},
 ) {
   const cliArgs = commandArgs(command, args);
-  const config = readFileSync(resolve(root, 'supabase/config.toml'), 'utf8');
-  if (!/^project_id = "quicktrimr"$/m.test(config))
-    throw new Error('Refusing to run with a different local project ID.');
+  assertLocalProject();
   const localEnv = { ...env };
   // Hosted operator credentials are irrelevant to local commands and are never forwarded.
   for (const name of Object.keys(localEnv))

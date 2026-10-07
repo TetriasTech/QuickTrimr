@@ -16,6 +16,14 @@ import {
 
 // Synthetic, disposable fixtures only. The amounts are the KB's worked example,
 // not defaults or a second financial policy implementation.
+export const bookingSnapshotExample = Object.freeze({
+  service_price_cents: 4500,
+  commission_pct_snapshot: 20,
+  gross_cents: 4500,
+  commission_cents: 900,
+  barber_net_cents: 3600,
+});
+
 export function coreFixtures(users) {
   const ids = Object.fromEntries(
     [
@@ -28,13 +36,7 @@ export function coreFixtures(users) {
       'batch',
     ].map((name) => [name, randomUUID()]),
   );
-  const amounts = {
-    service_price_cents: 4500,
-    commission_pct_snapshot: 20,
-    gross_cents: 4500,
-    commission_cents: 900,
-    barber_net_cents: 3600,
-  };
+  const amounts = bookingSnapshotExample;
   const location = 'SRID=4326;POINT(151.2 -33.8)';
   const profile = (id, role) => ({
     id,

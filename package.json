@@ -16,11 +16,13 @@
     "db:start": "node scripts/db/local.mjs start",
     "db:stop": "node scripts/db/local.mjs stop",
     "db:reset": "node scripts/db/local.mjs reset",
+    "db:seed": "node scripts/db/seed.mjs",
     "db:migrate": "node scripts/db/local.mjs migrate",
     "db:new": "node scripts/db/local.mjs new",
     "db:verify": "node scripts/db/verify.mjs",
     "db:test:live": "node scripts/db/verify-live.mjs",
     "db:test:core": "node scripts/db/verify-core.mjs",
+    "db:test:seed": "node scripts/db/verify-seed.mjs",
     "functions:serve": "node scripts/db/local.mjs serve",
     "build": "pnpm --recursive --if-present build"
   },
