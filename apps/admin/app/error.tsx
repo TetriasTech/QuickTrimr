@@ -1,6 +1,7 @@
 'use client';
 
 // Next error boundaries need client interactivity to reset a failed render.
+import { ErrorState } from '@/components/admin/states';
 import { Button } from '@/components/ui/button';
 
 export default function ErrorBoundary({
@@ -11,13 +12,14 @@ export default function ErrorBoundary({
 }) {
   return (
     <main className="mx-auto max-w-xl px-6 py-16">
-      <h1 className="text-3xl font-semibold">The workspace could not load</h1>
-      <p role="alert" className="my-4 text-muted-foreground">
-        Please try again. No operational details are shown here.
-      </p>
-      <Button variant="outline" onClick={reset}>
-        Try again
-      </Button>
+      <ErrorState
+        title="The workspace could not load"
+        action={
+          <Button variant="outline" onClick={reset}>
+            Try again
+          </Button>
+        }
+      />
     </main>
   );
 }

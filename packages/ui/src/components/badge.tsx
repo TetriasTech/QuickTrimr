@@ -2,7 +2,9 @@ import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { colors, radius, spacing, typography, useTheme } from '../theme';
 
-export type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+import type { BadgeTone } from '../presentation/status';
+
+export type { BadgeTone } from '../presentation/status';
 
 export interface BadgeProps {
   label: string;

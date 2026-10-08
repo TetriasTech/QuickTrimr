@@ -1,8 +1,8 @@
-# QuickTrimr admin shell — P0-T16 / TRIMR-25
+# QuickTrimr admin foundation — P0-T16 / P0-T17
 
 Next.js App Router, TypeScript, Tailwind v4 and a manually installed, adapted shadcn/ui Button.
-Real authentication belongs to P1-T02; the admin layout/component collection belongs to P0-T17;
-operational data screens belong to Phase 5. This ticket does not connect to any backend.
+Real authentication belongs to P1-T02; operational data screens belong to Phase 5. P0-T17 adds
+the guarded shell and shared admin components, not a backend or a working admin login.
 
 ## Local setup
 
@@ -42,6 +42,27 @@ requests try forged role parameters, cookies and headers, including a forged adm
 tests inspect requests, console errors, computed Tailwind styles and navigation. Screenshots and
 failure traces are written under ignored `test-results/`.
 
+For positive component interactions, run the separate synthetic-only harness after building:
+
+```bash
+pnpm --filter @quicktrimr/admin test:fixtures
+# Or inspect it locally after building, from the repository root:
+node scripts/qa/admin-fixture-server.mjs
+```
+
+The harness binds only `127.0.0.1:3101`; leave that port free. It bundles `fixtures/client.tsx`
+outside Next's app routes and uses the real compiled CSS. It projects P0-T12's in-memory seed
+bookings to `id`, `status`, `gross_cents`, serves one bounded page and a filtered count, and
+simulates a rejected/retried reason submission without performing a business action. It accepts
+no credentials, environment-file loading or target URL and does not connect to a database.
+Fixture identity is explicitly **not signed in**. This is component-protocol evidence, not
+authenticated Phase 5 query evidence. Nothing imports this harness from the production app.
+Screenshots are under `test-results/fixtures/`; the tests stop only their own server.
+
+The default build uses Turbopack. If a restricted host blocks its CSS worker's port binding,
+`pnpm --filter @quicktrimr/admin exec next build --webpack` is a supported local verification
+alternative; do not change the build policy or interpret that host error as a passing default build.
+
 ## Server access contract (RULE-ADMIN-01)
 
 - `src/lib/auth/session.ts` is server-only and currently always returns `null` in every environment.
@@ -55,7 +76,7 @@ failure traces are written under ignored `test-results/`.
 - P1-T02 must replace the session resolver with verified Supabase identity plus a database role
   lookup, and implement its full auth/expiry/audit requirements. Client-settable roles are not proof.
 - Tests inject admin/non-admin sessions only via module mocks, never through a runtime flag/route.
-  The protected empty shell is intentionally inaccessible in the running app until real auth lands.
+  The protected shell is intentionally inaccessible in the running app until real auth lands.
 
 Next may encode a redirect in a streamed HTML/RSC response after headers have been sent; denial
 tests verify the redirect **and raw body**, not only the HTTP status or visible screen.
@@ -64,13 +85,15 @@ tests verify the redirect **and raw body**, not only the HTTP status or visible 
 
 The login Server Component executes `src/workspace-contract.ts`, importing all four workspace
 packages through Next's bundler. `@quicktrimr/ui/metadata` is a platform-neutral subpath so Next does
-not load the package's React Native components. Mobile imports/exports remain unchanged. Shared
-roles and schemas are reused, not re-declared. Native primitives are not duplicated as web widgets;
-P0-T17 will build the prescribed shared admin collection here.
+not load the package's React Native components. The additive `@quicktrimr/ui/presentation` subpath
+contains pure money/status presentation; both surfaces reuse it without putting React Native into
+the web bundle. Mobile component APIs remain unchanged. Shared roles and schemas are reused, not
+re-declared; the [shared admin collection](src/components/README.md) provides web adapters.
 
 `components.json`, CSS variables and `src/lib/utils.ts` configure shadcn additions. The shell's
 Button uses the native-button/CVA pattern with only the needed variants and no client boundary.
-Server Components are the default; `app/error.tsx` is a Client Component because retry calls `reset`.
+Server Components are the default; the error boundary, controlled table and confirmation dialog
+are Client Components for retry, table intent and native modal/async interaction respectively.
 Loading and error content contain no operational details. No fonts or assets require network access.
 
 ## Vercel configuration only — do not deploy yet

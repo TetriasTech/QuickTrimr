@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const privateContent =
-  /No operational screens yet|private child|"(?:client_address|payment_intent_id|booking_status_history)"/;
+  /data-admin-shell|data-table-row|fixture-admin|No operational screens yet|private child|"(?:client_address|payment_intent_id|booking_status_history)"/;
 
 for (const role of ['anonymous', 'client', 'barber', 'admin', 'expired']) {
   for (const rsc of [false, true]) {

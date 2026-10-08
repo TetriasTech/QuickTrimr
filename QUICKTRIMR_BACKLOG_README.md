@@ -1616,9 +1616,9 @@ owner: Tony
 phase: 0
 priority: High
 jiraKey: TRIMR-26
-dependsOn: [P0-T06, P0-T16]
+dependsOn: [P0-T06, P0-T12, P0-T16]
 affects: [P5-T01, P5-T02, P5-T03, P5-T04, P5-T06, P5-T09, P5-T11, P5-T12]
-knowledgeBase: [ADR-007, ADR-013, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, ENUM-DISPUTE-STATUS]
+knowledgeBase: [ADR-007, ADR-009, ADR-013, RULE-ADMIN-01, RULE-ADMIN-04, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, ENUM-DISPUTE-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation, admin]
 ```
@@ -1631,30 +1631,38 @@ Eight Phase 5 tickets are list-and-detail screens over different entities. Built
 
 **Scope**
 
-Admin shell: sidebar, header with the signed-in admin, and content area.
+User-confirmed Option A (2026-10-08): presentation foundation and controlled server-table contracts, not real auth/data integration. Build sidebar/header/content compositions, accepting the identity returned by the server guard. Integrate the shell behind `requireAdmin()`; keep `readAdminSession()` deny-all in development and production. Positive interactive browser evidence uses a separate loopback-only fixture harness outside Next routes, never a preview session, public operational page or runtime auth bypass. Real signed-in-app evidence belongs to `P1-T02`.
 
 Components: `DataTable` wrapping TanStack Table with server-side pagination, sorting and filtering — never client-side over a full fetch (`RULE-ADMIN-04`); `StatusBadge` covering booking, payment, earning, payout and dispute statuses; `PageHeader`; `DetailPanel`; `ConfirmDialog` supporting a **required reason field** and a financial-impact summary; `LoadingState`; `EmptyState`; `ErrorState`; and a `Money` component rendering integer cents in a consistent format.
 
 The `Money` component is the only place cents become a displayed string. A number formatted ad hoc in one screen and differently in another is how an admin reads $4.50 as $450.
 
-All of it works against `P0-T12`'s seed data.
+Use `P0-T12`'s current synthetic seed source in the isolated harness. Do not invent absent contact/catalogue/Connect/review fields. The harness serves only an explicitly projected fixture page and filtered row count; it cannot read `.env`, query a real database or accept a target URL. It is not shipped as a production app route. Capture responsive screenshots and real browser interactions. Fixture HTTP paging/sorting/filtering proves the component protocol, not Phase 5's eventual indexed/authenticated production queries.
+
+**Component contract examples**
+
+- `DataTable`: controlled `query = { pagination: { pageIndex: 0, pageSize: 5 }, sorting: [{ id: 'status', desc: false }], columnFilters: [] }`; caller supplies **one page** of rows, its filtered `rowCount`, column definitions and stable row IDs. Next emits `pageIndex: 1`; sorting/filtering emits page zero. Manual pagination/sorting/filtering stay enabled; no client row transformations. Loading/error/empty states do not display stale rows. The owning server loader must independently verify admin, validate/allowlist query fields, bound its DB query, and supply the filtered count.
+- `ConfirmDialog`: `open`, `title`, consequence/financial-impact content, `requireReason`, `onCancel`, and async `onConfirm({ reason })`. Whitespace-only required reasons cannot submit. One pending submission disables repeat/cancel/escape; rejection displays a safe retry state without error internals. Only the reason is emitted, not a client-derived amount/status/permission. Server actions later revalidate reason, role, amount/idempotency and append audit/history; this dialog is not their enforcement.
+- `Money`: branded integer AUD cents, e.g. `4501 → A$45.01`, `-1 → -A$0.01`; no fractional-cent input or floating-point money arithmetic. Share a native-free formatter and status presentation metadata through `packages/ui`, with web adapters in the admin component folder and unchanged native component APIs.
 
 **Acceptance criteria**
 
-- [ ] The admin shell renders with sidebar, header and content area.
-- [ ] `DataTable` paginates, sorts and filters **server-side**; no screen fetches a full table and filters in the browser.
+- [ ] Shell/sidebar/header/content render in server-resolved admin unit fixtures and the isolated browser harness. Actual protected HTML/RSC requests remain denied before shell/data render, including forged admin claims.
+- [ ] `DataTable` is manually controlled for pagination/sort/filter; browser requests obtain one projected fixture page and filtered count from the harness server, never the full dataset. State changes/reset-to-first-page and terminal-page controls are tested; production integration remains Phase 5.
 - [ ] `StatusBadge` covers every value of every status enum it is used with, with a defined unknown fallback.
 - [ ] `ConfirmDialog` can require a reason and block confirmation until it is provided.
 - [ ] `ConfirmDialog` can display a financial-impact summary.
 - [ ] `Money` renders integer cents consistently and is the only formatter used.
 - [ ] Every component renders correctly against seed data, including empty and error cases.
 - [ ] No duplicate table or badge implementation exists outside `packages/ui` or the admin component folder.
+- [ ] Confirmation blocks whitespace-only required reasons and duplicate pending submissions; rejection/retry, keyboard focus/escape and cancellation are tested. No business action/provider call is performed.
+- [ ] Docs specify component contracts, independent server guards, fixture isolation, extension points and deferred real auth/data evidence.
 
-**Tests** — a render test per component; a `StatusBadge` coverage test driven from the shared enum tuples; a `Money` test covering zero, a round dollar, a partial cent boundary and a negative.
+**Tests** — a render test per component; shared-tuple badge coverage for all five enum families and safe unknown/prototype fallbacks; exact integer money formatting (zero/whole dollar/cent remainder/negative/safe-integer limits; reject fractions/non-finite values); controlled table state/no client transformations/terminal/loading/error/empty cases; async reason/duplicate/rejection/focus/cancel dialog cases; isolated fixture browser paging/filter/sort/confirmation/responsive screenshots. Preserve actual Next HTML/RSC/forged-role/no-operational-network denial tests. Build/typecheck/lint/test/format/client-env/graph checks and the advisory audit; evidence in `docs/qa/P0-T17.md`.
 
-**Out of scope** — real data integration (Phase 5); admin auth (`P1-T02`).
+**Out of scope** — real data integration (Phase 5); admin auth (`P1-T02`); production query endpoints, business mutations, audit/history writers, Stripe/refund/payout calls, schema/RLS changes or deployments.
 
-**Sync notes** — eight Phase 5 tickets compose these. A `DataTable` prop change touches all of them.
+**Sync notes** — P5-T01/T02/T03/T04/T06/T09/T11/T12 consume these controlled presentation contracts; their loaders/actions independently call `requireAdmin()` before data work. They own query validation/bounds/allowlists/index plans, cancellation/refresh/stale-request handling and real auth/API denial, not this fixture harness. P1-T02 replaces the deny-all resolver and proves the signed-in app; no production path imports fixture identities/data/server code. Shared presentation preserves the native booking badge API; currency formatting is single-source. Generated sections remain for the reviewed main automation.
 
 ---
 

@@ -1,3 +1,4 @@
+import { AdminShell } from '@/components/admin/layout';
 import { requireAdmin } from '@/lib/auth/require-admin';
 
 import type { ReactNode } from 'react';
@@ -10,6 +11,6 @@ export default async function AdminLayout({
 }: {
   children: ReactNode;
 }) {
-  await requireAdmin();
-  return <main className="mx-auto max-w-5xl px-6 py-16">{children}</main>;
+  const admin = await requireAdmin();
+  return <AdminShell adminUserId={admin.userId}>{children}</AdminShell>;
 }

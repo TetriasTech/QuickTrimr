@@ -21,6 +21,25 @@
   --muted: #e9ede9;
   --muted-foreground: #526158;
   --border: #ccd5ce;
+  --danger: #9b302f;
+  --warning: #72500d;
+  --info: #245e7d;
+}
+
+.status-badge[data-tone='neutral'] {
+  color: var(--muted-foreground);
+}
+.status-badge[data-tone='success'] {
+  color: var(--primary);
+}
+.status-badge[data-tone='warning'] {
+  color: var(--warning);
+}
+.status-badge[data-tone='danger'] {
+  color: var(--danger);
+}
+.status-badge[data-tone='info'] {
+  color: var(--info);
 }
 
 @layer base {

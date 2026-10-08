@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./presentation": {
+      "types": "./src/presentation/index.ts",
+      "default": "./src/presentation/index.ts"
+    },
     "./metadata": {
       "types": "./src/node.ts",
       "default": "./src/node.ts"
