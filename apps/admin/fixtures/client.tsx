@@ -50,10 +50,11 @@ function FixtureApp() {
     columnFilters: [],
   });
   const [result, setResult] = useState<{
+    forQuery: TableQuery | null;
     rows: Row[];
     rowCount: number;
     phase: 'ready' | 'loading' | 'error';
-  }>({ rows: [], rowCount: 0, phase: 'loading' });
+  }>({ forQuery: null, rows: [], rowCount: 0, phase: 'loading' });
   const [open, setOpen] = useState(false),
     [confirmed, setConfirmed] = useState(false);
   useEffect(() => {
@@ -66,7 +67,7 @@ function FixtureApp() {
       status: String(query.columnFilters[0]?.value ?? ''),
     });
     async function load() {
-      setResult({ rows: [], rowCount: 0, phase: 'loading' });
+      setResult({ forQuery: query, rows: [], rowCount: 0, phase: 'loading' });
       try {
         const response = await fetch(`/api/bookings?${params}`, {
           signal: controller.signal,
@@ -76,15 +77,25 @@ function FixtureApp() {
           rows: Row[];
           rowCount: number;
         };
-        if (!controller.signal.aborted) setResult({ ...page, phase: 'ready' });
+        if (!controller.signal.aborted)
+          setResult({ ...page, forQuery: query, phase: 'ready' });
       } catch {
         if (!controller.signal.aborted)
-          setResult({ rows: [], rowCount: 0, phase: 'error' });
+          setResult({ forQuery: query, rows: [], rowCount: 0, phase: 'error' });
       }
     }
-    load().catch(() => setResult({ rows: [], rowCount: 0, phase: 'error' }));
+    load().catch(() => {
+      if (!controller.signal.aborted)
+        setResult({ forQuery: query, rows: [], rowCount: 0, phase: 'error' });
+    });
     return () => controller.abort();
   }, [query]);
+  // Query changes render before effects run. Never label a previous query's
+  // result as the new page, even for that first render before loading starts.
+  const current =
+    result.forQuery === query
+      ? result
+      : { rows: [], rowCount: 0, phase: 'loading' as const };
   return (
     <AdminShell adminUserId="fixture-admin — not signed in">
       <PageHeader
@@ -98,12 +109,12 @@ function FixtureApp() {
         <DataTable
           caption="Bookings"
           columns={columns}
-          rows={result.rows}
-          rowCount={result.rowCount}
+          rows={current.rows}
+          rowCount={current.rowCount}
           query={query}
           getRowId={(row) => row.id}
           onQueryChange={setQuery}
-          phase={result.phase}
+          phase={current.phase}
           filters={
             <label className="flex items-center gap-3 text-sm">
               Booking status

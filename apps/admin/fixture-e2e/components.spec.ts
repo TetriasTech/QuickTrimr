@@ -31,6 +31,8 @@ test('isolated seed page sorts/filters/paginates on the fixture server, then exe
   }[] = [];
   const errors: string[] = [],
     requests: string[] = [];
+  const secondPage = Promise.withResolvers<void>();
+  let holdSecondPage = true;
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('request', (request) => requests.push(request.url()));
   await page.route('**/api/bookings?**', async (route) => {
@@ -40,6 +42,10 @@ test('isolated seed page sorts/filters/paginates on the fixture server, then exe
     const url = new URL(route.request().url());
     expect(response.status()).toBe(200);
     responses.push({ url, body: await response.json() });
+    // Hold delivery of an ACTUAL server page to prove old rows disappear while
+    // the new controlled query is loading. Do not mock/replace its payload.
+    if (holdSecondPage && url.searchParams.get('page') === '1')
+      await secondPage.promise;
     await route.fulfill({ response });
   });
   await page.goto('/');
@@ -52,7 +58,15 @@ test('isolated seed page sorts/filters/paginates on the fixture server, then exe
   await expect(page.getByRole('row')).toHaveCount(6);
   const firstIds = await page.locator('tbody tr').allTextContents();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('Loading bookings…')).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Next', exact: true }),
+  ).toBeDisabled();
+  holdSecondPage = false;
+  secondPage.resolve();
   await expect(page.getByText('Page 2 of 5 · 24 records')).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(5);
   expect(await page.locator('tbody tr').allTextContents()).not.toEqual(
     firstIds,
   );

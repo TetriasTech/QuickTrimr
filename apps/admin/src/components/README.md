@@ -37,7 +37,9 @@ offer a reset, or `emptyAction`; errors accept `retryAction`. No table total is 
 The future server owner must validate and allowlist fields/directions/filter values, bound page
 sizes, use indexed filtering/sorting with a stable tie-breaker, compute a filtered count server-side,
 and prove raw-body non-admin denial. Query cancellation/refresh and stale-response handling belong
-to that owning screen. Never fetch a full database result to make this component work.
+to that owning screen. Associate results with their query so a new query cannot render old rows
+before its loading effect starts; the isolated harness demonstrates this contract. Never fetch
+a full database result to make this component work.
 
 TanStack v8 exposes non-memoizable closures. `DataTable` alone opts out of React Compiler with
 `use no memo`; one documented compatibility diagnostic is suppressed at `useReactTable`, not
