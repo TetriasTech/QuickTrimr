@@ -1,0 +1,132 @@
+{
+  "command": "pnpm audit --prod --json",
+  "date": "2026-10-08",
+  "base": "9a28116",
+  "scanResult": "nonzero: inherited advisories present",
+  "vulnerabilities": {
+    "info": 0,
+    "low": 1,
+    "moderate": 7,
+    "high": 4,
+    "critical": 1
+  },
+  "advisories": [
+    {
+      "package": "uuid",
+      "severity": "moderate",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+      "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+      "versions": ["7.0.3"],
+      "unchangedFromBase": true,
+      "adminPath": false
+    },
+    {
+      "package": "decode-uri-component",
+      "severity": "moderate",
+      "title": "decode-uri-component: Denial of service via exponential decoding of malformed percent-encoded input",
+      "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr",
+      "versions": ["0.2.2"],
+      "unchangedFromBase": true,
+      "adminPath": false
+    },
+    {
+      "package": "node-forge",
+      "severity": "high",
+      "title": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements",
+      "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv",
+      "versions": ["1.4.0"],
+      "unchangedFromBase": true,
+      "adminPath": false
+    },
+    {
+      "package": "braces",
+      "severity": "high",
+      "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+      "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "versions": ["3.0.3"],
+      "unchangedFromBase": true,
+      "adminPath": false
+    },
+    {
+      "package": "sprintf-js",
+      "severity": "moderate",
+      "title": "sprintf-js vulnerable to denial of service through unbounded precision specifiers",
+      "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+      "versions": ["1.0.3"],
+      "unchangedFromBase": true,
+      "adminPath": false
+    },
+    {
+      "package": "source-map-js",
+      "severity": "high",
+      "title": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+      "url": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q",
+      "versions": ["1.2.1"],
+      "unchangedFromBase": true,
+      "adminPath": true
+    },
+    {
+      "package": "shell-quote",
+      "severity": "critical",
+      "title": "shell-quote: `quote()` command injection via a line terminator in a token after a `{ comment }` token",
+      "url": "https://github.com/advisories/GHSA-pqg4-j6r4-53mv",
+      "versions": ["1.10.0"],
+      "unchangedFromBase": true,
+      "adminPath": false
+    },
+    {
+      "package": "next",
+      "severity": "moderate",
+      "title": "Next.js: Pending `use cache` fill can leak Draft Mode content into regular responses and persisted pages",
+      "url": "https://github.com/advisories/GHSA-3w37-wq28-93x7",
+      "versions": ["16.3.7"],
+      "unchangedFromBase": true,
+      "adminPath": true
+    },
+    {
+      "package": "next",
+      "severity": "moderate",
+      "title": "Next.js has cache poisoning of SSG and ISR pages in self-hosted applications",
+      "url": "https://github.com/advisories/GHSA-4jqv-mc3x-m676",
+      "versions": ["16.3.7"],
+      "unchangedFromBase": true,
+      "adminPath": true
+    },
+    {
+      "package": "next",
+      "severity": "low",
+      "title": "Next.js has information disclosure in development server's Model Context Protocol endpoint",
+      "url": "https://github.com/advisories/GHSA-39w2-rjm5-chcv",
+      "versions": ["16.3.7"],
+      "unchangedFromBase": true,
+      "adminPath": true
+    },
+    {
+      "package": "next",
+      "severity": "moderate",
+      "title": "Next.js has information disclosure in App Router metadata image routes via dynamicParams bypass",
+      "url": "https://github.com/advisories/GHSA-f87g-xv8r-7p7x",
+      "versions": ["16.3.7"],
+      "unchangedFromBase": true,
+      "adminPath": true
+    },
+    {
+      "package": "next",
+      "severity": "moderate",
+      "title": "Next.js has cache poisoning in SSG/ISR rendering that leads to cross-user content substitution and persistent denial of service",
+      "url": "https://github.com/advisories/GHSA-mcj8-r9mp-w47p",
+      "versions": ["16.3.7"],
+      "unchangedFromBase": true,
+      "adminPath": true
+    },
+    {
+      "package": "next",
+      "severity": "high",
+      "title": "Next.js has Server-Side Request Forgery in Image Optimization",
+      "url": "https://github.com/advisories/GHSA-cjq9-62q9-8jv4",
+      "versions": ["16.3.7"],
+      "unchangedFromBase": true,
+      "adminPath": true
+    }
+  ]
+}

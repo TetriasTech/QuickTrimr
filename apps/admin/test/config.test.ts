@@ -39,7 +39,11 @@ it('keeps server components as the default and documents every client boundary',
       }
     }
   }
-  expect(clientFiles).toEqual(['app/error.tsx']);
+  expect(clientFiles.sort()).toEqual([
+    'app/error.tsx',
+    'src/components/admin/confirm-dialog.tsx',
+    'src/components/admin/data-table.tsx',
+  ]);
   for (const file of ['session.ts', 'require-admin.ts']) {
     const source = await readFile(
       new URL(`../src/lib/auth/${file}`, import.meta.url),

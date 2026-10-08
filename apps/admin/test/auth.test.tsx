@@ -39,7 +39,7 @@ describe('RULE-ADMIN-01 server boundary', () => {
     },
   );
 
-  it('allows only a server-resolved admin and renders the empty shell', async () => {
+  it('allows only a server-resolved admin and renders the guarded shell with its identity', async () => {
     const session = {
       userId: 'server-verified-id',
       role: USER_ROLE_VALUE.ADMIN,
@@ -48,9 +48,11 @@ describe('RULE-ADMIN-01 server boundary', () => {
     expect(await requireAdmin()).toEqual(session);
     const page = await AdminPage();
     const layout = await AdminLayout({ children: page });
-    expect(renderToStaticMarkup(layout)).toContain(
-      'No operational screens yet.',
-    );
+    const html = renderToStaticMarkup(layout);
+    expect(html).toContain('No operational screens yet.');
+    expect(html).toContain('data-admin-shell');
+    expect(html).toContain('Account: server-verified-id');
+    expect(html).toContain('Admin navigation');
   });
 
   it('does not continue a protected page while role verification is pending', async () => {
