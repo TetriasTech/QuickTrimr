@@ -169,7 +169,7 @@ Beyond the ticket's own acceptance criteria:
 
 | Phase | Title | Gate — do not start the next phase until |
 |---|---|---|
-| 0 | Foundations & Decisions | Every `TBC-*` blocking Phase 1–3 is resolved; monorepo, CI, Supabase, Stripe and Google sandboxes exist. |
+| 0 | Foundations & Decisions | Every `TBC-*` blocking Phase 1–3 is resolved; monorepo, CI, Supabase, Stripe and Google projects exist. Google billing/provider verification is explicitly deferred to P0-T20 under `RULE-OPS-GOOGLE-DEV-DEFERRAL`; only unrelated tickets whose own readiness gates pass may proceed before it closes. |
 | 1 | Auth, Profiles, Onboarding & Services | A barber can be created, Connect-verified, priced and discoverable; a client can save an address. |
 | 2 | Available Now, Discovery & Booking Requests | A client can find a barber and send a request, and exactly one acceptance can win it. No money yet. |
 | 3 | Payments, Earnings, Cancellations & Payouts | An accepted request captures money, creates an earning, can be refunded, and can be batched for payout. |
@@ -794,7 +794,7 @@ phase: 0
 priority: Highest
 jiraKey: TRIMR-12
 dependsOn: [P0-T01]
-affects: [P0-T04, P0-T09, P0-T18, P1-T07, P4-T05, P6-T03, P6-T04, P6-T09]
+affects: [P0-T04, P0-T09, P0-T18, P0-T20, P1-T07, P4-T05, P6-T03, P6-T04, P6-T09]
 knowledgeBase: [ADR-001, ADR-008, RULE-PAY-10, RULE-ETA-02]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation, security]
@@ -835,7 +835,7 @@ Document local, staging, and production setup, and how each engineer gets their 
 
 **Tests** — `check-client-env.mjs` asserted against a fixture that plants a service-role reference in `apps/mobile`.
 
-**Out of scope** — creating the actual third-party accounts (`P0-T18`); CI secret configuration (`P0-T04`); staging (`P6-T09`).
+**Out of scope** — creating the actual third-party accounts (`P0-T18`, with remaining Google setup in `P0-T20`); CI secret configuration (`P0-T04`); staging (`P6-T09`).
 
 **Sync notes** — every ticket in `affects` reads a variable defined here. Renaming one breaks the app that reads it and the CI that injects it.
 
@@ -1666,65 +1666,71 @@ Use `P0-T12`'s current synthetic seed source in the isolated harness. Do not inv
 
 ---
 
-#### P0-T18 — Provision Stripe test mode, Connect and Google Cloud
+#### P0-T18 — Provision Stripe test mode and Connect
 
 ```yaml
 id: P0-T18
-title: "Provision Stripe test mode, Connect and Google Cloud"
+title: "Provision Stripe test mode and Connect"
 issueType: Task
 owner: Tony
 phase: 0
 priority: Highest
 jiraKey: TRIMR-27
 dependsOn: [P0-D05, P0-T03]
-affects: [P1-T07, P1-T09, P2-T04, P3-T01, P3-T03, P3-T11, P4-T05, P6-T09]
-knowledgeBase: [ADR-006, ADR-008, RULE-PAY-10, RULE-ETA-02, RULE-ONBOARD-04, RULE-EARN-05, RULE-EARN-07]
+affects: [P0-T20, P1-T07, P1-T09, P3-T01, P3-T03, P3-T11, P6-T09, P6-T11]
+knowledgeBase: [ADR-006, RULE-OPS-PROVIDER-OWNERSHIP, RULE-OPS-DEV-PLACEHOLDERS, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-OPS-STRIPE-SANDBOX-ACK, RULE-OPS-STRIPE-TEST-ONBOARDING, RULE-PAY-07, RULE-PAY-10, RULE-PAY-12, RULE-ONBOARD-04, RULE-EARN-05, RULE-EARN-07, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-DEV-PROVIDER-URLS]
 blockedByTbc: []
-labels: [quicktrimr, phase-0, foundation, stripe, maps, security]
+labels: [quicktrimr, phase-0, foundation, stripe, security]
 ```
 
 **Context**
 
-Six tickets across Phases 1 to 4 assume a Stripe account with Connect enabled and a Google Cloud project with three APIs. The previous backlog never created either — `P1-E03-T02` simply began calling Stripe Connect.
+Downstream Stripe tickets assume a test account with Connect enabled and demonstrated payout controls. This ticket originally also owned Google Maps provisioning; the approved split below preserves that work in a separate gated follow-up.
 
-These have lead time. Stripe Connect requires platform settings and a completed platform profile; Google requires billing and per-API enablement. Discovering that on the morning someone starts `P1-T07` costs a day.
+Stripe Connect requires platform settings and a completed platform profile. Discovering missing setup on the morning someone starts `P1-T07` costs a day.
+
+The customer account is `joel@quicktrimr.com` (`RULE-OPS-PROVIDER-OWNERSHIP`). Andrew reported creating both provider accounts on 2026-10-14. Preflight reached the shared Stripe test-mode overview; the subsequently connected Stripe integration also exposes a separate customer sandbox with two existing, disabled sample connected accounts. Google Cloud's new-project form is under the correct email. These observations do not discharge the provisioning criteria. Andrew approved A$100 monthly, alerts to Joel and development placeholders (`RULE-OPS-DEV-PLACEHOLDERS` and the cited development config), then explicitly approved implementation of the Stripe sandbox design (`RULE-PAY-12`). Google configuration was initially paused by `TBC-GOOGLE-DEV-LIMITS`; the subsequent concrete approval below resolves that decision, not the provider evidence requirements. See `docs/qa/P0-T18.md`.
+
+Subsequent provider inspection exposed `TBC-STRIPE-RADAR-PLAN`: the sandbox acknowledgement required for new platform-liable accounts discloses an additional Radar Pro plan. Andrew explicitly approved submitting the reviewed sandbox acknowledgement on 2026-10-15, recorded as `RULE-OPS-STRIPE-SANDBOX-ACK`; the TBC is resolved in place. Apply and verify that acknowledgement, then continue sandbox Connect provisioning under `RULE-PAY-12`. No live plan or production legal acceptance is authorized. On 2026-10-20 Andrew approved the concrete Google alert/quota policy in `CFG-GOOGLE-DEV-ALERT-THRESHOLDS` and `CFG-GOOGLE-DEV-QUOTAS`, resolving `TBC-GOOGLE-DEV-LIMITS` in place. Google provisioning can now proceed; unsupported or non-editable limits must be reported rather than substituted. This decision does not claim provider configuration is complete or approve a hard spending cap.
+
+Later on 2026-10-20 Andrew explicitly approved deferring Google billing and remaining provider verification to `P0-T20` (`RULE-OPS-GOOGLE-DEV-DEFERRAL`). **QuickTrimr Development** / `quicktrimr-dev` exists under the customer account; its Billing page reports no linked billing account. Keep that project unbilled and hand it off without claiming APIs, keys, quotas or budgets are configured. This scope change removes no Stripe criterion: secure bank correction, durable prevention of bypass payouts and a genuine capture-failure fixture remain required here.
 
 **Scope**
 
 **Stripe test mode:**
 
-- Enable Connect and choose the account configuration, informed by `ADR-006`, `RULE-EARN-05` and `RULE-EARN-07`. Demonstrate platform-controlled bank payouts compatible with the Monday run, platform-borne standard Connect/payout fees, separate transfer/payout identities and connected-account webhook delivery. Independent automatic payouts or on-demand controls must not bypass the approved policy. Record applicable settlement/minimum/holding constraints and secure bank-detail correction; stop if the actual configuration cannot support the policy, rather than silently changing it.
+- Implement `RULE-PAY-12` in the customer sandbox: Express Dashboard, Stripe-hosted onboarding, separate charges/transfers, platform-paid fees and QuickTrimr negative-balance responsibility. Record explicit account fields and API-version mapping; a legacy type label alone is insufficient. Preserve `RULE-ONBOARD-04`'s charges/payouts eligibility gate when assessing current APIs. Demonstrate platform-controlled bank payouts compatible with the Monday run, platform-borne standard Connect/payout fees, separate transfer/payout identities and connected-account webhook delivery. Independent automatic payouts or on-demand controls must not bypass the approved policy. Record applicable settlement/minimum/holding constraints and secure bank-detail correction; stop if the actual configuration cannot support the policy, rather than silently changing it. No live configuration or production legal acceptance.
+- Apply the approved sandbox provider acknowledgement from `RULE-OPS-STRIPE-SANDBOX-ACK` before new account provisioning and record saved-state evidence. Do not change the approved responsibilities, bypass the provider gate or accept a live plan/production agreement.
+- Complete the synthetic Express fixture's separate hosted test onboarding under Andrew's approval in `RULE-OPS-STRIPE-TEST-ONBOARDING`, using only Stripe test data. Verify account eligibility and callback delivery rather than treating form submission as success; no live mode or real person/bank details.
 - Confirm manual-capture PaymentIntents are available, since `ADR-006` depends on them.
-- Configure the Connect onboarding branding and return/refresh URLs.
+- Configure the Connect onboarding branding and development return/refresh URLs from `CFG-DEV-PROVIDER-URLS`. Placeholder permission is not proof that the local callback routes work; demonstrate them through the verification probe without implementing production onboarding.
 - Create a webhook endpoint for local development and note the signing secret handling (`RULE-PAY-07`).
 - Record which test cards exercise which failure: successful auth, auth that fails at capture, and a card requiring authentication. `P3-T02` and `P6-T07` both need a capture that genuinely fails.
 - **Confirm the authorisation hold period on the account for supported payment methods.** It must cover the pending-request window through acceptance under `ADR-006`. Capture occurs on acceptance, so the appointment date and maximum booking horizon do not extend this hold.
 
-**Google Cloud:**
+**Google handoff only:**
 
-- Project with billing, and Maps SDK, Places API and Routes API enabled.
-- **Two separate keys.** A client key restricted by bundle id and referrer for map rendering; a server key with no client restriction, restricted by API, used only from Edge Functions (`ADR-008`, `RULE-ETA-02`).
-- Quotas and budget alerts, so a throttling bug in `P4-T05` produces an alert rather than an invoice.
+- Record the existing customer-owned development project's name, ID and observed unbilled state, with redacted evidence. Remaining billing, API enablement, four restricted keys, quota/budget configuration and provider usage tests belong to `P0-T20`. No billing details or terms are entered as part of this ticket.
 
 Record every variable name in `P0-T03`'s `.env.example`. **No key value is committed** — this ticket produces documentation and configuration, not secrets in the repo.
 
 **Acceptance criteria**
 
-- [ ] Stripe test-mode account exists with Connect enabled and the account type recorded with its reasoning.
+- [ ] Customer-owned Stripe test-mode account exists with Connect enabled and its approved account configuration, charge flow and responsibilities recorded with reasoning.
 - [ ] Test-mode evidence demonstrates the `RULE-EARN-07` payout controls and fee responsibility, distinguishes transfer funding from bank payout, and records applicable provider limits plus the bank-detail correction path without committing secrets or bank details.
 - [ ] A manual-capture PaymentIntent can be created and captured in test mode, demonstrated.
 - [ ] The **authorisation hold period is recorded** in `docs/architecture/` and checked against the configured pending-request windows. Any mismatch is raised before payment integration; it is not solved by changing the appointment horizon.
 - [ ] Connect onboarding return and refresh URLs are configured.
 - [ ] A test webhook endpoint receives a signed event locally, with signature verification demonstrated.
 - [ ] Test cards for success, capture failure and authentication-required are documented.
-- [ ] Google Cloud project exists with Maps SDK, Places and Routes enabled.
-- [ ] **Two distinct Google keys exist**, client-restricted and server-restricted, documented with their restrictions.
-- [ ] Quota limits and budget alerts are configured.
+- [ ] The customer-owned Google development project's identity and observed unbilled state are recorded with evidence; all remaining Google provider work is tracked in `P0-T20` with explicit consumer dependencies, not marked completed here.
 - [ ] Every variable name appears in `.env.example`; **no key value is committed anywhere.**
 
-**Out of scope** — implementing Connect onboarding (`P1-T07`); payment code (Phase 3); live mode (`P6-T11`); staging projects (`P6-T09`).
+**Tests** — actual Stripe test-mode evidence per criterion, including duplicate manual-capture calls producing one charge, supported-method authorisation deadlines covering both configured pending windows, the approved payout/fee/loss configuration and separate transfer/bank-payout references. Exercise success, capture failure and authentication-required test methods without recording card or bank numbers. Prove a signed event reaches the local verification probe, an invalid signature is rejected and duplicate delivery has no duplicate effect; production business webhook handlers remain Phase 3. Check the Google project-identity/unbilled handoff and graph dependencies on `P0-T20`, not deferred API/key/budget success. Check template coverage and the client environment boundary without printing credentials. Documentation, mocks and successful graph checks do not replace provider evidence.
 
-**Sync notes** — eight tickets consume these credentials. The authorisation hold period discovered here informs `P3-T01`, `P3-T02` and `P3-T06`'s authorise-to-capture lifecycle; `P0-D08`'s maximum booking horizon is an operational limit on advance capture.
+**Out of scope** — remaining Google development provisioning and verification (`P0-T20`); implementing Connect onboarding (`P1-T07`); payment code (Phase 3); live mode (`P6-T11`); staging projects (`P6-T09`).
+
+**Sync notes** — preserve `P0-T03`'s variable names and the local Connect callback contract. P1-T07 and P3-T01/P3-T03/P3-T11 consume the approved sandbox design only after its provider proof; P6-T11 still needs customer confirmation for live financial responsibility. The authorisation hold period informs `P3-T01`, `P3-T02` and `P3-T06`; `P0-D08`'s maximum booking horizon is an operational limit on advance capture. Google consumers now wait on `P0-T20`, not this ticket: P1-T05 (Places), P2-T07 (map) and P4-T05 (Routes). P2-T04 is a PostGIS query and needs no Google setup. P6-T09/P6-T11 retain the Stripe prerequisite and add P0-T20; they still establish their own staging/release identities and quotas. P0-T20 may proceed independently of remaining Stripe checks using the documented project handoff. Generated sections 8/9 remain for the reviewed automation on main.
 
 ---
 
@@ -1783,6 +1789,60 @@ metadata without forcing duplicate issue creation.
 Phase 0 update in place before creating later phases, then update each later phase as it is created.
 
 ---
+#### P0-T20 — Enable Google development billing and verify Maps services
+
+```yaml
+id: P0-T20
+title: "Enable Google development billing and verify Maps services"
+issueType: Task
+owner: Tony
+phase: 0
+priority: High
+jiraKey: TRIMR-29
+dependsOn: [P0-T03]
+affects: [P1-T05, P2-T07, P4-T05, P6-T09, P6-T11]
+knowledgeBase: [ADR-008, RULE-OPS-PROVIDER-OWNERSHIP, RULE-OPS-DEV-PLACEHOLDERS, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-ETA-02, CFG-GOOGLE-DEV-BUDGET, CFG-GOOGLE-DEV-ALERT-EMAIL, CFG-GOOGLE-DEV-ALERT-THRESHOLDS, CFG-GOOGLE-DEV-QUOTAS, CFG-DEV-MOBILE-IDENTIFIERS, CFG-DEV-PROVIDER-URLS]
+blockedByTbc: []
+labels: [quicktrimr, phase-0, foundation, maps, security, billing]
+```
+
+**Context**
+
+Andrew approved this split from P0-T18 / TRIMR-27 on 2026-10-20 (`RULE-OPS-GOOGLE-DEV-DEFERRAL`). The customer-owned **QuickTrimr Development** project, ID **`quicktrimr-dev`**, already exists under `joel@quicktrimr.com`. Its Billing page was observed to have no linked billing account. API enablement, four restricted keys, applied quotas and saved budget alerts have not been verified. See `docs/qa/P0-T18.md` and its Google evidence; do not recreate the project or treat the approved policy as applied settings.
+
+This is deferred foundation work, not permission to ship mocked Google integrations. It must close before P1-T05 address autocomplete, P2-T07 map rendering or P4-T05 ETA starts. Unrelated tickets may proceed only when their own readiness gates pass. It does not depend on unfinished Stripe checks in P0-T18.
+
+**Scope**
+
+- Confirm the customer account and exact existing project before any configuration. When this ticket is picked up, ask the customer to link/create its billing account, enter payment details directly with Google and personally accept billing terms. Keep payment details out of chat, logs and source control. Record billing-enabled state and currency only; do not record payment/profile fields. Stop if the billing currency cannot support the approved AUD policy rather than converting it silently.
+- Enable Maps SDK for Android, Maps SDK for iOS, Maps JavaScript API, Places API (New) and Routes API for the development project as required by P0-T03's environment contract.
+- Provision **four separate keys across two trust tiers**: Android package/actual development signing SHA-1 restricted to Maps SDK for Android; iOS bundle ID restricted to Maps SDK for iOS; browser referrers restricted to Maps JavaScript API; backend key API-restricted to Places/Routes for Edge Functions only (`ADR-008`, `RULE-ETA-02`). Apply server IP restrictions only with verified stable egress. No shared cross-platform client key, placeholder fingerprint or Places/Routes call from the client.
+- Use `CFG-DEV-MOBILE-IDENTIFIERS` and `CFG-DEV-PROVIDER-URLS` for development restrictions and make the selected development app/probe match before testing. P0-T03 owns the variable names and public/server-only contract; populate only ignored local env/approved secret storage, never commit credentials.
+- Apply `CFG-GOOGLE-DEV-QUOTAS`, recording each actual metric, scope and saved limit. Report unsupported/non-editable metrics and stop for direction; do not substitute another limit. Native Maps SDK defaults are permitted only where no adjustable quota exists.
+- Configure the project-scoped monthly AUD budget from `CFG-GOOGLE-DEV-BUDGET`, recipient `CFG-GOOGLE-DEV-ALERT-EMAIL` and exact thresholds `CFG-GOOGLE-DEV-ALERT-THRESHOLDS`. Verify saved settings and recipient configuration without generating spend just to trigger an alert. Budgets and rate limits do not guarantee a spending cap.
+- Deliver redacted operator documentation and actual allowed/rejected usage evidence in `docs/architecture/` and `docs/qa/P0-T20.md`. These are disposable verification probes, not production Places, discovery, map or ETA features.
+
+**Contract example** — consumes P0-T03's existing environment contract; no new application API. Android/iOS/browser keys may reach only their matching Maps client; the backend Places/Routes key stays in Edge Functions. A matching development app/referrer and allowed API succeeds; a different app identity/referrer or disallowed API is rejected by Google. Record response status/error category without credential-bearing URLs, headers, payloads, address or location data.
+
+**Acceptance criteria**
+
+- [ ] The exact customer-owned `quicktrimr-dev` project is linked to customer-managed billing; enabled state and AUD billing/budget currency are evidenced without payment/profile data.
+- [ ] All five required SDK/API services are enabled, evidenced against the selected project.
+- [ ] Four separate Android, iOS, browser and backend keys have saved application/API restrictions matching P0-T03; the Android restriction uses the actual selected signing SHA-1.
+- [ ] Each key's permitted usage succeeds and mismatched identity/referrer or disallowed API usage is rejected, using actual provider responses/builds rather than mocks.
+- [ ] Places/Routes use only the backend key from a server probe; client-env and bundle inspection show no backend key in mobile/admin output, and no credential value is committed.
+- [ ] Every requested quota in `CFG-GOOGLE-DEV-QUOTAS` has saved metric/scope/limit evidence; permitted native defaults are explicitly identified. Unsupported/non-editable limits remain an unmet criterion until an upstream human-approved policy amendment is recorded.
+- [ ] The saved monthly budget matches `CFG-GOOGLE-DEV-BUDGET`, is scoped only to this project, and contains every approved actual/forecast threshold and Joel as recipient. Documentation states it is alerts-only, not a hard spending cap.
+- [ ] `docs/qa/P0-T20.md` maps each criterion to redacted provider evidence and reproducible checks; no billing terms are accepted or payment details entered by the agent.
+
+**Tests** — actual project/billing/service state; positive and negative restriction checks for all four keys, including matching native development builds and real signing identity; backend-only Places/Routes calls; client-env/bundle secret-boundary checks; saved quota/budget/recipient inspection; environment-template coverage; non-disclosing secret scan; graph validation proving the first Google consumers depend on this ticket. Automated mocks or a project-exists screenshot alone do not discharge provider criteria.
+
+**Out of scope** — Stripe setup/checks (`P0-T18`); production address, Maps or ETA feature implementation (`P1-T05`, `P2-T07`, `P4-T05`); staging/release identities, keys, budgets or live activation (`P6-T09`, `P6-T11`); agent entry of payment details or acceptance of billing terms.
+
+**Sync notes** — retain P0-T03's variable names and trust tiers. P1-T05, P2-T07 and P4-T05 directly depend on this evidence; P2-T04 remains PostGIS-only and does not need a Google prerequisite. P6-T09/P6-T11 depend on both provider foundations but must obtain their own staging/production quota and billing approval. Do not mark P0-T18 Done to create this ticket, or mark this ticket Done from approved policy alone. Generated sections 8/9 are left to reviewed automation on main.
+
+---
+
 ## Phase 1 — Auth, Profiles, Onboarding & Services
 
 **Goal:** a barber can be created, Connect-verified, priced and made discoverable; a client can sign up and save an address. No bookings yet.
@@ -2084,9 +2144,9 @@ owner: Andrew
 phase: 1
 priority: High
 jiraKey: null
-dependsOn: [P0-T18, P1-T04]
+dependsOn: [P0-T20, P1-T04]
 affects: [P2-T05, P2-T08, P4-T03, P5-T02]
-knowledgeBase: [ADR-008, RULE-ONBOARD-02, ROLE-CLIENT]
+knowledgeBase: [ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-ONBOARD-02, ROLE-CLIENT]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, mobile, maps, security]
 ```
@@ -2103,7 +2163,7 @@ Addresses need coordinates, because discovery is a PostGIS distance query from t
 
 Address list, add, edit, and archive in `apps/mobile`.
 
-Google Places autocomplete for entry, with the resulting place resolved to a `geography(Point, 4326)` stored on the row. Manual entry as a fallback, because autocomplete fails on new developments and rural addresses.
+Google Places autocomplete through Edge Functions only (`ADR-008`), with the resulting place resolved to a `geography(Point, 4326)` stored on the row. Use the backend key provisioned/verified by `P0-T20`, never a client Maps key for Places. Manual entry as a fallback, because autocomplete fails on new developments and rural addresses.
 
 "Use my current location" where the permission is granted, with graceful handling of denial — a client who denies location must still be able to type an address and book.
 
@@ -2146,7 +2206,7 @@ RLS: select, insert and update on `auth.uid() = client_id`. **No delete policy**
 - [ ] Archive is idempotent.
 - [ ] **Client A cannot read, update or archive client B's address** — verified by calling as A with B's id, expecting denial rather than a leaked row.
 - [ ] **No client can delete an address row** — no delete policy exists.
-- [ ] The Google client key is used for autocomplete; no server key reaches the bundle.
+- [ ] Places autocomplete calls go through Edge Functions using the backend-only key; no server key reaches the bundle and no client Maps key is used for Places.
 - [ ] List, add and edit each have loading, error and empty states; the empty state prompts a first address.
 
 **Tests** — cross-client denial on all four verbs; archive idempotency; archived addresses absent from the picker; geocode failure rejected; permission-denied path reaching a successful manual save.
@@ -3089,9 +3149,9 @@ owner: Andrew
 phase: 2
 priority: Medium
 jiraKey: null
-dependsOn: [P0-D06, P2-T04, P2-T05]
+dependsOn: [P0-D06, P0-T20, P2-T04, P2-T05]
 affects: []
-knowledgeBase: [ADR-004, ADR-008, RULE-DISCOVERY-04, RULE-DISCOVERY-05]
+knowledgeBase: [ADR-004, ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-DISCOVERY-04, RULE-DISCOVERY-05]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile, maps, security]
 ```
@@ -3117,7 +3177,7 @@ Refetch throttled on pan and zoom. An unthrottled map fires a search on every fr
 
 Handle a denied location permission by centring on the selected service address instead.
 
-Uses the **client** Google key from `P0-T18`, bundle-restricted. The server key is not involved.
+Uses the matching platform-restricted **client** Google key verified in `P0-T20`. The server key is not involved.
 
 **Acceptance criteria**
 
@@ -4829,9 +4889,9 @@ owner: Andrew
 phase: 4
 priority: High
 jiraKey: null
-dependsOn: [P0-D06, P0-D07, P0-T18, P4-T03]
+dependsOn: [P0-D06, P0-D07, P0-T20, P4-T03]
 affects: [P4-T06]
-knowledgeBase: [ADR-004, ADR-008, ADR-011, RULE-DISCOVERY-05, RULE-ETA-02, RULE-ETA-03, RULE-ETA-04, RULE-ETA-05, CFG-ETA-REFRESH-MIN]
+knowledgeBase: [ADR-004, ADR-008, ADR-011, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-DISCOVERY-05, RULE-ETA-02, RULE-ETA-03, RULE-ETA-04, RULE-ETA-05, CFG-ETA-REFRESH-MIN]
 blockedByTbc: []
 labels: [quicktrimr, phase-4, backend, maps, security]
 ```
@@ -6757,9 +6817,9 @@ owner: Tony
 phase: 6
 priority: Highest
 jiraKey: null
-dependsOn: [P0-T03, P0-T09, P0-T18]
+dependsOn: [P0-T03, P0-T09, P0-T18, P0-T20]
 affects: [P6-T10, P6-T11]
-knowledgeBase: [ADR-001, RULE-PAY-07, RULE-PAY-10, RULE-ETA-02]
+knowledgeBase: [ADR-001, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-PAY-07, RULE-PAY-10, RULE-ETA-02]
 blockedByTbc: []
 labels: [quicktrimr, phase-6, security]
 ```
@@ -6858,9 +6918,9 @@ owner: Tony
 phase: 6
 priority: High
 jiraKey: null
-dependsOn: [P0-T18, P6-T06, P6-T07, P6-T09, P6-T10]
+dependsOn: [P0-T18, P0-T20, P6-T06, P6-T07, P6-T09, P6-T10]
 affects: []
-knowledgeBase: [ADR-001, ADR-013, RULE-PAY-07, RULE-PAY-10, RULE-ETA-02, RULE-ADMIN-01, RULE-COPY-01]
+knowledgeBase: [ADR-001, ADR-013, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-PAY-07, RULE-PAY-10, RULE-ETA-02, RULE-ADMIN-01, RULE-COPY-01]
 blockedByTbc: []
 labels: [quicktrimr, phase-6, qa, security]
 ```

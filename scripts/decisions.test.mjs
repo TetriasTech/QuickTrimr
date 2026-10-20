@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
+import { parse } from 'yaml';
+
 import { RELIABILITY_LEVEL } from '../packages/shared/src/enums/reliability-level.ts';
 
 const kb = await readFile(
@@ -12,6 +14,112 @@ const backlog = await readFile(
   new URL('../QUICKTRIMR_BACKLOG_README.md', import.meta.url),
   'utf8',
 );
+
+function backlogTicket(id) {
+  const block = [
+    ...backlog.matchAll(
+      /^#### (P[\dA-Z-]+) — .+?\n\n```yaml\n([\s\S]*?)```\n([\s\S]*?)(?=\n^#### P|\n^## |\n^<!-- TICKETS-END)/gm,
+    ),
+  ].find((match) => match[1] === id);
+  assert.ok(block, `Missing ticket: ${id}`);
+  return { ...parse(block[2]), body: block[3] };
+}
+
+test('Google deferral retains a named-owner foundation follow-up independent of Stripe', () => {
+  const google = backlogTicket('P0-T20');
+  assert.equal(google.owner, 'Tony');
+  assert.equal(google.issueType, 'Task');
+  assert.equal(google.phase, 0);
+  assert.deepEqual(google.dependsOn, ['P0-T03']);
+  assert.deepEqual(google.blockedByTbc, []);
+  assert.ok(google.knowledgeBase.includes('RULE-OPS-GOOGLE-DEV-DEFERRAL'));
+  assert.match(google.body, /quicktrimr-dev/);
+  assert.match(google.body, /no linked billing account/);
+  assert.match(
+    google.body,
+    /customer.*enter payment details.*personally accept billing terms/,
+  );
+  assert.match(kb, /narrow Phase 0 sequencing exception/);
+  assert.match(
+    backlog,
+    /only unrelated tickets whose own readiness gates pass/,
+  );
+});
+
+test('first Places, Maps and Routes consumers directly wait on deferred Google verification', () => {
+  for (const id of ['P1-T05', 'P2-T07', 'P4-T05']) {
+    const ticket = backlogTicket(id);
+    assert.ok(ticket.dependsOn.includes('P0-T20'), id);
+    assert.ok(!ticket.dependsOn.includes('P0-T18'), id);
+    assert.ok(
+      ticket.knowledgeBase.includes('RULE-OPS-GOOGLE-DEV-DEFERRAL'),
+      id,
+    );
+  }
+  for (const id of ['P6-T09', 'P6-T11']) {
+    const ticket = backlogTicket(id);
+    assert.ok(ticket.dependsOn.includes('P0-T18'), id);
+    assert.ok(ticket.dependsOn.includes('P0-T20'), id);
+  }
+  assert.ok(!backlogTicket('P2-T04').dependsOn.includes('P0-T20'));
+});
+
+test('Google split does not waive Stripe payout controls or genuine capture failure', () => {
+  const stripe = backlogTicket('P0-T18');
+  assert.match(stripe.body, /bank-detail correction/);
+  assert.match(stripe.body, /on-demand controls must not bypass/);
+  assert.match(stripe.body, /capture that genuinely fails/);
+  assert.match(stripe.body, /platform-borne standard Connect\/payout fees/);
+  assert.match(
+    stripe.body,
+    /all remaining Google provider work is tracked in `P0-T20`/,
+  );
+  assert.doesNotMatch(
+    stripe.body,
+    /\[ \] Approved quota limits and budget alerts are configured/,
+  );
+  assert.deepEqual(stripe.dependsOn, ['P0-D05', 'P0-T03']);
+  assert.deepEqual(stripe.blockedByTbc, []);
+  assert.ok(!stripe.dependsOn.includes('P0-T20'));
+});
+
+test('deferred Google scope preserves approved cost controls and real provider evidence', () => {
+  const google = backlogTicket('P0-T20');
+  for (const id of [
+    'CFG-GOOGLE-DEV-BUDGET',
+    'CFG-GOOGLE-DEV-ALERT-EMAIL',
+    'CFG-GOOGLE-DEV-ALERT-THRESHOLDS',
+    'CFG-GOOGLE-DEV-QUOTAS',
+  ]) {
+    assert.ok(google.knowledgeBase.includes(id), id);
+  }
+  assert.match(
+    google.body,
+    /Each key's permitted usage succeeds and mismatched identity\/referrer or disallowed API usage is rejected/,
+  );
+  assert.match(google.body, /actual selected signing SHA-1/);
+  assert.match(
+    google.body,
+    /Unsupported\/non-editable limits remain an unmet criterion/,
+  );
+  assert.match(google.body, /alerts-only, not a hard spending cap/);
+  assert.match(
+    google.body,
+    /no billing terms are accepted or payment details entered by the agent/,
+  );
+});
+
+test('Places address autocomplete keeps the existing Edge-Function-only trust boundary', () => {
+  const address = backlogTicket('P1-T05');
+  assert.match(
+    address.body,
+    /Places autocomplete calls go through Edge Functions using the backend-only key/,
+  );
+  assert.doesNotMatch(
+    address.body,
+    /The Google client key is used for autocomplete/,
+  );
+});
 
 function section(markdown, start, end) {
   const startAt = markdown.indexOf(start);
