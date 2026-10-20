@@ -2,8 +2,6 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { parse } from 'yaml';
-
 import { RELIABILITY_LEVEL } from '../packages/shared/src/enums/reliability-level.ts';
 
 const kb = await readFile(
@@ -22,8 +20,44 @@ function backlogTicket(id) {
     ),
   ].find((match) => match[1] === id);
   assert.ok(block, `Missing ticket: ${id}`);
-  return { ...parse(block[2]), body: block[3] };
+  // The Docs job intentionally runs without a dependency install. Read only the
+  // repository's flat header fields needed by these specification guards.
+  const field = (name) => {
+    const match = block[2].match(new RegExp(`^${name}: (.*)$`, 'm'));
+    assert.ok(match, `Missing ${name} on ${id}`);
+    return match[1];
+  };
+  const list = (name) => {
+    const value = field(name);
+    assert.match(value, /^\[[^[\]]*\]$/, `Expected flat list: ${id}.${name}`);
+    return value
+      .slice(1, -1)
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  };
+  return {
+    owner: field('owner'),
+    issueType: field('issueType'),
+    phase: Number(field('phase')),
+    dependsOn: list('dependsOn'),
+    blockedByTbc: list('blockedByTbc'),
+    knowledgeBase: list('knowledgeBase'),
+    body: block[3],
+  };
 }
+
+test('Docs decision checks keep a dependency-free runtime import surface', async () => {
+  const source = await readFile(import.meta.filename, 'utf8');
+  for (const match of source.matchAll(
+    /^import\b[\s\S]*?\bfrom\s+['"]([^'"]+)['"]/gm,
+  )) {
+    assert.ok(
+      match[1].startsWith('node:') || match[1].startsWith('.'),
+      'The dependency-free Docs job cannot import third-party packages.',
+    );
+  }
+});
 
 test('Google deferral retains a named-owner foundation follow-up independent of Stripe', () => {
   const google = backlogTicket('P0-T20');
