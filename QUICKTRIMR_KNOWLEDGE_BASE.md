@@ -912,6 +912,39 @@ Every Edge Function must:
 - Write an audit log for sensitive actions (`ADR-013`).
 - Return only what the caller needs.
 
+### RULE-API-CONTRACT-FOUNDATION — Executable contracts before implementation
+
+On 2026-11-04 Andrew approved Option A for `P0-T08`: retain coverage of every function in
+the inventory below (49 at approval), and extend `packages/validation` with the missing
+request/response schemas rather than limiting documentation to the 15 contracts delivered
+by `P0-T07`. Deliver importable synthetic fixtures, per-function caller/error definitions and
+tests that detect drift between the inventory, schemas, fixtures and documentation. Keep the
+existing contracts compatible unless an explicit KB/backlog inconsistency requires a recorded
+correction. This is contract work, not implementation of the later features or provider calls.
+
+The inventory is not a grant of 49 public HTTP endpoints. User-facing calls authenticate the
+verified JWT and resolve permissions server-side (`ADR-001`, `RULE-ADMIN-01`); server-only
+operations remain inaccessible to mobile/admin callers and recheck authoritative persisted state
+(`ADR-011`). Stripe webhooks authenticate the original raw body using the provider signature
+before decoding (`RULE-PAY-07`), not a user JWT. Document the relevant caller boundary for each
+entry; schemas and fixture tests are never evidence that authentication or idempotency works.
+
+Reuse shared enums and the `{ error, fields? }` envelope. Record technical error identifiers and
+payload shapes in the executable contract, without inventing product statuses, price/radius
+bounds, financial allocation, operational defaults or permissions. Business validation still
+uses the owning KB rules and server configuration; an undecided product rule must be raised
+through the TBC/drift protocol, not hidden in a schema. Fixtures contain synthetic data only,
+are opt-in development imports, and must never be wired into production as a fallback.
+
+### RULE-ADMIN-BARBER-STATUS-ALIAS — One audited reliability operation
+
+Andrew confirmed on 2026-11-05 that `admin-update-barber-status` is an alias of
+`admin-update-reliability-state`, not an independent mutation. Both names use the same request,
+response, server-side admin authorization, mandatory reason, append-only reliability/audit
+history and suspension/reinstatement safeguards (`RULE-RELY-05`, `RULE-RELY-06`, `ADR-013`).
+They must delegate to the same implementation when built in `P5-T13`. This creates no second
+status enum, independent moderation permission or manual Stripe verification override.
+
 Function inventory:
 
 ```txt
@@ -1000,6 +1033,7 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-WORKFLOW-ENGINE` | **RESOLVED → `ADR-011`** — Option A: Supabase `pg_cron` with bounded indexed due-state sweeps, durable effects and reconciliation; confirmed by Andrew on 2026-10-03, including documentation-only comparison of unselected Trigger.dev. | Every expiry, auto-completion, prompt and payout run | `P0-D07` |
 | `TBC-SCHED-LEAD-TIME` | **RESOLVED → `RULE-SCHED-04`** | Scheduled request validation and discovery | `P0-D08` |
 | `TBC-REVIEW-ELIGIBILITY` | **RESOLVED → `RULE-REVIEW-06`** | Review creation and prompts | `P0-D08` |
+| `TBC-ADMIN-BARBER-STATUS-CONTRACT` | **RESOLVED → `RULE-ADMIN-BARBER-STATUS-ALIAS`** — Andrew confirmed the alias on 2026-11-05, with the same audited admin-only reliability safeguards and no manual Stripe verification override. | `P0-T08` all-inventory contracts; `P5-T13` alias implementation | Tony or Andrew |
 
 ---
 

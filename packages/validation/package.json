@@ -7,6 +7,14 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./fixtures": {
+      "types": "./src/fixtures.ts",
+      "default": "./src/fixtures.ts"
+    },
+    "./contract-details": {
+      "types": "./src/contract-details.ts",
+      "default": "./src/contract-details.ts"
     }
   },
   "scripts": {
