@@ -9,6 +9,8 @@ import { z } from 'zod';
 import {
   geographicPointSchema,
   integerCentsSchema,
+  latitudeSchema,
+  longitudeSchema,
   nonEmptyStringSchema,
   nonNegativeIntegerSchema,
   postgresUuidSchema,
@@ -50,7 +52,15 @@ export type CancelBookingResponse = z.infer<typeof cancelBookingResponseSchema>;
 
 export const markOnTheWayRequestSchema = requestObject({
   bookingId: postgresUuidSchema,
-  ...geographicPointSchema.shape,
+  lat: latitudeSchema.optional(),
+  lng: longitudeSchema.optional(),
+}).superRefine((value, context) => {
+  if ((value.lat === undefined) !== (value.lng === undefined))
+    context.addIssue({
+      code: 'custom',
+      path: [value.lat === undefined ? 'lat' : 'lng'],
+      message: 'Provide both coordinates or neither when permission is denied',
+    });
 });
 export type MarkOnTheWayRequest = z.infer<typeof markOnTheWayRequestSchema>;
 
@@ -73,6 +83,16 @@ export const markOnTheWayResponseSchema = z.union([
   markOnTheWayWithoutEtaResponseSchema,
 ]);
 export type MarkOnTheWayResponse = z.infer<typeof markOnTheWayResponseSchema>;
+
+export const markArrivedRequestSchema = requestObject({
+  bookingId: postgresUuidSchema,
+});
+export type MarkArrivedRequest = z.infer<typeof markArrivedRequestSchema>;
+export const markArrivedResponseSchema = z.strictObject({
+  bookingId: postgresUuidSchema,
+  status: z.literal(BOOKING_STATUS_VALUE.ARRIVED),
+});
+export type MarkArrivedResponse = z.infer<typeof markArrivedResponseSchema>;
 
 export const updateEtaRequestSchema = requestObject({
   bookingId: postgresUuidSchema,

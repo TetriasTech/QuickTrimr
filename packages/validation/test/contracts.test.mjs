@@ -11,9 +11,10 @@ import {
   REQUEST_STATUS_VALUE,
 } from '@quicktrimr/shared';
 
+import { ALL_CONTRACT_EXAMPLES as CONTRACT_EXAMPLES } from '../src/all-examples.ts';
 import {
   CONTRACTS,
-  CONTRACT_EXAMPLES,
+  CORE_CONTRACTS,
   ERROR_RESPONSE_EXAMPLES,
   SERVER_CONTROLLED_REQUEST_FIELDS,
   createBookingRequestRequestSchema,
@@ -24,6 +25,8 @@ import {
 function hasFieldLevelIssue(issues) {
   return issues.some((issue) => {
     if (issue.path.length > 0) return true;
+    if (issue.code === 'unrecognized_keys' && issue.keys.length > 0)
+      return true;
     if (!('errors' in issue)) return false;
     return issue.errors.some((nestedIssues) =>
       hasFieldLevelIssue(nestedIssues),
@@ -118,7 +121,7 @@ test('cancellation fixture matches the approved Available Now backlog example', 
 });
 
 test('request schemas ignore client-supplied identity, status and server-derived money fields', () => {
-  for (const [name, contract] of Object.entries(CONTRACTS)) {
+  for (const [name, contract] of Object.entries(CORE_CONTRACTS)) {
     const valid = CONTRACT_EXAMPLES[name].request.valid;
     for (const field of SERVER_CONTROLLED_REQUEST_FIELDS) {
       const result = contract.requestSchema.safeParse({ ...valid, [field]: 1 });
@@ -159,6 +162,7 @@ test('reliability-denial backlog examples reuse the shared error contract', asyn
 
 test('request schemas still reject unknown non-server fields', () => {
   for (const [name, contract] of Object.entries(CONTRACTS)) {
+    if (name === 'stripe-webhook') continue; // Provider envelope intentionally strips extra keys after signature verification.
     const valid = CONTRACT_EXAMPLES[name].request.valid;
     assert.equal(
       contract.requestSchema.safeParse({ ...valid, misspelledField: true })

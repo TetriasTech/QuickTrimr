@@ -38,14 +38,32 @@ export type EveryResponseIsInferred = {
 
 type ForbiddenClientField = (typeof SERVER_CONTROLLED_REQUEST_FIELDS)[number];
 
+type OrdinaryContractName = Exclude<
+  ContractName,
+  'admin-resolve-dispute' | 'admin-issue-refund'
+>;
 type ForbiddenFieldsByContract = {
-  [Name in ContractName]: Extract<
+  [Name in OrdinaryContractName]: Extract<
     keyof ContractRequest<Name>,
     ForbiddenClientField
   >;
 };
 export type NoRequestTypeContainsServerControlledFields = Expect<
-  Equal<ForbiddenFieldsByContract[ContractName], never>
+  Equal<ForbiddenFieldsByContract[OrdinaryContractName], never>
+>;
+
+// P5-T07 permits bounded admin refund intent, not other server-owned amounts.
+export type AdminRefundIntentIsBrandedCents = Expect<
+  Equal<ContractRequest<'admin-issue-refund'>['refundCents'], IntegerCents>
+>;
+export type AdminRefundHasNoOtherServerFields = Expect<
+  Equal<
+    Extract<
+      keyof ContractRequest<'admin-issue-refund'>,
+      Exclude<ForbiddenClientField, 'refundCents'>
+    >,
+    never
+  >
 >;
 
 export type IntegerCentsOutputUsesSharedBrand = Expect<
