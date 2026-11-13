@@ -102,7 +102,12 @@ test('Google split does not waive Stripe payout controls or genuine capture fail
   const stripe = backlogTicket('P0-T18');
   assert.match(stripe.body, /bank-detail correction/);
   assert.match(stripe.body, /on-demand controls must not bypass/);
-  assert.match(stripe.body, /capture that genuinely fails/);
+  // Capture-time failure has no Stripe test method (RULE-PAY-13). The proof is
+  // reassigned to P3-T02 with an explicit rule and approval, never silently
+  // dropped, and an authorisation decline is still not a substitute.
+  assert.match(stripe.body, /`RULE-PAY-13`/);
+  assert.match(stripe.body, /Capture-time failure has no Stripe test card/);
+  assert.match(stripe.body, /do not substitute an authorisation decline/);
   assert.match(stripe.body, /platform-borne standard Connect\/payout fees/);
   assert.match(
     stripe.body,
@@ -115,6 +120,28 @@ test('Google split does not waive Stripe payout controls or genuine capture fail
   assert.deepEqual(stripe.dependsOn, ['P0-D05', 'P0-T03']);
   assert.deepEqual(stripe.blockedByTbc, []);
   assert.ok(!stripe.dependsOn.includes('P0-T20'));
+});
+
+test('capture-failure reassignment keeps RULE-PAY-05 coverage in the build tickets', () => {
+  // RULE-PAY-13 changes the testing method only. P3-T02 must still prove the
+  // recoverable state, and must not regress to the non-existent P0-T18 card.
+  const rule = section(kb, '- `RULE-PAY-13`', '- `RULE-PAY-06`');
+  assert.match(rule, /simulated provider error, not a test card/i);
+  assert.match(rule, /not a relaxation of `RULE-PAY-05`/);
+
+  const capture = backlogTicket('P3-T02');
+  assert.ok(capture.knowledgeBase.includes('RULE-PAY-05'));
+  assert.ok(capture.knowledgeBase.includes('RULE-PAY-13'));
+  assert.match(capture.body, /simulating the provider capture error/);
+  assert.match(capture.body, /stays `accepted_pending_payment`/);
+  assert.doesNotMatch(capture.body, /`P0-T18` test card/);
+
+  for (const id of ['P6-T06', 'P6-T07']) {
+    assert.ok(
+      backlogTicket(id).knowledgeBase.includes('RULE-PAY-13'),
+      `${id} must cite RULE-PAY-13`,
+    );
+  }
 });
 
 test('deferred Google scope preserves approved cost controls and real provider evidence', () => {

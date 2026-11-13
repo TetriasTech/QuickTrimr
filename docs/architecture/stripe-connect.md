@@ -244,7 +244,29 @@ not the approved launch method list or a promise about live issuers.
 | Successful manual authorization/capture | `pm_card_visa`: `requires_capture` → `succeeded`, one charge under duplicate calls. |
 | Additional authorization windows | `pm_card_mastercard`, `pm_card_amex`: seven-day windows, duplicate create/cancel IDs unchanged, both holds cancelled without capture. |
 | Authentication required | `pm_card_threeDSecure2Required`: `requires_action`, zero received, duplicate creation reused the intent. Cancelled with duplicate deterministic calls after observation; final `canceled`. No challenge completion or mobile payment UI was tested. |
-| Genuine capture-time failure | **Outstanding.** No documented method was established that first authorizes successfully and then genuinely fails at capture. A generic decline or decline-after-attaching is not that proof; do not substitute one or invent a method name. |
+| Genuine capture-time failure | **Not available from the provider; reassigned under `RULE-PAY-13`.** Stripe publishes no test payment method that authorizes successfully and then fails at capture: every documented fixture declines at authorization, fails at refund (`pm_card_refundFail`) or raises a dispute (`pm_card_createDispute`). Confirmed against Stripe's testing documentation on 2026-11-13 and approved by Tony the same day. `RULE-PAY-05` coverage therefore moves to a simulated provider capture error in `P3-T02`, re-asserted in `P6-T06`/`P6-T07`. A generic decline or decline-after-attaching is still not a substitute, and no method name may be invented. |
+
+### Capture-failure fixture — provider limitation (RULE-PAY-13)
+
+The authorize-then-fail-at-capture fixture this ticket sought does not exist. Stripe's testing
+documentation enumerates declines at authorization, declines after attaching to a customer,
+refund failures and disputes; none authorizes successfully and then fails the capture call.
+The earlier `pm_card_chargeCustomerFail` candidate declined at authorization
+(`requires_payment_method`, `card_declined`, `amount_received: 0`, charge `captured: false`), so
+capture was never attempted — recorded in
+[the candidate evidence](../qa/evidence/P0-T18-capture-failure-candidate.json).
+
+The underlying production risk is real and documented by Stripe: a capture can fail when the card
+is closed or reported stolen after authorization, on a processor error, or when the authorization
+expires before capture. `RULE-PAY-05` is therefore not waived. Its proof moves to the owning
+build ticket, where the capture code exists and the provider boundary can return a simulated
+capture error, asserting the payment reaches `capture_failed`, the booking stays
+`accepted_pending_payment`, both parties are notified and an audit log is written.
+
+Sources read 2026-11-13: [Stripe testing](https://docs.stripe.com/testing),
+[Place a hold on a payment method](https://docs.stripe.com/payments/place-a-hold-on-a-payment-method),
+[Capture a PaymentIntent](https://docs.stripe.com/api/payment_intents/capture).
+Approved by Tony on 2026-11-13; recorded upstream as `RULE-PAY-13` before these documents changed.
 
 The named 3DS fixture is documented in [Stripe's testing guide](https://docs.stripe.com/testing).
 The current public guide was read with official CLI 1.53.1. Its decline-after-attaching method

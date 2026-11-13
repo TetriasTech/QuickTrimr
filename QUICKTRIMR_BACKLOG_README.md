@@ -1717,7 +1717,7 @@ priority: Highest
 jiraKey: TRIMR-27
 dependsOn: [P0-D05, P0-T03]
 affects: [P0-T20, P1-T07, P1-T09, P3-T01, P3-T03, P3-T11, P6-T09, P6-T11]
-knowledgeBase: [ADR-006, RULE-OPS-PROVIDER-OWNERSHIP, RULE-OPS-DEV-PLACEHOLDERS, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-OPS-STRIPE-SANDBOX-ACK, RULE-OPS-STRIPE-TEST-ONBOARDING, RULE-PAY-07, RULE-PAY-10, RULE-PAY-12, RULE-ONBOARD-04, RULE-EARN-05, RULE-EARN-07, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-DEV-PROVIDER-URLS]
+knowledgeBase: [ADR-006, RULE-OPS-PROVIDER-OWNERSHIP, RULE-OPS-DEV-PLACEHOLDERS, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-OPS-STRIPE-SANDBOX-ACK, RULE-OPS-STRIPE-TEST-ONBOARDING, RULE-PAY-07, RULE-PAY-10, RULE-PAY-12, RULE-PAY-13, RULE-ONBOARD-04, RULE-EARN-05, RULE-EARN-07, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-DEV-PROVIDER-URLS]
 blockedByTbc: []
 labels: [quicktrimr, phase-0, foundation, stripe, security]
 ```
@@ -1732,7 +1732,7 @@ The customer account is `joel@quicktrimr.com` (`RULE-OPS-PROVIDER-OWNERSHIP`). A
 
 Subsequent provider inspection exposed `TBC-STRIPE-RADAR-PLAN`: the sandbox acknowledgement required for new platform-liable accounts discloses an additional Radar Pro plan. Andrew explicitly approved submitting the reviewed sandbox acknowledgement on 2026-10-15, recorded as `RULE-OPS-STRIPE-SANDBOX-ACK`; the TBC is resolved in place. Apply and verify that acknowledgement, then continue sandbox Connect provisioning under `RULE-PAY-12`. No live plan or production legal acceptance is authorized. On 2026-10-20 Andrew approved the concrete Google alert/quota policy in `CFG-GOOGLE-DEV-ALERT-THRESHOLDS` and `CFG-GOOGLE-DEV-QUOTAS`, resolving `TBC-GOOGLE-DEV-LIMITS` in place. Google provisioning can now proceed; unsupported or non-editable limits must be reported rather than substituted. This decision does not claim provider configuration is complete or approve a hard spending cap.
 
-Later on 2026-10-20 Andrew explicitly approved deferring Google billing and remaining provider verification to `P0-T20` (`RULE-OPS-GOOGLE-DEV-DEFERRAL`). **QuickTrimr Development** / `quicktrimr-dev` exists under the customer account; its Billing page reports no linked billing account. Keep that project unbilled and hand it off without claiming APIs, keys, quotas or budgets are configured. This scope change removes no Stripe criterion: secure bank correction, durable prevention of bypass payouts and a genuine capture-failure fixture remain required here.
+Later on 2026-10-20 Andrew explicitly approved deferring Google billing and remaining provider verification to `P0-T20` (`RULE-OPS-GOOGLE-DEV-DEFERRAL`). **QuickTrimr Development** / `quicktrimr-dev` exists under the customer account; its Billing page reports no linked billing account. Keep that project unbilled and hand it off without claiming APIs, keys, quotas or budgets are configured. This scope change removes no Stripe criterion: secure bank correction and durable prevention of bypass payouts remain required here. The genuine capture-failure fixture is **not obtainable** — `RULE-PAY-13` records that Stripe publishes no such test method and moves that proof to `P3-T02`/`P6-T07`.
 
 **Scope**
 
@@ -1744,7 +1744,7 @@ Later on 2026-10-20 Andrew explicitly approved deferring Google billing and rema
 - Confirm manual-capture PaymentIntents are available, since `ADR-006` depends on them.
 - Configure the Connect onboarding branding and development return/refresh URLs from `CFG-DEV-PROVIDER-URLS`. Placeholder permission is not proof that the local callback routes work; demonstrate them through the verification probe without implementing production onboarding.
 - Create a webhook endpoint for local development and note the signing secret handling (`RULE-PAY-07`).
-- Record which test cards exercise which failure: successful auth, auth that fails at capture, and a card requiring authentication. `P3-T02` and `P6-T07` both need a capture that genuinely fails.
+- Record which test cards exercise which failure: successful auth and a card requiring authentication. **Capture-time failure has no Stripe test card** — Tony confirmed on 2026-11-13 that every documented fixture declines at authorisation, fails at refund or raises a dispute, so `RULE-PAY-13` moves that proof to a simulated provider error in `P3-T02` and `P6-T07`. Record the finding and its sources here; do not substitute an authorisation decline.
 - **Confirm the authorisation hold period on the account for supported payment methods.** It must cover the pending-request window through acceptance under `ADR-006`. Capture occurs on acceptance, so the appointment date and maximum booking horizon do not extend this hold.
 
 **Google handoff only:**
@@ -1761,11 +1761,11 @@ Record every variable name in `P0-T03`'s `.env.example`. **No key value is commi
 - [ ] The **authorisation hold period is recorded** in `docs/architecture/` and checked against the configured pending-request windows. Any mismatch is raised before payment integration; it is not solved by changing the appointment horizon.
 - [ ] Connect onboarding return and refresh URLs are configured.
 - [ ] A test webhook endpoint receives a signed event locally, with signature verification demonstrated.
-- [ ] Test cards for success, capture failure and authentication-required are documented.
+- [ ] Test cards for success and authentication-required are documented, **and the absence of any capture-failure test card is recorded with its Stripe documentation sources** (`RULE-PAY-13`), with that proof reassigned to `P3-T02`/`P6-T07` rather than left open here.
 - [ ] The customer-owned Google development project's identity and observed unbilled state are recorded with evidence; all remaining Google provider work is tracked in `P0-T20` with explicit consumer dependencies, not marked completed here.
 - [ ] Every variable name appears in `.env.example`; **no key value is committed anywhere.**
 
-**Tests** — actual Stripe test-mode evidence per criterion, including duplicate manual-capture calls producing one charge, supported-method authorisation deadlines covering both configured pending windows, the approved payout/fee/loss configuration and separate transfer/bank-payout references. Exercise success, capture failure and authentication-required test methods without recording card or bank numbers. Prove a signed event reaches the local verification probe, an invalid signature is rejected and duplicate delivery has no duplicate effect; production business webhook handlers remain Phase 3. Check the Google project-identity/unbilled handoff and graph dependencies on `P0-T20`, not deferred API/key/budget success. Check template coverage and the client environment boundary without printing credentials. Documentation, mocks and successful graph checks do not replace provider evidence.
+**Tests** — actual Stripe test-mode evidence per criterion, including duplicate manual-capture calls producing one charge, supported-method authorisation deadlines covering both configured pending windows, the approved payout/fee/loss configuration and separate transfer/bank-payout references. Exercise success and authentication-required test methods without recording card or bank numbers; record the capture-failure fixture finding and its sources per `RULE-PAY-13` instead of inducing one. Prove a signed event reaches the local verification probe, an invalid signature is rejected and duplicate delivery has no duplicate effect; production business webhook handlers remain Phase 3. Check the Google project-identity/unbilled handoff and graph dependencies on `P0-T20`, not deferred API/key/budget success. Check template coverage and the client environment boundary without printing credentials. Documentation, mocks and successful graph checks do not replace provider evidence.
 
 **Out of scope** — remaining Google development provisioning and verification (`P0-T20`); implementing Connect onboarding (`P1-T07`); payment code (Phase 3); live mode (`P6-T11`); staging projects (`P6-T09`).
 
@@ -3913,7 +3913,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P0-D02, P2-T12, P3-T01]
 affects: [P3-T04, P3-T06, P5-T04, P5-T09]
-knowledgeBase: [ADR-006, ADR-009, ADR-010, ADR-013, RULE-PAY-03, RULE-PAY-04, RULE-PAY-05, RULE-PAY-06, RULE-PAY-09, RULE-PAY-11, ENUM-PAYMENT-STATUS, ENUM-BOOKING-STATUS]
+knowledgeBase: [ADR-006, ADR-009, ADR-010, ADR-013, RULE-PAY-03, RULE-PAY-04, RULE-PAY-05, RULE-PAY-06, RULE-PAY-09, RULE-PAY-11, RULE-PAY-13, ENUM-PAYMENT-STATUS, ENUM-BOOKING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -3971,14 +3971,14 @@ Stripe is the source of truth (`RULE-PAY-06`). The webhook in `P3-T03` reconcile
 - [ ] **A duplicate capture call charges once** — proven against the Stripe test dashboard showing a single charge, not one per call.
 - [ ] **Parallel capture calls on one payment produce exactly one charge** — real concurrency, repeated runs.
 - [ ] The idempotency key is derived server-side from the payment id.
-- [ ] **A failed capture leaves the booking at `accepted_pending_payment`** and the payment at `capture_failed` — never a confirmed booking with no money.
+- [ ] **A failed capture leaves the booking at `accepted_pending_payment`** and the payment at `capture_failed` — never a confirmed booking with no money. Proven by a simulated provider capture error (`RULE-PAY-13`), not an authorisation decline, refund failure or dispute.
 - [ ] An expired authorisation returns `409 authorisation_expired`, distinct from a decline.
 - [ ] **No database lock is held across the Stripe call** — demonstrated by the code path and by a load test that does not exhaust connections.
 - [ ] Both parties are notified on success and on failure.
 - [ ] Amounts are integer cents and match the authorised amount.
 - [ ] An audit log is written for success and for failure.
 
-**Tests** — duplicate and parallel capture asserted against the Stripe dashboard as one charge; capture failure using the `P0-T18` test card, asserting the booking status stays `accepted_pending_payment`; expired authorisation path; a concurrency load test asserting no lock is held across the external call.
+**Tests** — duplicate and parallel capture asserted against the Stripe dashboard as one charge; capture failure by simulating the provider capture error at the Stripe boundary (`RULE-PAY-13` — no Stripe test card authorises then fails at capture), asserting the payment reaches `capture_failed`, the booking status stays `accepted_pending_payment`, both parties are notified and an audit log is written; expired authorisation path; a concurrency load test asserting no lock is held across the external call.
 
 **Out of scope** — wiring capture into acceptance (`P3-T06`); the webhook (`P3-T03`); earnings (`P3-T04`).
 
@@ -6711,7 +6711,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P3-T07, P4-T11, P5-T07]
 affects: [P6-T11]
-knowledgeBase: [RULE-ADMIN-01, RULE-COMPLETE-04, RULE-CANCEL-07, RULE-EARN-04]
+knowledgeBase: [RULE-ADMIN-01, RULE-COMPLETE-04, RULE-CANCEL-07, RULE-EARN-04, RULE-PAY-13]
 blockedByTbc: []
 labels: [quicktrimr, phase-6, qa]
 ```
@@ -6722,7 +6722,7 @@ Some things cannot be automated at reasonable cost: a real Stripe Connect onboar
 
 **Scope**
 
-`docs/qa/test-plan.md` with cases covering: client onboarding; barber onboarding including real Connect; Available Now end to end; Scheduled end to end; request expiry; accept and decline; payment authorisation and capture including a **deliberate capture failure**; all four cancellation cases with the refund arithmetic checked against Stripe; all three completion cases including both auto-completion paths; disputes and admin resolution; payout batching; ETA including permission denial; reviews; and every admin action.
+`docs/qa/test-plan.md` with cases covering: client onboarding; barber onboarding including real Connect; Available Now end to end; Scheduled end to end; request expiry; accept and decline; payment authorisation and capture including a **deliberate capture failure** simulated at the provider boundary (`RULE-PAY-13` — no Stripe test card authorises then fails at capture); all four cancellation cases with the refund arithmetic checked against Stripe; all three completion cases including both auto-completion paths; disputes and admin resolution; payout batching; ETA including permission denial; reviews; and every admin action.
 
 **Access control cases run as the wrong role**, at the API, for every admin action and every cross-user read.
 
@@ -6758,7 +6758,7 @@ priority: High
 jiraKey: null
 dependsOn: [P2-T12, P3-T02, P3-T07, P3-T11, P4-T11, P5-T07, P6-T05]
 affects: []
-knowledgeBase: [RULE-PAY-04, RULE-PAY-05, RULE-REQUEST-05, RULE-AVAIL-05, RULE-CANCEL-07, RULE-COMPLETE-04, RULE-EARN-03, RULE-EARN-06, RULE-ADMIN-01]
+knowledgeBase: [RULE-PAY-04, RULE-PAY-05, RULE-PAY-13, RULE-REQUEST-05, RULE-AVAIL-05, RULE-CANCEL-07, RULE-COMPLETE-04, RULE-EARN-03, RULE-EARN-06, RULE-ADMIN-01]
 blockedByTbc: []
 labels: [quicktrimr, phase-6, backend, qa, security]
 ```
