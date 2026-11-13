@@ -38,3 +38,7 @@ coverage/
 playwright-report/
 test-results/
 .vercel/
+
+# Local-only onboarding captures contain test phone fields; never publish them.
+/docs/qa/evidence/P0-T18-hosted-onboarding-start.jpg
+/docs/qa/evidence/P0-T18-hosted-onboarding-stalled.jpg

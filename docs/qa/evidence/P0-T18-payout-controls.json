@@ -1,0 +1,32 @@
+{
+  "ticket": "P0-T18",
+  "case": "connected-account-payout-controls-v1",
+  "recordedUtc": "2026-11-13",
+  "method": "scripts/stripe/read-payout-controls.mjs — read-only account retrieve; no object created, no money moved, no setting changed",
+  "platformAccountId": "acct_1UORkfJHIzfhdSDq",
+  "connectedAccountId": "acct_1UQZXTJHIzBQ6oGf",
+  "observed": {
+    "dashboardType": "express",
+    "payoutsEnabled": true,
+    "debitNegativeBalances": true,
+    "scheduleInterval": "manual",
+    "scheduleDelayDays": 2,
+    "feesPayer": "application",
+    "lossesPayments": "application"
+  },
+  "assessment": {
+    "ruleEarn07AutomaticScheduleAbsent": true,
+    "rulePay12FeesPayerApplication": true,
+    "rulePay12PlatformBearsPaymentLosses": true,
+    "note": "A manual schedule means no automatic payout run can fire independently of the platform's weekly batch."
+  },
+  "notReadableFromAccountObject": [
+    "manualPayoutsFeature",
+    "editPayoutScheduleFeature",
+    "instantPayoutsFeature"
+  ],
+  "notReadableReason": "Express payout toggles are platform-wide Connect Dashboard settings, not fields on the account object. Confirmed absent from the v1 account payload and from the v2 configuration.recipient response, which exposes capabilities only. They remain the Dashboard observations already recorded (manual payouts off, schedule editing off, Instant daily limit A$0) and are not asserted as disabled by this probe.",
+  "connectedAccountDashboardObservation": "The connected account's own dashboard shows a 'Pay out funds' control, greyed at A$0.00 balance. This probe establishes the account cannot pay out on an independent automatic schedule; it does not by itself establish that the control can never be invoked.",
+  "secretsRecorded": false,
+  "bankOrPersonalValuesRecorded": false
+}

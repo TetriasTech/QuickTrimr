@@ -1,0 +1,33 @@
+{
+  "ticket": "P0-T18",
+  "verificationDateAustraliaSydney": "2026-10-20",
+  "customerIdentityLabelMatched": true,
+  "projectName": "QuickTrimr Development",
+  "projectId": "quicktrimr-dev",
+  "projectCreatedAndSelected": true,
+  "projectHeaderScreenshot": "P0-T18-google-development-project.png",
+  "projectBillingPageObservedNoLinkedAccount": true,
+  "billingSetupHandedToUser": true,
+  "userRequestedBillingGuidance": true,
+  "billingDeferralApprovedDateAustraliaSydney": "2026-10-20",
+  "deferralRule": "RULE-OPS-GOOGLE-DEV-DEFERRAL",
+  "remainingProviderWorkDeferredTo": "P0-T20",
+  "followUpJiraKey": "TRIMR-29",
+  "billingLeftUnchangedDuringSplit": true,
+  "agentEnteredPaymentDetails": false,
+  "agentAcceptedBillingTerms": false,
+  "billingCurrencyVerified": false,
+  "requiredApisVerifiedEnabled": false,
+  "fourRestrictedKeysProvisioned": false,
+  "savedQuotaLimitsVerified": false,
+  "savedBudgetAndRecipientVerified": false,
+  "budgetAlertsDeliveryVerified": false,
+  "approvedPolicyReferences": [
+    "CFG-GOOGLE-DEV-BUDGET",
+    "CFG-GOOGLE-DEV-ALERT-EMAIL",
+    "CFG-GOOGLE-DEV-ALERT-THRESHOLDS",
+    "CFG-GOOGLE-DEV-QUOTAS"
+  ],
+  "policyGuaranteesHardSpendingCap": false,
+  "keyOrPaymentValuesPersisted": false
+}

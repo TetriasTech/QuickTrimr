@@ -13,6 +13,175 @@ const backlog = await readFile(
   'utf8',
 );
 
+function backlogTicket(id) {
+  const block = [
+    ...backlog.matchAll(
+      /^#### (P[\dA-Z-]+) — .+?\n\n```yaml\n([\s\S]*?)```\n([\s\S]*?)(?=\n^#### P|\n^## |\n^<!-- TICKETS-END)/gm,
+    ),
+  ].find((match) => match[1] === id);
+  assert.ok(block, `Missing ticket: ${id}`);
+  // The Docs job intentionally runs without a dependency install. Read only the
+  // repository's flat header fields needed by these specification guards.
+  const field = (name) => {
+    const match = block[2].match(new RegExp(`^${name}: (.*)$`, 'm'));
+    assert.ok(match, `Missing ${name} on ${id}`);
+    return match[1];
+  };
+  const list = (name) => {
+    const value = field(name);
+    assert.match(value, /^\[[^[\]]*\]$/, `Expected flat list: ${id}.${name}`);
+    return value
+      .slice(1, -1)
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  };
+  return {
+    owner: field('owner'),
+    issueType: field('issueType'),
+    phase: Number(field('phase')),
+    dependsOn: list('dependsOn'),
+    blockedByTbc: list('blockedByTbc'),
+    knowledgeBase: list('knowledgeBase'),
+    body: block[3],
+  };
+}
+
+test('Docs decision checks keep a dependency-free runtime import surface', async () => {
+  const source = await readFile(import.meta.filename, 'utf8');
+  for (const match of source.matchAll(
+    /^import\b[\s\S]*?\bfrom\s+['"]([^'"]+)['"]/gm,
+  )) {
+    assert.ok(
+      match[1].startsWith('node:') || match[1].startsWith('.'),
+      'The dependency-free Docs job cannot import third-party packages.',
+    );
+  }
+});
+
+test('Google deferral retains a named-owner foundation follow-up independent of Stripe', () => {
+  const google = backlogTicket('P0-T20');
+  assert.equal(google.owner, 'Tony');
+  assert.equal(google.issueType, 'Task');
+  assert.equal(google.phase, 0);
+  assert.deepEqual(google.dependsOn, ['P0-T03']);
+  assert.deepEqual(google.blockedByTbc, []);
+  assert.ok(google.knowledgeBase.includes('RULE-OPS-GOOGLE-DEV-DEFERRAL'));
+  assert.match(google.body, /quicktrimr-dev/);
+  assert.match(google.body, /no linked billing account/);
+  assert.match(
+    google.body,
+    /customer.*enter payment details.*personally accept billing terms/,
+  );
+  assert.match(kb, /narrow Phase 0 sequencing exception/);
+  assert.match(
+    backlog,
+    /only unrelated tickets whose own readiness gates pass/,
+  );
+});
+
+test('first Places, Maps and Routes consumers directly wait on deferred Google verification', () => {
+  for (const id of ['P1-T05', 'P2-T07', 'P4-T05']) {
+    const ticket = backlogTicket(id);
+    assert.ok(ticket.dependsOn.includes('P0-T20'), id);
+    assert.ok(!ticket.dependsOn.includes('P0-T18'), id);
+    assert.ok(
+      ticket.knowledgeBase.includes('RULE-OPS-GOOGLE-DEV-DEFERRAL'),
+      id,
+    );
+  }
+  for (const id of ['P6-T09', 'P6-T11']) {
+    const ticket = backlogTicket(id);
+    assert.ok(ticket.dependsOn.includes('P0-T18'), id);
+    assert.ok(ticket.dependsOn.includes('P0-T20'), id);
+  }
+  assert.ok(!backlogTicket('P2-T04').dependsOn.includes('P0-T20'));
+});
+
+test('Google split does not waive Stripe payout controls or genuine capture failure', () => {
+  const stripe = backlogTicket('P0-T18');
+  assert.match(stripe.body, /bank-detail correction/);
+  assert.match(stripe.body, /on-demand controls must not bypass/);
+  // Capture-time failure has no Stripe test method (RULE-PAY-13). The proof is
+  // reassigned to P3-T02 with an explicit rule and approval, never silently
+  // dropped, and an authorisation decline is still not a substitute.
+  assert.match(stripe.body, /`RULE-PAY-13`/);
+  assert.match(stripe.body, /Capture-time failure has no Stripe test card/);
+  assert.match(stripe.body, /do not substitute an authorisation decline/);
+  assert.match(stripe.body, /platform-borne standard Connect\/payout fees/);
+  assert.match(
+    stripe.body,
+    /all remaining Google provider work is tracked in `P0-T20`/,
+  );
+  assert.doesNotMatch(
+    stripe.body,
+    /\[ \] Approved quota limits and budget alerts are configured/,
+  );
+  assert.deepEqual(stripe.dependsOn, ['P0-D05', 'P0-T03']);
+  assert.deepEqual(stripe.blockedByTbc, []);
+  assert.ok(!stripe.dependsOn.includes('P0-T20'));
+});
+
+test('capture-failure reassignment keeps RULE-PAY-05 coverage in the build tickets', () => {
+  // RULE-PAY-13 changes the testing method only. P3-T02 must still prove the
+  // recoverable state, and must not regress to the non-existent P0-T18 card.
+  const rule = section(kb, '- `RULE-PAY-13`', '- `RULE-PAY-06`');
+  assert.match(rule, /simulated provider error, not a test card/i);
+  assert.match(rule, /not a relaxation of `RULE-PAY-05`/);
+
+  const capture = backlogTicket('P3-T02');
+  assert.ok(capture.knowledgeBase.includes('RULE-PAY-05'));
+  assert.ok(capture.knowledgeBase.includes('RULE-PAY-13'));
+  assert.match(capture.body, /simulating the provider capture error/);
+  assert.match(capture.body, /stays `accepted_pending_payment`/);
+  assert.doesNotMatch(capture.body, /`P0-T18` test card/);
+
+  for (const id of ['P6-T06', 'P6-T07']) {
+    assert.ok(
+      backlogTicket(id).knowledgeBase.includes('RULE-PAY-13'),
+      `${id} must cite RULE-PAY-13`,
+    );
+  }
+});
+
+test('deferred Google scope preserves approved cost controls and real provider evidence', () => {
+  const google = backlogTicket('P0-T20');
+  for (const id of [
+    'CFG-GOOGLE-DEV-BUDGET',
+    'CFG-GOOGLE-DEV-ALERT-EMAIL',
+    'CFG-GOOGLE-DEV-ALERT-THRESHOLDS',
+    'CFG-GOOGLE-DEV-QUOTAS',
+  ]) {
+    assert.ok(google.knowledgeBase.includes(id), id);
+  }
+  assert.match(
+    google.body,
+    /Each key's permitted usage succeeds and mismatched identity\/referrer or disallowed API usage is rejected/,
+  );
+  assert.match(google.body, /actual selected signing SHA-1/);
+  assert.match(
+    google.body,
+    /Unsupported\/non-editable limits remain an unmet criterion/,
+  );
+  assert.match(google.body, /alerts-only, not a hard spending cap/);
+  assert.match(
+    google.body,
+    /no billing terms are accepted or payment details entered by the agent/,
+  );
+});
+
+test('Places address autocomplete keeps the existing Edge-Function-only trust boundary', () => {
+  const address = backlogTicket('P1-T05');
+  assert.match(
+    address.body,
+    /Places autocomplete calls go through Edge Functions using the backend-only key/,
+  );
+  assert.doesNotMatch(
+    address.body,
+    /The Google client key is used for autocomplete/,
+  );
+});
+
 function section(markdown, start, end) {
   const startAt = markdown.indexOf(start);
   assert.notEqual(startAt, -1, `Missing section: ${start}`);
