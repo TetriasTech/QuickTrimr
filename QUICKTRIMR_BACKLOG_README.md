@@ -1076,9 +1076,9 @@ phase: 0
 priority: High
 jiraKey: TRIMR-17
 dependsOn: [P0-T07]
-affects: []
-knowledgeBase: [ADR-002, RULE-ADMIN-01]
-blockedByTbc: []
+affects: [P1-T03, P1-T04, P1-T06, P1-T07, P1-T08, P1-T09, P1-T10, P1-T11, P2-T01, P2-T03, P2-T04, P2-T08, P2-T09, P2-T12, P2-T13, P2-T14, P2-T15, P3-T01, P3-T02, P3-T03, P3-T04, P3-T06, P3-T07, P3-T08, P3-T10, P3-T11, P4-T03, P4-T04, P4-T05, P4-T07, P4-T09, P4-T10, P4-T11, P4-T12, P4-T14, P5-T01, P5-T04, P5-T05, P5-T07, P5-T08, P5-T12, P5-T13]
+knowledgeBase: [ADR-001, ADR-002, ADR-007, ADR-011, RULE-ADMIN-01, RULE-ADMIN-04, RULE-PAY-01, RULE-PAY-07, RULE-API-CONTRACT-FOUNDATION, RULE-ADMIN-BARBER-STATUS-ALIAS]
+blockedByTbc: [TBC-ADMIN-BARBER-STATUS-CONTRACT]
 labels: [quicktrimr, phase-0, foundation, backend]
 ```
 
@@ -1088,28 +1088,67 @@ labels: [quicktrimr, phase-0, foundation, backend]
 
 The documentation is only load-bearing if it is honest about **errors**. A screen built against the success shape alone has no empty state, no expired state, and no "someone else accepted first" state — which is exactly the state `RULE-REQUEST-05` guarantees will happen.
 
+Readiness inspection found that `P0-T07` supplies 15 schemas while the KB inventory contains
+49 functions. On 2026-11-04 Andrew approved Option A: this ticket also defines the missing
+34 request/response schema pairs and their contract/error fixtures, preserving all-inventory
+coverage (`RULE-API-CONTRACT-FOUNDATION`). This does not reopen the completed prerequisite or
+authorize implementing its future feature consumers.
+
+On 2026-11-05 Andrew resolved `TBC-ADMIN-BARBER-STATUS-CONTRACT`: the generic
+`admin-update-barber-status` name is an alias of `admin-update-reliability-state`, with
+identical schemas and safeguards (`RULE-ADMIN-BARBER-STATUS-ALIAS`). Both remain in the
+49-entry inventory; no separate status enum or manual verification override is introduced.
+
 **Scope**
 
-`docs/api/contracts.md`, one section per function from `KB §12`'s inventory. For each: required role, the Zod schema from `P0-T07`, a worked success request and response, and **every** error response with its status code and stable error string.
+`docs/api/contracts.md`, one section per function from the KB inventory. For each: required
+caller/role, the named shared request/response schemas, a worked request and success response,
+and every defined error response with its status code and stable error string. Extend the
+existing shared contract registry with the missing schemas; derive payload types rather than
+maintaining separate interfaces. Preserve the existing 15 schemas and reuse their examples.
 
-Document the shared error envelope and the standard failures every function has — `401 unauthenticated`, `403 forbidden`, `422 validation_failed` with field errors.
+Document the shared error envelope and standard user-call failures — `401 unauthenticated`,
+`403 forbidden`, `422 validation_failed` with field errors. Document server-only operations
+as internal contracts, not client-callable money/worker controls. The Stripe entry describes
+signature authentication and its raw-body boundary, not a JWT requirement; any decoded example
+is synthetic and does not claim a verified signature or actual provider delivery.
 
 Mock fixtures under `docs/api/fixtures/` that mobile and admin can import while a function does not exist yet, so mock mode is real data in the real shape rather than a hand-written object.
 
 **Acceptance criteria**
 
-- [ ] Every function in `KB §12`'s inventory has a documented contract.
-- [ ] Each states its required role.
+- [ ] Every function in the KB inventory has a documented, schema-backed contract; an exact-set test detects omissions and extras.
+- [ ] Each states its required caller/role, including the internal-only and signed-provider boundaries.
 - [ ] Each has a worked request and success response with realistic values.
 - [ ] Each documents every error case, with status code and stable error string — not just the happy path.
 - [ ] Mock fixtures exist and are importable by mobile and admin.
-- [ ] Fixtures validate against the `P0-T07` schemas, asserted in a test.
+- [ ] Fixtures validate against the shared schemas (the original 15 plus the approved additions), asserted in CI; negative cases reject invalid fields and private response additions.
+- [ ] Existing contract examples and consumers remain compatible, or a KB-mandated correction is explicitly recorded with affected tickets.
+- [ ] Mobile and admin can import the fixture entry without provider credentials, network access or enabling a production mock mode.
 
-**Tests** — every documented fixture parsed against its schema. A fixture that has drifted from its schema fails CI.
+**Tests** — every documented fixture parsed against its schema; inventory/registry/docs/fixture
+exact-set parity; documented error status/code parity; malformed requests and unexpected/private
+response fields rejected; user-payload server-owned fields never become trusted inputs; actual
+mobile/admin-context fixture imports. A fixture that has drifted from its schema fails CI.
 
-**Out of scope** — implementing the functions.
+**Out of scope** — implementing functions, database changes, provider calls, production mock
+wiring, choosing unresolved business rules or declaring later feature acceptance criteria met.
 
-**Sync notes** — this is documentation of contracts owned by later tickets. When a function ships and its contract differs, the owning ticket updates this file in the same PR.
+**Sync notes** — these are contracts for later tickets, not evidence of their implementation.
+The `affects` list names the owners of the documented consumers. When a function ships and its
+contract differs, its owning ticket updates schemas, fixtures and documentation together in the
+same PR. Generated sections 8/9 remain untouched on this branch and are proposed by CI after merge.
+
+**Contract drift corrections (2026-11-05)** — P0-T07's strict shared error envelope wins over
+legacy illustrative extra error properties in downstream examples. Remove those properties;
+clients read permitted authoritative records separately, never parse an ad hoc error status/id
+or a client secret. P3-T01 must deliver and test its owner-scoped SDK/SCA recovery as part of
+that feature, updating shared contracts and fixtures for any additional typed success/action
+payload it actually needs; a client secret is not an ordinary error field. The current
+contract foundation does not claim to implement that recovery. The pre-existing mark-on-way
+schema also required location despite P4-T04's permission-denied flow: coordinates are now an
+optional pair and the unavailable-ETA success branch is retained. Original valid inputs remain
+valid. P4-T03/T04/T05 and the affected error consumers listed above must use these corrections.
 
 ---
 
@@ -2363,7 +2402,7 @@ Audit log on account creation and on each link issue (`ADR-013`).
 { "error": "forbidden" }
 
 // 409 — onboarding already complete
-{ "error": "onboarding_complete", "accountStatus": "verified" }
+{ "error": "onboarding_complete" }
 
 // 502 — Stripe unavailable; nothing was created
 { "error": "stripe_unavailable" }
@@ -2789,7 +2828,7 @@ RLS: a barber reads and writes only their own sessions; the discovery path reads
   "approximateArea": { "id": "sal:2021:example", "label": "Melbourne" } }
 
 // 409 — a session is already active
-{ "error": "session_already_active", "activeSessionId": "5c22..." }
+{ "error": "session_already_active" }
 
 // 422 — available-until in the past
 { "error": "validation_failed",
@@ -3258,10 +3297,10 @@ Audit log (`ADR-013`).
   "expiresAt": "2026-08-05T04:16:22Z", "createdAt": "2026-08-05T04:11:22Z" }
 
 // 409 — RULE-AVAIL-04
-{ "error": "active_request_exists", "existingRequestId": "b334..." }
+{ "error": "active_request_exists" }
 
 // 409 — RULE-SCHED-03
-{ "error": "duplicate_request_intent", "existingRequestId": "c901..." }
+{ "error": "duplicate_request_intent" }
 
 // 409 — barber ineligible
 { "error": "barber_unavailable" }
@@ -3526,10 +3565,10 @@ Audit log (`ADR-013`).
   "requestStatus": "accepted", "bookingStatus": "accepted_pending_payment" }
 
 // 409 — someone or something got there first
-{ "error": "request_not_pending", "currentStatus": "expired" }
+{ "error": "request_not_pending" }
 
 // 409 — RULE-AVAIL-05
-{ "error": "active_job_exists", "activeBookingId": "7f10..." }
+{ "error": "active_job_exists" }
 
 // 409 — RULE-RELY-06 now prevents accepting this booking type
 { "error": "barber_unavailable" }
@@ -3607,7 +3646,7 @@ Audit log.
 { "requestId": "d5e1...", "status": "declined" }
 
 // 409 — already resolved
-{ "error": "request_not_pending", "currentStatus": "accepted" }
+{ "error": "request_not_pending" }
 
 // 403
 { "error": "forbidden" }
@@ -3617,7 +3656,7 @@ Audit log.
 
 - [ ] A barber can decline a pending request addressed to them.
 - [ ] **A decline racing an acceptance loses cleanly** — the request ends `accepted`, the decline returns `409`, and no booking is corrupted.
-- [ ] An expired or already-resolved request returns `409` with its current status.
+- [ ] An expired or already-resolved request returns `409 request_not_pending` in the shared error envelope; read permitted current state separately rather than adding a status property to the error.
 - [ ] A request addressed to another barber returns 403.
 - [ ] **Declining resets the consecutive-miss counter** (`RULE-AVAIL-03`).
 - [ ] An optional reason is stored when supplied.
@@ -3826,13 +3865,16 @@ Audit log. Never log a card number, a full payload, or a secret (`RULE-PAY-10`).
   "authorisationExpiresAt": "2026-08-12T04:11:22Z" }
 
 // 402 — declined
-{ "error": "card_declined", "declineCode": "insufficient_funds" }
+{ "error": "card_declined" }
+
+// 402 — insufficient funds is a distinct safe error
+{ "error": "insufficient_funds" }
 
 // 402 — SCA
-{ "error": "authentication_required", "clientSecret": "pi_1..._secret_..." }
+{ "error": "authentication_required" }
 
 // 409 — already authorised
-{ "error": "already_authorised", "paymentId": "p820..." }
+{ "error": "already_authorised" }
 
 // 502
 { "error": "stripe_unavailable" }
@@ -3917,8 +3959,7 @@ Stripe is the source of truth (`RULE-PAY-06`). The webhook in `P3-T03` reconcile
   "bookingStatus": "paid_confirmed", "idempotent": true }
 
 // 402 — capture failed; booking deliberately stays accepted_pending_payment
-{ "error": "capture_failed", "declineCode": "card_declined",
-  "bookingStatus": "accepted_pending_payment" }
+{ "error": "capture_failed" }
 
 // 409 — authorisation expired; client must re-authorise
 { "error": "authorisation_expired" }
@@ -4060,7 +4101,7 @@ Audit log on creation and on every status change.
 { "earningId": "e44b...", "status": "pending", "idempotent": true }
 
 // 409 — release attempted while a dispute is open
-{ "error": "dispute_open", "disputeId": "f77c..." }
+{ "error": "dispute_open" }
 ```
 
 **Acceptance criteria**
@@ -4289,7 +4330,7 @@ The following amounts implement `RULE-CANCEL-07` for a 4500-cent captured servic
   "refundCents": 0, "authorisationCancelled": true, "ruleApplied": "RULE-CANCEL-01" }
 
 // 409 — booking already terminal
-{ "error": "booking_not_cancellable", "currentStatus": "completed" }
+{ "error": "booking_not_cancellable" }
 ```
 
 **Acceptance criteria**
@@ -4778,7 +4819,10 @@ The transition that starts ETA. `RULE-ETA-01` — nothing is tracked before this
 
 Validate the barber owns the booking and it is in a valid status — `paid_confirmed`, not a completed or cancelled one.
 
-Capture the barber's location at this moment as the ETA origin, and trigger the first calculation via `P4-T05`.
+With location permission, capture the barber's location at this moment as the ETA origin,
+and trigger the first calculation via `P4-T05`. Coordinates are an optional pair: on denied
+permission submit only `bookingId`, complete the transition and return unavailable ETA
+(`P4-T04`). Never read or store a location without consent.
 
 Status to `on_the_way`, status history written (`ADR-010`).
 
@@ -4799,7 +4843,7 @@ Audit log.
   "etaMinutes": 14, "etaUpdatedAt": "2026-08-05T04:11:22Z" }
 
 // 409 — wrong status
-{ "error": "invalid_status_transition", "currentStatus": "completed" }
+{ "error": "invalid_status_transition" }
 
 // 409 — already on the way
 { "error": "already_on_the_way" }
@@ -4814,7 +4858,7 @@ Audit log.
 - [ ] A barber can mark a `paid_confirmed` booking as on the way.
 - [ ] The barber's location is captured as the ETA origin and the first ETA is triggered.
 - [ ] **An ETA failure does not block the transition** — the booking still moves to `on_the_way` with a null ETA.
-- [ ] An invalid status transition returns `409` naming the current status.
+- [ ] An invalid status transition returns `409 invalid_status_transition` in the shared error envelope; current state is read through an authorized booking query, not an ad hoc error property.
 - [ ] Marking on-the-way twice is rejected or idempotent, and behaves the same way every time.
 - [ ] A booking scheduled implausibly far ahead is rejected.
 - [ ] Status history is written; the client is notified.
@@ -5062,7 +5106,7 @@ Audit log and status history.
   "clientRespondBy": "2026-08-05T05:11:22Z", "earningStatus": "pending" }
 
 // 409
-{ "error": "invalid_status_transition", "currentStatus": "cancelled" }
+{ "error": "invalid_status_transition" }
 ```
 
 **Acceptance criteria**
@@ -5073,7 +5117,7 @@ Audit log and status history.
 - [ ] **The earning remains `pending`** (`RULE-EARN-02`).
 - [ ] Auto-completion is scheduled.
 - [ ] ETA refreshes stop.
-- [ ] An invalid status transition returns `409` naming the current status.
+- [ ] An invalid status transition returns `409 invalid_status_transition` in the shared error envelope; read permitted current state separately rather than adding a status property to the error.
 - [ ] Barber A cannot complete barber B's booking.
 - [ ] Calling twice is idempotent and does not extend the deadline.
 - [ ] Status history and audit log are written; the client is notified.
@@ -5190,7 +5234,7 @@ Status history and audit log; the barber is notified.
   "completedBy": "client" }
 
 // 409 — auto-completion won the race
-{ "error": "already_completed", "currentStatus": "completed" }
+{ "error": "already_completed" }
 
 // 409 — response window closed
 { "error": "response_window_closed" }
@@ -5395,7 +5439,7 @@ Audit log (`RULE-DISPUTE-06`).
   "earningStatus": "pending" }
 
 // 409 — RULE-DISPUTE-03
-{ "error": "dispute_already_open", "disputeId": "f77c..." }
+{ "error": "dispute_already_open" }
 
 // 409 — outside the window
 { "error": "dispute_window_closed" }
@@ -5519,13 +5563,13 @@ The barber's aggregate recomputed server-side, excluding hidden reviews (`RULE-R
 { "reviewId": "r501...", "rating": 5, "barberRating": 4.83, "barberRatingCount": 38 }
 
 // 409 — RULE-REVIEW-02
-{ "error": "review_already_exists", "reviewId": "r501..." }
+{ "error": "review_already_exists" }
 
 // 409 — outcome not reviewable per RULE-REVIEW-06
-{ "error": "booking_not_reviewable", "bookingStatus": "cancelled" }
+{ "error": "booking_not_reviewable" }
 
 // 409 — review window closed
-{ "error": "review_window_closed", "deadline": "2026-08-19T04:16:22Z" }
+{ "error": "review_window_closed" }
 
 // 422
 { "error": "validation_failed", "fields": { "rating": "Must be between 1 and 5" } }
@@ -5866,10 +5910,10 @@ Status history and audit log recording the admin, the reason, and the before and
 { "error": "validation_failed", "fields": { "reason": "Required" } }
 
 // 409 — transition not permitted
-{ "error": "transition_not_allowed", "from": "cancelled", "to": "on_the_way" }
+{ "error": "transition_not_allowed" }
 
 // 409 — would release an earning with a dispute open
-{ "error": "dispute_open", "disputeId": "f77c..." }
+{ "error": "dispute_open" }
 
 // 403
 { "error": "forbidden" }
@@ -5997,10 +6041,10 @@ For a first 2000-cent service refund on a 4500-cent capture with 900-cent origin
   "fields": { "refundCents": "Cannot exceed captured amount of 4500" } }
 
 // 409 — already resolved
-{ "error": "dispute_already_resolved", "status": "resolved_barber_paid" }
+{ "error": "dispute_already_resolved" }
 
 // 502 — Stripe failed; nothing was marked resolved
-{ "error": "stripe_unavailable", "disputeStatus": "open" }
+{ "error": "stripe_unavailable" }
 ```
 
 **Acceptance criteria**
@@ -6307,7 +6351,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D04, P1-T02, P3-T12, P5-T03]
 affects: []
-knowledgeBase: [ADR-013, RULE-ADMIN-01, RULE-RELY-01, RULE-RELY-02, RULE-RELY-05, RULE-RELY-06, ENUM-RELIABILITY-LEVEL, CFG-RELIABILITY-WINDOW-DAYS]
+knowledgeBase: [ADR-013, RULE-ADMIN-01, RULE-RELY-01, RULE-RELY-02, RULE-RELY-05, RULE-RELY-06, RULE-ADMIN-BARBER-STATUS-ALIAS, ENUM-RELIABILITY-LEVEL, CFG-RELIABILITY-WINDOW-DAYS]
 blockedByTbc: []
 labels: [quicktrimr, phase-5, admin, backend, security]
 ```
@@ -6320,7 +6364,10 @@ labels: [quicktrimr, phase-5, admin, backend, security]
 
 **Scope**
 
-`admin-update-reliability-state`.
+`admin-update-reliability-state`, also exposed under the inventory alias
+`admin-update-barber-status` (`RULE-ADMIN-BARBER-STATUS-ALIAS`). Both names delegate to
+one implementation with identical request/response schemas and all safeguards below;
+neither grants a manual Stripe verification override or a separate account-status mutation.
 
 Admin role verified server-side; a mandatory reason.
 
@@ -7085,16 +7132,16 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `ADR-006` | `P0-D08`, `P0-T18`, `P2-T08`, `P2-T09`, `P3-T01`, `P3-T02`, `P3-T06` |
 | `ADR-007` | `P0-T01`, `P0-T02`, `P0-T04`, `P0-T06`, `P0-T07`, `P0-T13`, `P0-T14`, `P0-T16`, `P0-T17`, `P6-T10` |
 | `ADR-008` | `P0-D06`, `P0-T03`, `P0-T09`, `P0-T10`, `P0-T12`, `P0-T18`, `P1-T05`, `P1-T06`, `P2-T01`, `P2-T04`, `P2-T07`, `P4-T05` |
-| `ADR-009` | `P0-D02`, `P0-D03`, `P0-T10`, `P0-T12`, `P1-T11`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P3-T10`, `P5-T07`, `P5-T08`, `P5-T09`, `P5-T10` |
+| `ADR-009` | `P0-D02`, `P0-D03`, `P0-T10`, `P0-T12`, `P0-T17`, `P1-T11`, `P2-T08`, `P3-T01`, `P3-T02`, `P3-T04`, `P3-T07`, `P3-T10`, `P5-T07`, `P5-T08`, `P5-T09`, `P5-T10` |
 | `ADR-010` | `P0-T06`, `P0-T10`, `P0-T12`, `P2-T12`, `P3-T02`, `P3-T06`, `P4-T01`, `P4-T02`, `P4-T03`, `P4-T07`, `P4-T09`, `P4-T12`, `P5-T04`, `P5-T05` |
 | `ADR-011` | `P0-D07`, `P2-T03`, `P2-T15`, `P3-T11`, `P3-T12`, `P4-T05`, `P4-T11`, `P6-T02` |
 | `ADR-012` | `P0-T05` |
 | `ADR-013` | `P0-T05`, `P0-T10`, `P0-T11`, `P0-T12`, `P0-T17`, `P1-T02`, `P1-T03`, `P1-T07`, `P1-T09`, `P1-T10`, `P2-T03`, `P2-T08`, `P2-T12`, `P2-T13`, `P2-T15`, `P3-T01`, `P3-T02`, `P3-T03`, `P3-T04`, `P3-T07`, `P3-T10`, `P3-T11`, `P3-T12`, `P4-T03`, `P4-T07`, `P4-T09`, `P4-T11`, `P4-T12`, `P4-T14`, `P5-T02`, `P5-T05`, `P5-T07`, `P5-T11`, `P5-T12`, `P5-T13`, `P6-T05`, `P6-T11` |
 | `ADR-014` | `P0-T19` |
-| `RULE-ADMIN-01` | `P0-T05`, `P0-T07`, `P0-T08`, `P0-T11`, `P0-T16`, `P1-T02`, `P1-T10`, `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T05`, `P5-T06`, `P5-T07`, `P5-T09`, `P5-T10`, `P5-T11`, `P5-T12`, `P5-T13`, `P6-T06`, `P6-T07`, `P6-T08`, `P6-T11`, `P7-T02` |
+| `RULE-ADMIN-01` | `P0-T05`, `P0-T07`, `P0-T08`, `P0-T11`, `P0-T16`, `P0-T17`, `P1-T02`, `P1-T10`, `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T05`, `P5-T06`, `P5-T07`, `P5-T09`, `P5-T10`, `P5-T11`, `P5-T12`, `P5-T13`, `P6-T06`, `P6-T07`, `P6-T08`, `P6-T11`, `P7-T02` |
 | `RULE-ADMIN-02` | `P5-T05`, `P6-T08` |
 | `RULE-ADMIN-03` | `P5-T07`, `P5-T08` |
-| `RULE-ADMIN-04` | `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T06`, `P5-T09` |
+| `RULE-ADMIN-04` | `P0-T17`, `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T06`, `P5-T09` |
 | `RULE-AVAIL-01` | `P0-T10`, `P2-T01`, `P2-T02` |
 | `RULE-AVAIL-02` | `P2-T01`, `P2-T02` |
 | `RULE-AVAIL-03` | `P0-D04`, `P2-T02`, `P2-T03`, `P2-T13`, `P2-T15` |
@@ -7212,9 +7259,9 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `ENUM-BOOKING-STATUS` | `P0-T06`, `P0-T10`, `P0-T12`, `P0-T14`, `P0-T17`, `P2-T12`, `P3-T02`, `P3-T06`, `P3-T07`, `P4-T01`, `P4-T02`, `P4-T03`, `P4-T07`, `P4-T09`, `P4-T11`, `P4-T12`, `P5-T01`, `P5-T04`, `P5-T05` |
 | `ENUM-BOOKING-TYPE` | `P0-T06`, `P0-T10`, `P0-T12`, `P2-T05`, `P2-T08` |
 | `ENUM-DISPUTE-STATUS` | `P0-D08`, `P0-T06`, `P0-T10`, `P0-T12`, `P0-T17`, `P4-T12`, `P5-T01`, `P5-T06`, `P5-T07` |
-| `ENUM-EARNING-STATUS` | `P0-T06`, `P0-T10`, `P0-T12`, `P3-T04`, `P3-T05`, `P3-T10`, `P3-T11`, `P5-T04`, `P5-T07`, `P5-T09`, `P5-T10` |
+| `ENUM-EARNING-STATUS` | `P0-T06`, `P0-T10`, `P0-T12`, `P0-T17`, `P3-T04`, `P3-T05`, `P3-T10`, `P3-T11`, `P5-T04`, `P5-T07`, `P5-T09`, `P5-T10` |
 | `ENUM-PAYMENT-STATUS` | `P0-T06`, `P0-T10`, `P0-T12`, `P0-T17`, `P3-T01`, `P3-T02`, `P3-T03`, `P3-T06`, `P3-T07`, `P5-T01`, `P5-T04`, `P5-T09` |
-| `ENUM-PAYOUT-STATUS` | `P0-T06`, `P0-T10`, `P0-T12`, `P3-T10`, `P3-T11`, `P5-T10` |
+| `ENUM-PAYOUT-STATUS` | `P0-T06`, `P0-T10`, `P0-T12`, `P0-T17`, `P3-T10`, `P3-T11`, `P5-T10` |
 | `ENUM-RELIABILITY-LEVEL` | `P0-D04`, `P0-T06`, `P0-T10`, `P0-T12`, `P3-T12`, `P5-T03`, `P5-T13` |
 | `ENUM-REQUEST-STATUS` | `P0-T06`, `P0-T10`, `P0-T12`, `P2-T08`, `P2-T09`, `P2-T10`, `P2-T11`, `P2-T12`, `P2-T13`, `P2-T14`, `P2-T15` |
 | `ENUM-USER-ROLE` | `P0-T06`, `P0-T10`, `P0-T12`, `P1-T03` |
@@ -7256,7 +7303,7 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P0-T09` | `P0-T10`, `P6-T05`, `P6-T09` | `P0-T03` |
 | `P0-T10` | `P0-T11`, `P0-T12`, `P1-T03`, `P1-T10`, `P2-T01`, `P2-T08`, `P3-T04`, `P3-T12`, `P4-T12`, `P4-T14` | `P0-D08`, `P0-T06`, `P0-T09` |
 | `P0-T11` | `P0-T12`, `P1-T01`, `P1-T02`, `P1-T03`, `P1-T10`, `P2-T10` | `P0-T09`, `P0-T10` |
-| `P0-T12` | `P5-T01` | `P0-D01`, `P0-T09`, `P0-T10`, `P0-T11` |
+| `P0-T12` | `P0-T17`, `P5-T01` | `P0-D01`, `P0-T09`, `P0-T10`, `P0-T11` |
 | `P0-T13` | `P0-T14`, `P0-T15`, `P1-T01`, `P6-T01`, `P6-T03`, `P6-T04`, `P6-T10` | `P0-T01` |
 | `P0-T14` | `P1-T01`, `P1-T04`, `P1-T06`, `P2-T02`, `P2-T09`, `P2-T11`, `P3-T05`, `P3-T08`, `P3-T09`, `P4-T01`, `P4-T02`, `P4-T08`, `P4-T10`, `P4-T13`, `P4-T15` | `P0-T06`, `P0-T13` |
 | `P0-T15` | `P1-T01`, `P2-T05`, `P2-T06`, `P4-T01`, `P4-T06` | `P0-T13` |

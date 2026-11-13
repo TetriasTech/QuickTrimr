@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { SHARED_ENUMS } from '@quicktrimr/shared';
 
+import { CONTRACTS } from '../src/contracts/index.ts';
+
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const contractsRoot = resolve(packageRoot, 'src/contracts');
 
@@ -22,7 +24,7 @@ test('all named contract payload types are inferred with z.infer', async () => {
   assert.equal(
     (source.match(/export type \w+(?:Request|Response) = z\.infer</g) ?? [])
       .length,
-    30,
+    Object.keys(CONTRACTS).length * 2,
   );
   assert.doesNotMatch(source, /export interface/);
   assert.doesNotMatch(source, /export type \w+(?:Request|Response)\s*=\s*\{/);
@@ -32,6 +34,7 @@ test('validation source does not redeclare shared status literals', async () => 
   const sourceFiles = [
     resolve(packageRoot, 'src/primitives.ts'),
     resolve(packageRoot, 'src/examples.ts'),
+    resolve(packageRoot, 'src/foundation-examples.ts'),
     ...(await readdir(contractsRoot)).map((file) =>
       resolve(contractsRoot, file),
     ),
