@@ -7169,6 +7169,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-COMPLETE-05` | `P4-T11` |
 | `RULE-COPY-01` | `P1-T08`, `P2-T02`, `P2-T09`, `P2-T14`, `P3-T05`, `P3-T08`, `P3-T09`, `P4-T01`, `P4-T02`, `P4-T04`, `P4-T06`, `P4-T08`, `P4-T10`, `P4-T13`, `P6-T02`, `P6-T04`, `P6-T11`, `P7-T01`, `P7-T02` |
 | `RULE-DEV-CI` | `P0-T04` |
+| `RULE-DEV-PROFILE-FIRST` | `P1-T01`, `P1-T03` |
 | `RULE-DISCOVERY-01` | `P2-T04`, `P2-T05` |
 | `RULE-DISCOVERY-02` | `P0-D06`, `P2-T04` |
 | `RULE-DISCOVERY-03` | `P1-T06`, `P2-T04` |
@@ -7289,6 +7290,11 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `ROLE-BARBER` | `P0-T11`, `P1-T01`, `P1-T03`, `P2-T10`, `P4-T02`, `P4-T03` |
 | `ROLE-CLIENT` | `P0-T11`, `P1-T01`, `P1-T03`, `P1-T05` |
 
+**Defined in the knowledge base but not cited by any ticket** — either the rule is not
+implemented, or a ticket is missing its citation. Both are worth knowing:
+
+`RULE-DEV-PHASE1-OWNERSHIP`
+
 ---
 
 ## 9. Reverse Dependency Index
@@ -7331,9 +7337,9 @@ that is what rotted `canRunInParallelWith` in the previous backlog (§3.1).
 | `P0-T18` | `P1-T07`, `P1-T09`, `P3-T01`, `P3-T03`, `P3-T11`, `P6-T09`, `P6-T11` | `P0-D05`, `P0-D08`, `P0-T03` |
 | `P0-T19` | `P0-T01` | — |
 | `P0-T20` | `P1-T05`, `P2-T07`, `P4-T05`, `P6-T09`, `P6-T11` | `P0-T03`, `P0-T18` |
-| `P1-T01` | `P1-T03`, `P6-T01` | `P0-T11`, `P0-T13` |
+| `P1-T01` | `P6-T01` | `P0-T11`, `P0-T13`, `P1-T03` |
 | `P1-T02` | `P5-T01`, `P5-T02`, `P5-T03`, `P5-T04`, `P5-T06`, `P5-T09`, `P5-T11`, `P5-T12`, `P5-T13` | `P0-T11`, `P0-T16` |
-| `P1-T03` | `P1-T04`, `P1-T06`, `P1-T07` | `P0-T06`, `P0-T07`, `P0-T08`, `P0-T10`, `P0-T11`, `P1-T01` |
+| `P1-T03` | `P1-T01`, `P1-T04`, `P1-T06`, `P1-T07` | `P0-T06`, `P0-T07`, `P0-T08`, `P0-T10`, `P0-T11` |
 | `P1-T04` | `P1-T05`, `P2-T08`, `P5-T02` | `P0-T08`, `P0-T14`, `P1-T01`, `P1-T03` |
 | `P1-T05` | `P2-T05`, `P2-T08`, `P4-T03`, `P5-T02` | `P0-T20`, `P1-T04` |
 | `P1-T06` | `P1-T08`, `P1-T11`, `P2-T01` | `P0-D06`, `P0-T08`, `P0-T14`, `P1-T01`, `P1-T03` |
