@@ -45,6 +45,17 @@ enabled = false
 enabled = true
 site_url = "http://127.0.0.1:3000"
 
+[auth.email]
+enable_confirmations = true
+
+[auth.email.template.confirmation]
+subject = "Confirm your QuickTrimr email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your QuickTrimr password"
+content_path = "./supabase/templates/recovery.html"
+
 [edge_runtime]
 enabled = true
 policy = "per_worker"

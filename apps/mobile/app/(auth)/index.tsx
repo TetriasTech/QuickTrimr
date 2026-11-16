@@ -1,5 +1,5 @@
-import { AuthPlaceholderScreen } from '@/features/auth/screens/auth-placeholder-screen';
+import { AuthScreen } from '@/features/auth/screens/auth-screen';
 
 export default function AuthRoute() {
-  return <AuthPlaceholderScreen />;
+  return <AuthScreen />;
 }
