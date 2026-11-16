@@ -65,7 +65,6 @@ test('Google deferral retains a named-owner foundation follow-up independent of 
   assert.equal(google.issueType, 'Task');
   assert.equal(google.phase, 0);
   assert.deepEqual(google.dependsOn, ['P0-T03']);
-  assert.deepEqual(google.blockedByTbc, []);
   assert.ok(google.knowledgeBase.includes('RULE-OPS-GOOGLE-DEV-DEFERRAL'));
   assert.match(google.body, /quicktrimr-dev/);
   assert.match(google.body, /no linked billing account/);
@@ -159,15 +158,56 @@ test('deferred Google scope preserves approved cost controls and real provider e
     /Each key's permitted usage succeeds and mismatched identity\/referrer or disallowed API usage is rejected/,
   );
   assert.match(google.body, /actual selected signing SHA-1/);
-  assert.match(
-    google.body,
-    /Unsupported\/non-editable limits remain an unmet criterion/,
-  );
   assert.match(google.body, /alerts-only, not a hard spending cap/);
   assert.match(
     google.body,
     /no billing terms are accepted or payment details entered by the agent/,
   );
+});
+
+test('Google development quota decision preserves approval and project-specific evidence', () => {
+  const google = backlogTicket('P0-T20');
+  const decisionId = 'TBC-GOOGLE-DEV-NATIVE-IOS-QUOTAS';
+  const configId = 'CFG-GOOGLE-DEV-QUOTAS';
+  assert.deepEqual(google.blockedByTbc, [decisionId]);
+
+  const decisionRegister = section(kb, '## 14. Open Decisions', '## 15.');
+  const decision = decisionRegister
+    .split('\n')
+    .find((line) => line.startsWith(`| \`${decisionId}\` |`));
+  assert.ok(
+    decision?.includes(`**RESOLVED → \`${configId}\`**`),
+    `${decisionId} must remain resolved to ${configId}`,
+  );
+
+  const quotaRow = kb
+    .split('\n')
+    .find((line) => line.startsWith(`| \`${configId}\` |`));
+  const quotaJson = quotaRow
+    ?.split('|')[2]
+    .trim()
+    .match(/^`(\{.*\})`$/);
+  assert.ok(quotaJson, `${configId} must contain a JSON quota policy`);
+  assert.deepEqual(JSON.parse(quotaJson[1]), {
+    mapsJavaScriptMapLoadsPerMinutePerProject: 30000,
+    placesNewAutocompleteRequestsPerMinutePerProject: 12000,
+    placesNewOtherObservedMethodsRequestsPerMinutePerProject: 600,
+    routesComputeRoutesRequestsPerMinutePerProject: 3000,
+    routesComputeRouteMatrixElementsPerMinutePerProject: 3000,
+    nativeMapsSdkQuotaPolicy: 'retain_observed_development_defaults',
+  });
+  assert.match(quotaRow, /`quicktrimr-dev`/);
+  assert.match(quotaRow, /not future methods/);
+  assert.match(
+    quotaRow,
+    /No app business rule or staging\/production quota changes/,
+  );
+  assert.match(google.body, /Read back .* without changing them/);
+  assert.match(
+    google.body,
+    /stop and report it; do not substitute another limit/,
+  );
+  assert.match(google.body, /effective metric\/scope\/limit evidence/);
 });
 
 test('Places address autocomplete keeps the existing Edge-Function-only trust boundary', () => {
