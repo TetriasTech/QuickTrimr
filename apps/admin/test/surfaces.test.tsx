@@ -5,23 +5,35 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { Button } from '@/components/ui/button';
 
 import ErrorBoundary from '../app/error';
-import ForbiddenPage from '../app/forbidden/page';
+import { GET as forbiddenResponse } from '../app/forbidden/route';
 import Loading from '../app/loading';
 import LoginPage from '../app/login/page';
 
 afterEach(cleanup);
+vi.mock('@/lib/auth/actions', () => ({
+  signInAdmin: vi.fn(),
+  signOutAdmin: vi.fn(),
+}));
 
-it('renders honest public copy and a native shadcn form action without claiming sign-in works', () => {
-  render(<LoginPage />);
-  expect(screen.getByText(/Admin sign-in is not available yet/)).toBeTruthy();
-  const button = screen.getByRole('button', { name: 'Check dashboard access' });
+it('renders the public sign-in form with a password input and expiry status', async () => {
+  render(
+    await LoginPage({ searchParams: Promise.resolve({ reason: 'expired' }) }),
+  );
+  expect(screen.getByRole('status').textContent).toContain(
+    'Your session ended.',
+  );
+  expect(screen.getByLabelText('Password').getAttribute('type')).toBe(
+    'password',
+  );
+  const button = screen.getByRole('button', { name: 'Sign in' });
   expect(button.getAttribute('data-slot')).toBe('button');
-  expect(button.closest('form')?.getAttribute('action')).toBe('/');
+  expect(button.closest('form')).toBeTruthy();
 });
 
-it('provides a safe return path for a non-admin', () => {
-  render(<ForbiddenPage />);
-  expect(screen.getByRole('link').getAttribute('href')).toBe('/login');
+it('provides a safe return path for a non-admin with an actual 403 status', async () => {
+  const response = forbiddenResponse();
+  expect(response.status).toBe(403);
+  expect(await response.text()).toContain('href="/login"');
 });
 
 it('announces loading without rendering private placeholder content', () => {

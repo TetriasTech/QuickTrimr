@@ -1,8 +1,7 @@
-# QuickTrimr admin foundation — P0-T16 / P0-T17
+# QuickTrimr admin
 
 Next.js App Router, TypeScript, Tailwind v4 and a manually installed, adapted shadcn/ui Button.
-Real authentication belongs to P1-T02; operational data screens belong to Phase 5. P0-T17 adds
-the guarded shell and shared admin components, not a backend or a working admin login.
+P1-T02 adds Supabase Auth to the guarded shell. Operational data screens belong to Phase 5.
 
 ## Local setup
 
@@ -13,13 +12,11 @@ pnpm install --frozen-lockfile
 pnpm --filter @quicktrimr/admin dev
 ```
 
-Open <http://localhost:3000>. `/` redirects to `/login`. The public information page renders the
-Tailwind theme and shadcn Button; its native form checks dashboard access and returns to `/login`.
-**No `.env`, Supabase credentials, preview account or auth bypass is needed or supported.**
-
-Future integrations use `adminEnv` in `src/lib/env.ts` and this app's public-only `.env.local`
-template. Backend credentials do not belong in this app, including its server components.
-See the [environment contract](../../docs/architecture/environment-variables.md).
+Open <http://localhost:3000>. `/` redirects visitors to `/login`. To sign in, configure
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in this app's ignored `.env.local`,
+apply the database migrations, and use an existing confirmed Supabase Auth account with an admin
+profile assigned through the authorised provisioning process. The admin app uses only the public
+project URL and anon credential. See the [environment contract](../../docs/architecture/environment-variables.md).
 
 ```bash
 pnpm --filter @quicktrimr/admin typecheck
@@ -41,6 +38,10 @@ The tests start the production server on `127.0.0.1:3100`; leave that port free.
 requests try forged role parameters, cookies and headers, including a forged admin claim. Browser
 tests inspect requests, console errors, computed Tailwind styles and navigation. Screenshots and
 failure traces are written under ignored `test-results/`.
+
+With local QuickTrimr Supabase running and Chromium installed, run
+`node scripts/db/verify-admin-auth-live.mjs` from the repository root. It starts its own
+server on `127.0.0.1:3102` after building against the local API, and uses disposable local Auth accounts.
 
 For positive component interactions, run the separate synthetic-only harness after building:
 
@@ -65,21 +66,19 @@ alternative; do not change the build policy or interpret that host error as a pa
 
 ## Server access contract (RULE-ADMIN-01)
 
-- `src/lib/auth/session.ts` is server-only and currently always returns `null` in every environment.
-- `requireAdmin()` awaits the session resolver, denies missing sessions with `/login`, denies
-  non-admin roles with `/forbidden`, and only returns a server-resolved admin session.
+- `requireAdmin()` uses only database-verified identity and role. Navigation without a session
+  redirects to `/login`. Expired sessions redirect to `/login?reason=expired`. A verified non-admin
+  request receives the forbidden page with HTTP 403.
 - The `(admin)` layout **and** page await this guard before rendering. Do not fetch first and hide
   the result: nested pages can render independently of layouts. Every new protected loader, route
   handler and server action must independently await the guard **before** its first data operation.
 - React `cache()` deduplicates checks within a render request; never use persistent caching for
   identity or access decisions. Protected routes are dynamic and must not be shared across users.
-- P1-T02 must replace the session resolver with verified Supabase identity plus a database role
-  lookup, and implement its full auth/expiry/audit requirements. Client-settable roles are not proof.
-- Tests inject admin/non-admin sessions only via module mocks, never through a runtime flag/route.
-  The protected shell is intentionally inaccessible in the running app until real auth lands.
-
-Next may encode a redirect in a streamed HTML/RSC response after headers have been sent; denial
-tests verify the redirect **and raw body**, not only the HTTP status or visible screen.
+- The eight-hour deadline (`CFG-ADMIN-SESSION-HOURS`) is measured from the provider's session
+  creation time and checked in the database. Refreshes keep the same deadline. Opening and closing
+  the dashboard session append audit entries. The admin cookie is HttpOnly, Secure and SameSite=Lax.
+- New protected pages, loaders and actions must use `requireAdmin()` independently of the Next
+  proxy. The proxy gives HTML and RSC denials an HTTP status before streaming starts.
 
 ## Shared packages and UI boundaries (ADR-007)
 

@@ -9,7 +9,8 @@ import { readAdminSession } from './session';
 // RULE-ADMIN-01: call this at EVERY data/action boundary, not only the layout.
 export const requireAdmin = cache(async () => {
   const session = await readAdminSession();
-  if (!session) redirect('/login');
-  if (session.role !== USER_ROLE_VALUE.ADMIN) redirect('/forbidden');
-  return session;
+  if (session.status === 'anonymous') redirect('/login');
+  if (session.status === 'expired') redirect('/login?reason=expired');
+  if (session.status !== 'active') redirect('/forbidden');
+  return { userId: session.userId, role: USER_ROLE_VALUE.ADMIN };
 });

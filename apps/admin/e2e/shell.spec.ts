@@ -25,14 +25,10 @@ for (const role of ['anonymous', 'client', 'barber', 'admin', 'expired']) {
       );
       const body = await response.text();
       expect(body).not.toMatch(privateContent);
-      // Next can carry redirects in the RSC/streamed body after streaming starts.
-      if (response.status() === 307) {
-        expect(response.headers().location).toBe('/login');
-      } else {
-        expect(response.status()).toBe(200);
-        expect(body).toContain('NEXT_REDIRECT');
-        expect(body).toContain('/login');
-      }
+      expect(response.status()).toBe(302);
+      expect(
+        new URL(response.headers().location ?? '', response.url()).pathname,
+      ).toBe('/login');
       expect(response.headers()['cache-control']).toContain('no-store');
     });
   }
@@ -47,15 +43,15 @@ test('running dashboard renders Tailwind/shadcn and denies navigation with no op
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/login');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'A secure start.Operations come next.',
+    'Admin sign in',
   );
-  const button = page.getByRole('button', { name: 'Check dashboard access' });
+  const button = page.getByRole('button', { name: 'Sign in' });
   await expect(button).toHaveAttribute('data-slot', 'button');
   await expect(button).toHaveCSS('background-color', 'rgb(32, 91, 66)');
-  await button.click();
   await expect(page).toHaveURL('/login');
   await expect(page.getByText('No operational screens yet.')).toHaveCount(0);
-  await expect(page.getByText('Access is closed by default')).toBeVisible();
+  await expect(page.getByLabel('Email')).toBeVisible();
+  await expect(page.getByLabel('Password')).toBeVisible();
   expect(errors).toEqual([]);
   for (const url of requests) {
     const parsed = new URL(url);

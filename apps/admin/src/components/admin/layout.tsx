@@ -49,9 +49,11 @@ const navigation = [
 // supplying identity/children. Native anchors do not prefetch private data.
 export function AdminShell({
   adminUserId,
+  actions,
   children,
 }: {
   adminUserId: string;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -90,6 +92,7 @@ export function AdminShell({
           <span className="max-w-full truncate text-xs text-muted-foreground">
             Account: {adminUserId}
           </span>
+          {actions}
         </header>
         <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-8">
           {children}

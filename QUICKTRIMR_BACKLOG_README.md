@@ -1972,8 +1972,8 @@ priority: Highest
 jiraKey: TRIMR-32
 dependsOn: [P0-T11, P0-T16]
 affects: [P5-T01, P5-T02, P5-T03, P5-T04, P5-T06, P5-T09, P5-T11, P5-T12, P5-T13]
-knowledgeBase: [ROLE-ADMIN, RULE-ADMIN-01, ADR-013]
-blockedByTbc: []
+knowledgeBase: [ROLE-ADMIN, RULE-ADMIN-01, ADR-013, CFG-ADMIN-SESSION-HOURS]
+blockedByTbc: [TBC-ADMIN-SESSION-LIFETIME]
 labels: [quicktrimr, phase-1, admin, security]
 ```
 
@@ -1993,13 +1993,13 @@ An unauthorised visitor gets a redirect or a safe error, never a partial render 
 
 Admin sign-in and sign-out write audit logs (`ADR-013`) — who accessed the operational dashboard and when is itself operational information.
 
-Session expiry shorter than the mobile app's. An admin session that lives for weeks on a laptop is a standing risk that a barber's session is not.
+Enforce the absolute `CFG-ADMIN-SESSION-HOURS` deadline on the server. A refreshed token does not extend admin access. Require a fresh admin sign-in after expiry and preserve the mobile session policy.
 
 **Contract example** — guard outcomes
 
 ```jsonc
 // authenticated admin       → 200, page renders
-// authenticated non-admin   → 403, redirect to /forbidden, no operational data in the response
+// authenticated non-admin   → 403, serves /forbidden, no operational data in the response
 // unauthenticated           → 302 to /login
 // expired session           → 302 to /login?reason=expired
 ```

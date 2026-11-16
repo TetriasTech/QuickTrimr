@@ -1,14 +1,22 @@
 import 'server-only';
-import type { UserRole } from '@quicktrimr/shared';
+import { cookies } from 'next/headers';
 
-export type AdminSession = Readonly<{ userId: string; role: UserRole }>;
+import {
+  adminSessionOperation,
+  createAdminProvider,
+  isAdminCookie,
+} from './provider';
 
-/**
- * P0-T16 placeholder: deny everyone in development AND production.
- * P1-T02 replaces this with verified Supabase identity + database role lookup.
- * Never accept a role from query params, headers, cookies or editable JWT metadata.
- * No environment override or production-wired test session is provided.
- */
-export async function readAdminSession(): Promise<AdminSession | null> {
-  return null;
+export async function readAdminSession() {
+  const store = await cookies();
+  const values = store.getAll();
+  if (!values.some(({ name }) => isAdminCookie(name)))
+    return { status: 'anonymous' } as const;
+  const session = await adminSessionOperation(
+    createAdminProvider({ getAll: () => values }),
+    'check',
+  );
+  return session.status === 'anonymous'
+    ? ({ status: 'expired' } as const)
+    : session;
 }

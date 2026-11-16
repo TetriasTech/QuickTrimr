@@ -43,8 +43,9 @@ it('keeps server components as the default and documents every client boundary',
     'app/error.tsx',
     'src/components/admin/confirm-dialog.tsx',
     'src/components/admin/data-table.tsx',
+    'src/features/auth/auth-forms.tsx',
   ]);
-  for (const file of ['session.ts', 'require-admin.ts']) {
+  for (const file of ['session.ts', 'require-admin.ts', 'provider.ts']) {
     const source = await readFile(
       new URL(`../src/lib/auth/${file}`, import.meta.url),
       'utf8',
