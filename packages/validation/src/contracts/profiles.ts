@@ -46,9 +46,22 @@ export type CreateOrSyncProfileResponse = z.infer<
   typeof createOrSyncProfileResponseSchema
 >;
 
+export const INVALID_AU_MOBILE_MESSAGE =
+  'Enter a valid Australian mobile number';
+export const australianMobileSchema = z
+  .string()
+  .trim()
+  .regex(/^[+0-9\s().-]+$/, INVALID_AU_MOBILE_MESSAGE)
+  .transform((input) => input.replace(/[\s().-]/g, ''))
+  .transform((input) =>
+    input.startsWith('04') ? `+61${input.slice(1)}` : input,
+  )
+  .pipe(z.string().regex(/^\+614[0-9]{8}$/, INVALID_AU_MOBILE_MESSAGE));
+
 export const completeClientProfileRequestSchema = requestObject({
-  displayName: nonEmptyStringSchema,
-  mobile: z.e164(),
+  displayName: z.string().trim().min(1, 'Enter your display name'),
+  mobile: australianMobileSchema,
+  attachAvatar: z.literal(true).optional(),
 });
 export type CompleteClientProfileRequest = z.infer<
   typeof completeClientProfileRequestSchema
@@ -56,7 +69,7 @@ export type CompleteClientProfileRequest = z.infer<
 export const completeClientProfileResponseSchema = z.strictObject({
   id: postgresUuidSchema,
   displayName: nonEmptyStringSchema,
-  mobile: nonEmptyStringSchema,
+  mobile: z.string().regex(/^\+614[0-9]{8}$/, INVALID_AU_MOBILE_MESSAGE),
   onboardingComplete: z.boolean(),
   verificationStatus: verificationStatusSchema,
 });

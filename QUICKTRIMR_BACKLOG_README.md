@@ -2138,17 +2138,19 @@ Mobile number format validated for the launch market and stored normalised, so `
 
 The flow is resumable: a client who closes the app mid-onboarding returns to where they left off, which is the state `P0-T13`'s routing already anticipates.
 
-Completion updates `client_profiles` and marks onboarding complete, which is what unlocks the `(client)` journey.
+Completion saves the profile basics in `client_profiles`. Full onboarding and the `(client)` journey require both the saved basics and an owned, active service address (`RULE-ONBOARD-02`). When the first address is still missing, the app keeps the client in onboarding and preserves the saved profile. `P1-T05` owns address entry and the completion refresh after address changes.
 
 **Contract example** — `complete-client-profile`
 
 ```jsonc
 // request
 { "displayName": "Sam Rivera", "mobile": "+61412345678" }
+// Optional: attachAvatar: true links the authenticated client's own uploaded photo.
 
-// 200
+// 200 — profile saved, address still required
 { "id": "9f2c...", "displayName": "Sam Rivera", "mobile": "+61412345678",
-  "onboardingComplete": true, "verificationStatus": "not_started" }
+  "onboardingComplete": false, "verificationStatus": "not_started" }
+// onboardingComplete is true only if an owned, active address already exists.
 
 // 422
 { "error": "validation_failed",
@@ -2160,7 +2162,7 @@ Completion updates `client_profiles` and marks onboarding complete, which is wha
 
 **Acceptance criteria**
 
-- [ ] A client can complete their profile and reach the client journey.
+- [ ] A client can save profile basics. The client journey opens only when an owned, active service address also exists.
 - [ ] Required fields are enforced; the client cannot proceed while one is missing.
 - [ ] The form uses React Hook Form with a shared Zod schema — the same schema the function validates against.
 - [ ] An invalid mobile number is rejected with a field-level message, both client-side and at the API.
@@ -2169,11 +2171,11 @@ Completion updates `client_profiles` and marks onboarding complete, which is wha
 - [ ] `verification_status` remains `not_started` and the field is not removed (`ADR-005`).
 - [ ] Loading and error states exist; a failed submit does not lose entered data.
 
-**Tests** — mobile number validation including boundary formats; resume after interruption; profile completion unlocking the client journey; the API rejecting an invalid number that a modified client sent anyway.
+**Tests** — mobile number validation including boundary formats; resume after interruption; profile save with and without an owned active address; the API rejecting an invalid number that a modified client sent anyway.
 
 **Out of scope** — addresses (`P1-T05`); Stripe Identity; payment methods (`P3-T01`).
 
-**Sync notes** — `P1-T05` continues this flow. `P2-T08` requires a complete profile before a request.
+**Sync notes** — `P1-T05` continues this flow and updates the server-owned onboarding state when address availability changes. `P2-T08` requires a complete profile and a usable address before a request. `P5-T02` must retain the existing admin-only access boundary for private fields.
 
 ---
 
@@ -2205,6 +2207,8 @@ Addresses need coordinates, because discovery is a PostGIS distance query from t
 **Scope**
 
 Address list, add, edit, and archive in `apps/mobile`.
+
+Use the `archived_at` marker introduced by `P1-T04`. Recalculate the server-owned client onboarding state after address changes, and refresh the mobile session so an eligible client enters the client journey after saving their first active address (`RULE-ONBOARD-02`).
 
 Google Places autocomplete through Edge Functions only (`ADR-008`), with the resulting place resolved to a `geography(Point, 4326)` stored on the row. Use the backend key provisioned/verified by `P0-T20`, never a client Maps key for Places. Manual entry as a fallback, because autocomplete fails on new developments and rural addresses.
 
@@ -2241,6 +2245,7 @@ RLS: select, insert and update on `auth.uid() = client_id`. **No delete policy**
 **Acceptance criteria**
 
 - [ ] A client can add, edit, archive and list addresses.
+- [ ] A client with saved profile basics enters the client journey after saving an active service address. Archiving the last active address clears full onboarding completion.
 - [ ] Every saved address has resolved coordinates; an address that cannot be geocoded is rejected with a field-level message rather than saved unusable.
 - [ ] Places autocomplete works, and manual entry works when it does not.
 - [ ] "Use current location" works, and **denying the location permission still allows manual entry and booking.**

@@ -843,9 +843,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P1-T04. Caller: **user**. Roles: client.
 
-Rules: `RULE-ONBOARD-02`, `RULE-ONBOARD-05`.
+Rules: `RULE-ONBOARD-02`, `ADR-001`, `ADR-005`.
 
-Own profile only. Normalize/validate mobile server-side. Onboarding is complete only when required profile information AND an active address exist; the success fixture assumes the address already exists.
+Own profile only. Accept Australian mobile numbers in domestic or international form and store +61 format. An optional attachAvatar flag links the caller’s existing upload from private storage. Onboarding is complete only when required profile information AND an active address exist; the success fixture assumes the address already exists. Verification status is unchanged.
 
 Shared request schema: `completeClientProfileRequestSchema`.
 Shared response schema: `completeClientProfileResponseSchema`.

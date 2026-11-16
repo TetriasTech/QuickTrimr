@@ -134,8 +134,8 @@ export const CONTRACT_DETAILS = {
   'complete-client-profile': user(
     'P1-T04',
     [c],
-    ['RULE-ONBOARD-02', 'RULE-ONBOARD-05'],
-    'Own profile only. Normalize/validate mobile server-side. Onboarding is complete only when required profile information AND an active address exist; the success fixture assumes the address already exists.',
+    ['RULE-ONBOARD-02', 'ADR-001', 'ADR-005'],
+    'Own profile only. Accept Australian mobile numbers in domestic or international form and store +61 format. An optional attachAvatar flag links the caller’s existing upload from private storage. Onboarding is complete only when required profile information AND an active address exist; the success fixture assumes the address already exists. Verification status is unchanged.',
   ),
   'complete-barber-profile': user(
     'P1-T06',
