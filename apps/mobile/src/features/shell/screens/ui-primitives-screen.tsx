@@ -17,6 +17,8 @@ import {
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { mobileWorkspacePackages } from '@/workspace-contract';
+
 export function UiPrimitivesScreen() {
   const { colors, spacing, typography } = useTheme();
   const [displayName, setDisplayName] = useState('Andrew');
@@ -28,7 +30,8 @@ export function UiPrimitivesScreen() {
     <Screen edges={['right', 'bottom', 'left']} scroll>
       <Text style={typography.title}>Shared mobile UI</Text>
       <Text selectable style={typography.subhead}>
-        Every Phase 0 primitive is rendered here against the central theme.
+        Workspace packages resolved by Metro:{' '}
+        {mobileWorkspacePackages.join(', ')}.
       </Text>
 
       <Card>

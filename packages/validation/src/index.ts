@@ -1,4 +1,5 @@
 export * from './contracts/index.ts';
+export * from './auth.ts';
 export * from './error-response.ts';
 export * from './environment.ts';
 export * from './examples.ts';

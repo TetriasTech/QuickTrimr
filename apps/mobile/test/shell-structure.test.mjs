@@ -77,7 +77,6 @@ test('the mobile shell uses the ADR-003 state libraries and no out-of-scope alte
   }
 
   for (const outOfScope of [
-    '@supabase/supabase-js',
     'redux',
     '@reduxjs/toolkit',
     'expo-notifications',

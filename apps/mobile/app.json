@@ -5,7 +5,7 @@
     "scheme": "quicktrimr",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "plugins": ["expo-router", "expo-image"],
+    "plugins": ["expo-router", "expo-image", "expo-secure-store"],
     "experiments": {
       "typedRoutes": true
     },
