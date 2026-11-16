@@ -1841,7 +1841,7 @@ jiraKey: TRIMR-29
 dependsOn: [P0-T03]
 affects: [P1-T05, P2-T07, P4-T05, P6-T09, P6-T11]
 knowledgeBase: [ADR-008, RULE-OPS-PROVIDER-OWNERSHIP, RULE-OPS-DEV-PLACEHOLDERS, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-ETA-02, CFG-GOOGLE-DEV-BUDGET, CFG-GOOGLE-DEV-ALERT-EMAIL, CFG-GOOGLE-DEV-ALERT-THRESHOLDS, CFG-GOOGLE-DEV-QUOTAS, CFG-DEV-MOBILE-IDENTIFIERS, CFG-DEV-PROVIDER-URLS]
-blockedByTbc: []
+blockedByTbc: [TBC-GOOGLE-DEV-NATIVE-IOS-QUOTAS]
 labels: [quicktrimr, phase-0, foundation, maps, security, billing]
 ```
 
@@ -1857,7 +1857,7 @@ This is deferred foundation work, not permission to ship mocked Google integrati
 - Enable Maps SDK for Android, Maps SDK for iOS, Maps JavaScript API, Places API (New) and Routes API for the development project as required by P0-T03's environment contract.
 - Provision **four separate keys across two trust tiers**: Android package/actual development signing SHA-1 restricted to Maps SDK for Android; iOS bundle ID restricted to Maps SDK for iOS; browser referrers restricted to Maps JavaScript API; backend key API-restricted to Places/Routes for Edge Functions only (`ADR-008`, `RULE-ETA-02`). Apply server IP restrictions only with verified stable egress. No shared cross-platform client key, placeholder fingerprint or Places/Routes call from the client.
 - Use `CFG-DEV-MOBILE-IDENTIFIERS` and `CFG-DEV-PROVIDER-URLS` for development restrictions and make the selected development app/probe match before testing. P0-T03 owns the variable names and public/server-only contract; populate only ignored local env/approved secret storage, never commit credentials.
-- Apply `CFG-GOOGLE-DEV-QUOTAS`, recording each actual metric, scope and saved limit. Report unsupported/non-editable metrics and stop for direction; do not substitute another limit. Native Maps SDK defaults are permitted only where no adjustable quota exists.
+- Read back the approved existing project-wide Maps JavaScript, Places (New), Routes and native SDK limits from `CFG-GOOGLE-DEV-QUOTAS` without changing them. Record each actual metric, scope and effective limit. If a metric or value differs from the observed limits explicitly approved for this project, stop and report it; do not substitute another limit.
 - Configure the project-scoped monthly AUD budget from `CFG-GOOGLE-DEV-BUDGET`, recipient `CFG-GOOGLE-DEV-ALERT-EMAIL` and exact thresholds `CFG-GOOGLE-DEV-ALERT-THRESHOLDS`. Verify saved settings and recipient configuration without generating spend just to trigger an alert. Budgets and rate limits do not guarantee a spending cap.
 - Deliver redacted operator documentation and actual allowed/rejected usage evidence in `docs/architecture/` and `docs/qa/P0-T20.md`. These are disposable verification probes, not production Places, discovery, map or ETA features.
 
@@ -1870,7 +1870,7 @@ This is deferred foundation work, not permission to ship mocked Google integrati
 - [ ] Four separate Android, iOS, browser and backend keys have saved application/API restrictions matching P0-T03; the Android restriction uses the actual selected signing SHA-1.
 - [ ] Each key's permitted usage succeeds and mismatched identity/referrer or disallowed API usage is rejected, using actual provider responses/builds rather than mocks.
 - [ ] Places/Routes use only the backend key from a server probe; client-env and bundle inspection show no backend key in mobile/admin output, and no credential value is committed.
-- [ ] Every requested quota in `CFG-GOOGLE-DEV-QUOTAS` has saved metric/scope/limit evidence; permitted native defaults are explicitly identified. Unsupported/non-editable limits remain an unmet criterion until an upstream human-approved policy amendment is recorded.
+- [ ] Every quota in `CFG-GOOGLE-DEV-QUOTAS` has effective metric/scope/limit evidence matching the unchanged project-specific defaults Andrew approved, including the adjustable iOS native defaults.
 - [ ] The saved monthly budget matches `CFG-GOOGLE-DEV-BUDGET`, is scoped only to this project, and contains every approved actual/forecast threshold and Joel as recipient. Documentation states it is alerts-only, not a hard spending cap.
 - [ ] `docs/qa/P0-T20.md` maps each criterion to redacted provider evidence and reproducible checks; no billing terms are accepted or payment details entered by the agent.
 

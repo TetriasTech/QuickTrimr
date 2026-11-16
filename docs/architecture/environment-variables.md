@@ -128,8 +128,9 @@ within its client tier, plus the distinct server tier; no accounts or keys are c
    approved provider access/password-manager entries. Use the local Supabase instance or an
    explicitly designated development project, Stripe test mode with a local listener secret,
    and individually restricted development Google keys. No production data or credentials.
-   P0-T09 owns starting Supabase; P0-T18 owns obtaining provider values. Never reuse a different
-   project's values just because variable names match.
+   P0-T09 owns starting Supabase, P0-T18 owns the Stripe sandbox setup, and P0-T20 owns
+   Google development billing and restricted keys. Never reuse a different project's values
+   just because variable names match.
 2. **Staging:** P6-T09 creates isolated resources. Select the staging Supabase project, Stripe test
    configuration and staging-specific webhook secret, staging Google keys/quotas, and staging
    Sentry/PostHog projects. Supply only public values to the mobile/admin build environments;
@@ -173,7 +174,8 @@ bundle checks remain necessary. It does not inspect old Git history or third-par
 |---|---|
 | P0-T04 | Run `check-client-env.mjs` alongside root lint/typecheck/tests; retain the standalone check or consolidate without losing coverage. Add branch protection separately. |
 | P0-T09 | Use the backend template and explicit `--env-file`; never require production credentials locally. |
-| P0-T18 | Populate provider stores, not committed examples; confirm platform-specific Google restrictions and Stripe endpoint/return/refresh values. |
+| P0-T18 | Populate Stripe provider values in secret stores or ignored local environment files; confirm endpoint/return/refresh values. |
+| P0-T20 | Populate Google development keys in their respective ignored local environment files or approved secret stores; verify the platform-specific restrictions. |
 | P1-T07 | Read Stripe API and approved Connect URLs in the Edge Function only. |
 | P4-T05 | Read the backend Google key only in the Edge Function; add delivered-bundle evidence with the actual integration. |
 | P6-T03 | Public Sentry DSNs/labels go through accessors; any future upload token stays build/CI-only and is already denied in apps. |
