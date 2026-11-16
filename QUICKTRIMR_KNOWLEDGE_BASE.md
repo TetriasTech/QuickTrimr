@@ -461,6 +461,7 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 ### Onboarding
 
 - `RULE-ONBOARD-01` — Every authenticated user has exactly one `profiles` row, created or synced server-side from the verified JWT. Client- and barber-specific data lives in `client_profiles` / `barber_profiles`.
+- `RULE-DEV-PROFILE-FIRST` — Andrew approved delivering and testing the server-owned profile bootstrap (`P1-T03`) before mobile authentication (`P1-T01`). The server slice is verified with disposable local Auth users; the mobile app consumes its verified role and completion state. The sync operation starts new profiles incomplete and only reads existing completion state; the owning onboarding slices apply `RULE-ONBOARD-02` and `RULE-ONBOARD-03` to record completion. No client-settable role or completion state is authoritative.
 - `RULE-ONBOARD-02` — Client onboarding at launch collects profile basics and at least one service address. No identity document verification (`ADR-005`).
 - `RULE-ONBOARD-03` — Barber onboarding collects profile, photo, service area and travel radius, offered services and prices, and Stripe Connect.
 - `RULE-ONBOARD-04` — **A barber cannot receive a paid booking until their Stripe Connect account satisfies charges-enabled and payouts-enabled requirements.** Discovery excludes them. This is enforced server-side in search and at request creation, not by hiding a toggle.

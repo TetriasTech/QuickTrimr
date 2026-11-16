@@ -1902,9 +1902,9 @@ owner: Andrew
 phase: 1
 priority: Highest
 jiraKey: TRIMR-31
-dependsOn: [P0-T11, P0-T13, P0-T14, P0-T15]
-affects: [P1-T03, P1-T04, P1-T06, P6-T01]
-knowledgeBase: [ADR-001, ROLE-CLIENT, ROLE-BARBER, RULE-ONBOARD-01]
+dependsOn: [P0-T11, P0-T13, P0-T14, P0-T15, P1-T03]
+affects: [P1-T04, P1-T06, P6-T01]
+knowledgeBase: [ADR-001, ROLE-CLIENT, ROLE-BARBER, RULE-ONBOARD-01, RULE-DEV-PROFILE-FIRST]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, mobile, security]
 ```
@@ -2033,9 +2033,9 @@ owner: Andrew
 phase: 1
 priority: Highest
 jiraKey: TRIMR-33
-dependsOn: [P0-T07, P0-T10, P0-T11, P1-T01]
-affects: [P1-T04, P1-T06, P5-T02, P5-T03]
-knowledgeBase: [ADR-002, ADR-013, RULE-ONBOARD-01, ROLE-CLIENT, ROLE-BARBER, ENUM-USER-ROLE, ENUM-VERIFICATION-STATUS]
+dependsOn: [P0-T07, P0-T10, P0-T11]
+affects: [P1-T01, P1-T04, P1-T06, P5-T02, P5-T03]
+knowledgeBase: [ADR-002, ADR-013, RULE-ONBOARD-01, RULE-DEV-PROFILE-FIRST, ROLE-CLIENT, ROLE-BARBER, ENUM-USER-ROLE, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, backend, security]
 ```
@@ -2055,6 +2055,8 @@ The user id comes from the verified JWT. A user id in the request body is ignore
 Role comes from the request but is validated against `ENUM-USER-ROLE` **minus `admin`**. A self-assigned admin role is rejected. Admin is granted out-of-band, never through a signup path.
 
 Creates `profiles` plus the matching `client_profiles` or `barber_profiles` row, with `verification_status` at `not_started` (`ADR-005`).
+
+Read `onboardingComplete` from server-owned completion state. New profiles are incomplete; sync never sets or clears completion. Verify independently of the mobile UI with disposable local Auth users (`RULE-DEV-PROFILE-FIRST`).
 
 Idempotent on the user id: create if absent, return existing otherwise. Safe under concurrent calls — use an upsert with a unique constraint, not check-then-insert.
 
