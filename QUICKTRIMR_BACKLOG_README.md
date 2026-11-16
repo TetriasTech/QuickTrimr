@@ -1886,6 +1886,8 @@ This is deferred foundation work, not permission to ship mocked Google integrati
 
 **Goal:** a barber can be created, Connect-verified, priced and made discoverable; a client can sign up and save an address. No bookings yet.
 
+**Ownership:** Andrew owns all Phase 1 work under `RULE-DEV-PHASE1-OWNERSHIP`. Readiness and delivery requirements are unchanged.
+
 **Gate:** a barber exists end to end — profile, photo, service area, services with prices, Stripe Connect satisfied — and a client exists with a saved address. Until both are true, Phase 2 has nothing to search for.
 
 ---
@@ -1899,7 +1901,7 @@ issueType: Story
 owner: Andrew
 phase: 1
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-31
 dependsOn: [P0-T11, P0-T13, P0-T14, P0-T15]
 affects: [P1-T03, P1-T04, P1-T06, P6-T01]
 knowledgeBase: [ADR-001, ROLE-CLIENT, ROLE-BARBER, RULE-ONBOARD-01]
@@ -1964,10 +1966,10 @@ Errors that are safe and useful: wrong password and unknown email must not be di
 id: P1-T02
 title: "Admin authentication and route guard"
 issueType: Story
-owner: Tony
+owner: Andrew
 phase: 1
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-32
 dependsOn: [P0-T11, P0-T16]
 affects: [P5-T01, P5-T02, P5-T03, P5-T04, P5-T06, P5-T09, P5-T11, P5-T12, P5-T13]
 knowledgeBase: [ROLE-ADMIN, RULE-ADMIN-01, ADR-013]
@@ -2030,7 +2032,7 @@ issueType: Task
 owner: Andrew
 phase: 1
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-33
 dependsOn: [P0-T07, P0-T10, P0-T11, P1-T01]
 affects: [P1-T04, P1-T06, P5-T02, P5-T03]
 knowledgeBase: [ADR-002, ADR-013, RULE-ONBOARD-01, ROLE-CLIENT, ROLE-BARBER, ENUM-USER-ROLE, ENUM-VERIFICATION-STATUS]
@@ -2112,7 +2114,7 @@ issueType: Story
 owner: Andrew
 phase: 1
 priority: High
-jiraKey: null
+jiraKey: TRIMR-34
 dependsOn: [P0-T14, P1-T03]
 affects: [P1-T05, P2-T08, P5-T02]
 knowledgeBase: [ADR-005, RULE-ONBOARD-02, ENUM-VERIFICATION-STATUS]
@@ -2182,7 +2184,7 @@ issueType: Story
 owner: Andrew
 phase: 1
 priority: High
-jiraKey: null
+jiraKey: TRIMR-35
 dependsOn: [P0-T20, P1-T04]
 affects: [P2-T05, P2-T08, P4-T03, P5-T02]
 knowledgeBase: [ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-ONBOARD-02, ROLE-CLIENT]
@@ -2265,7 +2267,7 @@ issueType: Story
 owner: Andrew
 phase: 1
 priority: High
-jiraKey: null
+jiraKey: TRIMR-36
 dependsOn: [P0-D06, P0-T14, P1-T03]
 affects: [P1-T11, P1-T12, P2-T01, P2-T04, P5-T03]
 knowledgeBase: [ADR-008, RULE-ONBOARD-03, RULE-ONBOARD-05, RULE-DISCOVERY-03, RULE-DISCOVERY-05]
@@ -2351,10 +2353,10 @@ A radius bound, so a barber cannot set 500 km and appear in every search.
 id: P1-T07
 title: "Stripe Connect onboarding function"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 1
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-37
 dependsOn: [P0-D05, P0-T03, P0-T18, P1-T03]
 affects: [P1-T08, P1-T09, P3-T11, P5-T03]
 knowledgeBase: [ADR-002, ADR-013, RULE-ONBOARD-04, RULE-PAY-10, RULE-EARN-07, ENUM-VERIFICATION-STATUS]
@@ -2435,10 +2437,10 @@ Audit log on account creation and on each link issue (`ADR-013`).
 id: P1-T08
 title: "Barber Stripe Connect onboarding UI"
 issueType: Story
-owner: Tony
+owner: Andrew
 phase: 1
 priority: High
-jiraKey: null
+jiraKey: TRIMR-38
 dependsOn: [P1-T06, P1-T07]
 affects: [P1-T11, P3-T05]
 knowledgeBase: [RULE-ONBOARD-04, RULE-COPY-01, ENUM-VERIFICATION-STATUS]
@@ -2489,10 +2491,10 @@ Handle: abandonment mid-flow, an expired account link, a Stripe outage, and a re
 id: P1-T09
 title: "Stripe Connect status refresh and webhook foundation"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 1
 priority: High
-jiraKey: null
+jiraKey: TRIMR-39
 dependsOn: [P0-T18, P1-T07]
 affects: [P2-T04, P3-T03, P3-T11, P5-T03]
 knowledgeBase: [ADR-013, RULE-ONBOARD-04, RULE-PAY-07, RULE-PAY-10, ENUM-VERIFICATION-STATUS]
@@ -2560,7 +2562,7 @@ issueType: Task
 owner: Andrew
 phase: 1
 priority: High
-jiraKey: null
+jiraKey: TRIMR-40
 dependsOn: [P0-D01, P0-T10, P0-T11]
 affects: [P1-T11, P1-T12, P2-T04, P5-T11]
 knowledgeBase: [ADR-013, RULE-SERVICE-01, RULE-SERVICE-03, RULE-SERVICE-05, RULE-ADMIN-01]
@@ -2643,7 +2645,7 @@ issueType: Story
 owner: Andrew
 phase: 1
 priority: High
-jiraKey: null
+jiraKey: TRIMR-41
 dependsOn: [P0-D01, P1-T06, P1-T10]
 affects: [P1-T12, P2-T04, P2-T08, P5-T03]
 knowledgeBase: [ADR-009, RULE-SERVICE-02, RULE-SERVICE-04, RULE-SERVICE-05, RULE-ONBOARD-04]
@@ -2723,7 +2725,7 @@ issueType: Story
 owner: Andrew
 phase: 1
 priority: Medium
-jiraKey: null
+jiraKey: TRIMR-42
 dependsOn: [P0-D01, P1-T10, P1-T11]
 affects: [P2-T06, P2-T09, P4-T15]
 knowledgeBase: [RULE-ONBOARD-05, RULE-DISCOVERY-04, RULE-REVIEW-04]

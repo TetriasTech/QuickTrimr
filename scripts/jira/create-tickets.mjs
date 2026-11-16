@@ -308,6 +308,18 @@ async function jira(path, method = 'GET', body) {
   return text ? JSON.parse(text) : null;
 }
 
+function issueLinkPayload(name, ticketKey, relatedKey) {
+  // In GET /issue, an inwardIssue carries the "is blocked by" label. The
+  // prerequisite must be that endpoint, not the ticket that depends on it.
+  const [inward, outward] =
+    name === 'Blocks' ? [relatedKey, ticketKey] : [ticketKey, relatedKey];
+  return {
+    type: { name },
+    inwardIssue: { key: inward },
+    outwardIssue: { key: outward },
+  };
+}
+
 function assertTargetProject(project) {
   if (project.key !== EXPECTED_PROJECT_KEY) {
     throw new Error(
@@ -678,11 +690,11 @@ if (update) {
           continue;
         }
         try {
-          await jira('/issueLink', 'POST', {
-            type: { name: rel },
-            inwardIssue: { key: t.jiraKey },
-            outwardIssue: { key: outward },
-          });
+          await jira(
+            '/issueLink',
+            'POST',
+            issueLinkPayload(rel, t.jiraKey, outward),
+          );
           console.log(`  link ${t.id} ${rel} ${id}  added`);
           added++;
         } catch (e) {
@@ -885,11 +897,11 @@ for (const t of created) {
       const outward = keyOf.get(id);
       if (!outward) continue;
       try {
-        await jira('/issueLink', 'POST', {
-          type: { name: rel },
-          inwardIssue: { key: t.jiraKey },
-          outwardIssue: { key: outward },
-        });
+        await jira(
+          '/issueLink',
+          'POST',
+          issueLinkPayload(rel, t.jiraKey, outward),
+        );
         links++;
       } catch (e) {
         console.error(
