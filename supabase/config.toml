@@ -58,3 +58,7 @@ enabled = false
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/workspace-contract/serve.ts"
+
+[functions.create-or-sync-profile]
+enabled = true
+verify_jwt = true

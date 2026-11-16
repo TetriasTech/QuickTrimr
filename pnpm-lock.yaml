@@ -292,6 +292,19 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  supabase/functions/create-or-sync-profile:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
   supabase/functions/workspace-contract:
     dependencies:
       '@quicktrimr/shared':
