@@ -1,4 +1,5 @@
 import { AdminShell } from '@/components/admin/layout';
+import { AdminSignOutForm } from '@/features/auth/auth-forms';
 import { requireAdmin } from '@/lib/auth/require-admin';
 
 import type { ReactNode } from 'react';
@@ -12,5 +13,9 @@ export default async function AdminLayout({
   children: ReactNode;
 }) {
   const admin = await requireAdmin();
-  return <AdminShell adminUserId={admin.userId}>{children}</AdminShell>;
+  return (
+    <AdminShell adminUserId={admin.userId} actions={<AdminSignOutForm />}>
+      {children}
+    </AdminShell>
+  );
 }
