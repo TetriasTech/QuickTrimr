@@ -349,6 +349,8 @@ Ownership is vertical (`ADR-012`). One named owner per ticket.
 
 **Andrew — the marketplace.** Auth, profiles, addresses, client and barber onboarding, service catalogue and pricing, Available Now sessions, discovery and search, booking requests, request inbox, accept/decline surfaces, booking and job views, ETA display, completion flows, reviews, notifications, analytics, mobile shell and shared UI, Wix.
 
+- `RULE-DEV-PHASE1-OWNERSHIP` — Andrew confirmed that he and Tony agreed Andrew would take over project delivery. Andrew is the sole named owner and Jira assignee for all Phase 1 work, including its admin-auth and Stripe Connect slices. This supersedes the default division of work for Phase 1; it does not change delivery or security requirements, prerequisites, or the named owners on tickets in other phases.
+
 ### 6.2 Shared foundations
 
 Shared constants, enums, Zod schemas and UI primitives are built **first**, in Phase 0, because both engineers build against them. They still have one owner each; they are just sequenced early.

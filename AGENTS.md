@@ -130,6 +130,9 @@ reviews, notifications, analytics, mobile shell, Wix.
 
 There is no "Shared" owner and no separate integration ticket — integration is inside the ticket.
 
+**Phase 1 handover:** Andrew owns every Phase 1 ticket, including admin authentication and
+Stripe Connect work (`RULE-DEV-PHASE1-OWNERSHIP`). Other phases keep their recorded owners.
+
 ## Commands
 
 ```bash
