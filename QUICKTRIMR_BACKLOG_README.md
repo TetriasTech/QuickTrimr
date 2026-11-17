@@ -1769,7 +1769,7 @@ Record every variable name in `P0-T03`'s `.env.example`. **No key value is commi
 
 **Out of scope** — remaining Google development provisioning and verification (`P0-T20`); implementing Connect onboarding (`P1-T07`); payment code (Phase 3); live mode (`P6-T11`); staging projects (`P6-T09`).
 
-**Sync notes** — preserve `P0-T03`'s variable names and the local Connect callback contract. P1-T07 and P3-T01/P3-T03/P3-T11 consume the approved sandbox design only after its provider proof; P6-T11 still needs customer confirmation for live financial responsibility. The authorisation hold period informs `P3-T01`, `P3-T02` and `P3-T06`; `P0-D08`'s maximum booking horizon is an operational limit on advance capture. Google consumers now wait on `P0-T20`, not this ticket: P1-T05 (Places), P2-T07 (map) and P4-T05 (Routes). P2-T04 is a PostGIS query and needs no Google setup. P6-T09/P6-T11 retain the Stripe prerequisite and add P0-T20; they still establish their own staging/release identities and quotas. P0-T20 may proceed independently of remaining Stripe checks using the documented project handoff. Generated sections 8/9 remain for the reviewed automation on main.
+**Sync notes** — preserve `P0-T03`'s variable names and the local Connect callback contract. P1-T07 and P3-T01/P3-T03/P3-T11 consume the approved sandbox design only after its provider proof; P6-T11 still needs customer confirmation for live financial responsibility. The authorisation hold period informs `P3-T01`, `P3-T02` and `P3-T06`; `P0-D08`'s maximum booking horizon is an operational limit on advance capture. Google consumers now wait on `P0-T20`, not this ticket: P2-T07 (map) and P4-T05 (Routes). P1-T05 uses an independently licensed address source under `RULE-ADDRESS-01`. P2-T04 is a PostGIS query and needs no Google setup. P6-T09/P6-T11 retain the Stripe prerequisite and add P0-T20; they still establish their own staging/release identities and quotas. P0-T20 may proceed independently of remaining Stripe checks using the documented project handoff. Generated sections 8/9 remain for the reviewed automation on main.
 
 ---
 
@@ -1839,7 +1839,7 @@ phase: 0
 priority: High
 jiraKey: TRIMR-29
 dependsOn: [P0-T03]
-affects: [P1-T05, P2-T07, P4-T05, P6-T09, P6-T11]
+affects: [P2-T07, P4-T05, P6-T09, P6-T11]
 knowledgeBase: [ADR-008, RULE-OPS-PROVIDER-OWNERSHIP, RULE-OPS-DEV-PLACEHOLDERS, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-ETA-02, CFG-GOOGLE-DEV-BUDGET, CFG-GOOGLE-DEV-ALERT-EMAIL, CFG-GOOGLE-DEV-ALERT-THRESHOLDS, CFG-GOOGLE-DEV-QUOTAS, CFG-DEV-MOBILE-IDENTIFIERS, CFG-DEV-PROVIDER-URLS]
 blockedByTbc: [TBC-GOOGLE-DEV-NATIVE-IOS-QUOTAS]
 labels: [quicktrimr, phase-0, foundation, maps, security, billing]
@@ -1849,7 +1849,7 @@ labels: [quicktrimr, phase-0, foundation, maps, security, billing]
 
 Andrew approved this split from P0-T18 / TRIMR-27 on 2026-10-20 (`RULE-OPS-GOOGLE-DEV-DEFERRAL`). The customer-owned **QuickTrimr Development** project, ID **`quicktrimr-dev`**, already exists under `joel@quicktrimr.com`. Its Billing page was observed to have no linked billing account. API enablement, four restricted keys, applied quotas and saved budget alerts have not been verified. See `docs/qa/P0-T18.md` and its Google evidence; do not recreate the project or treat the approved policy as applied settings.
 
-This is deferred foundation work, not permission to ship mocked Google integrations. It must close before P1-T05 address autocomplete, P2-T07 map rendering or P4-T05 ETA starts. Unrelated tickets may proceed only when their own readiness gates pass. It does not depend on unfinished Stripe checks in P0-T18.
+This is deferred foundation work, not permission to ship mocked Google integrations. It must close before P2-T07 map rendering or P4-T05 ETA starts. P1-T05 address lookup uses its own independently licensed source under `RULE-ADDRESS-01`. Unrelated tickets may proceed only when their own readiness gates pass. It does not depend on unfinished Stripe checks in P0-T18.
 
 **Scope**
 
@@ -1878,7 +1878,7 @@ This is deferred foundation work, not permission to ship mocked Google integrati
 
 **Out of scope** — Stripe setup/checks (`P0-T18`); production address, Maps or ETA feature implementation (`P1-T05`, `P2-T07`, `P4-T05`); staging/release identities, keys, budgets or live activation (`P6-T09`, `P6-T11`); agent entry of payment details or acceptance of billing terms.
 
-**Sync notes** — retain P0-T03's variable names and trust tiers. P1-T05, P2-T07 and P4-T05 directly depend on this evidence; P2-T04 remains PostGIS-only and does not need a Google prerequisite. P6-T09/P6-T11 depend on both provider foundations but must obtain their own staging/production quota and billing approval. Do not mark P0-T18 Done to create this ticket, or mark this ticket Done from approved policy alone. Generated sections 8/9 are left to reviewed automation on main.
+**Sync notes** — retain P0-T03's variable names and trust tiers. P2-T07 and P4-T05 directly depend on this evidence; P2-T04 remains PostGIS-only and does not need a Google prerequisite. P6-T09/P6-T11 depend on both provider foundations but must obtain their own staging/production quota and billing approval. Do not mark P0-T18 Done to create this ticket, or mark this ticket Done from approved policy alone. Generated sections 8/9 are left to reviewed automation on main.
 
 ---
 
@@ -2189,10 +2189,10 @@ owner: Andrew
 phase: 1
 priority: High
 jiraKey: TRIMR-35
-dependsOn: [P0-T20, P1-T04]
+dependsOn: [P1-T04]
 affects: [P2-T05, P2-T08, P4-T03, P5-T02]
-knowledgeBase: [ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-ONBOARD-02, ROLE-CLIENT]
-blockedByTbc: []
+knowledgeBase: [ADR-008, RULE-ADDRESS-01, RULE-ADDRESS-02, RULE-ONBOARD-02, ROLE-CLIENT]
+blockedByTbc: [TBC-CLIENT-ADDRESS-POINT-SOURCE, TBC-CLIENT-ADDRESS-REGION]
 labels: [quicktrimr, phase-1, mobile, maps, security]
 ```
 
@@ -2210,30 +2210,31 @@ Address list, add, edit, and archive in `apps/mobile`.
 
 Use the `archived_at` marker introduced by `P1-T04`. Recalculate the server-owned client onboarding state after address changes, and refresh the mobile session so an eligible client enters the client journey after saving their first active address (`RULE-ONBOARD-02`).
 
-Google Places autocomplete through Edge Functions only (`ADR-008`), with the resulting place resolved to a `geography(Point, 4326)` stored on the row. Use the backend key provisioned/verified by `P0-T20`, never a client Maps key for Places. Manual entry as a fallback, because autocomplete fails on new developments and rural addresses.
+Resolve any Australian service address through the independently licensed directory on the server (`RULE-ADDRESS-01`, `RULE-ADDRESS-02`). Autocomplete offers candidates from the directory. Manual entry resolves against the same source before save. Store the resolved `geography(Point, 4326)` on the private row. Both paths keep Google Places out of service-address lookup.
 
 "Use my current location" where the permission is granted, with graceful handling of denial — a client who denies location must still be able to type an address and book.
 
 Fields beyond the address itself: a label ("Home", "Mum's"), unit or apartment number, and access notes. Access notes matter more here than they look: a barber standing outside a locked apartment building calls the client, and that is the moment the product feels broken.
 
-RLS: select, insert and update on `auth.uid() = client_id`. **No delete policy** — archiving is an update, and the absent policy is the enforcement.
+RLS permits reads for the owning client. Writes go through the verified-client server path so callers cannot bypass geocoding, onboarding recalculation or auditing. Scope each write to the verified owner. **No delete policy** — archive is an update.
 
-**Contract example** — `create-client-address`
+**Contract example** — `manage-client-addresses`
 
 ```jsonc
 // request
-{ "label": "Home", "line1": "12 Smith St", "unit": "4B",
+{ "operation": "create", "address": { "label": "Home", "line1": "12 Smith St", "unit": "4B",
   "suburb": "Richmond", "state": "VIC", "postcode": "3121",
-  "lat": -37.8226, "lng": 144.9980,
-  "accessNotes": "Buzzer 4B, gate code 1942" }
+  "accessNotes": "Use the side entrance" } }
 
 // 200
-{ "id": "a71f...", "label": "Home", "line1": "12 Smith St", "unit": "4B",
-  "suburb": "Richmond", "archivedAt": null, "createdAt": "2026-08-05T04:11:22Z" }
+{ "operation": "create", "onboardingComplete": true,
+  "address": { "id": "a71f...", "label": "Home", "line1": "12 Smith St", "unit": "4B",
+  "suburb": "Richmond", "state": "VIC", "postcode": "3121", "accessNotes": "Use the side entrance",
+  "archivedAt": null, "createdAt": "2026-08-05T04:11:22Z" } }
 
-// 422 — coordinates missing or outside the supported region
+// 422 — the server cannot resolve this Australian address
 { "error": "validation_failed",
-  "fields": { "lat": "Address could not be located" } }
+  "fields": { "line1": "We could not match this address" } }
 
 // 409 — editing an archived address
 { "error": "address_archived" }
@@ -2247,14 +2248,14 @@ RLS: select, insert and update on `auth.uid() = client_id`. **No delete policy**
 - [ ] A client can add, edit, archive and list addresses.
 - [ ] A client with saved profile basics enters the client journey after saving an active service address. Archiving the last active address clears full onboarding completion.
 - [ ] Every saved address has resolved coordinates; an address that cannot be geocoded is rejected with a field-level message rather than saved unusable.
-- [ ] Places autocomplete works, and manual entry works when it does not.
-- [ ] "Use current location" works, and **denying the location permission still allows manual entry and booking.**
-- [ ] Archiving removes the address from pickers; a booking referencing it still renders.
+- [ ] Australian address autocomplete and manual entry both resolve against the independently licensed directory.
+- [ ] “Use current location” suggests addresses for confirmation. Denying location permission still allows a manual save and yields an address eligible for booking where barber coverage exists.
+- [ ] Archiving removes the address from active pickers and preserves the row and existing booking references.
 - [ ] Editing an archived address returns `409 address_archived`, not a 500.
 - [ ] Archive is idempotent.
 - [ ] **Client A cannot read, update or archive client B's address** — verified by calling as A with B's id, expecting denial rather than a leaked row.
 - [ ] **No client can delete an address row** — no delete policy exists.
-- [ ] Places autocomplete calls go through Edge Functions using the backend-only key; no server key reaches the bundle and no client Maps key is used for Places.
+- [ ] Address lookup runs only through the verified-client Edge Function. The directory is inaccessible directly to mobile roles and service-address lookup uses no Maps key.
 - [ ] List, add and edit each have loading, error and empty states; the empty state prompts a first address.
 
 **Tests** — cross-client denial on all four verbs; archive idempotency; archived addresses absent from the picker; geocode failure rejected; permission-denied path reaching a successful manual save.

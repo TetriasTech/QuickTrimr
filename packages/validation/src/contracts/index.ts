@@ -26,6 +26,7 @@ import {
   declineBookingRequestResponseSchema,
 } from './booking-requests.ts';
 import * as catalogue from './catalogue.ts';
+import * as clientAddresses from './client-addresses.ts';
 import * as discovery from './discovery.ts';
 import {
   cancelBookingRequestSchema,
@@ -56,6 +57,7 @@ export * from './available-now.ts';
 export * from './barber-service.ts';
 export * from './booking-requests.ts';
 export * from './catalogue.ts';
+export * from './client-addresses.ts';
 export * from './discovery.ts';
 export * from './lifecycle.ts';
 export * from './payments.ts';
@@ -157,6 +159,10 @@ export const CONTRACTS = {
   'complete-client-profile': contract(
     profiles.completeClientProfileRequestSchema,
     profiles.completeClientProfileResponseSchema,
+  ),
+  'manage-client-addresses': contract(
+    clientAddresses.manageClientAddressesRequestSchema,
+    clientAddresses.manageClientAddressesResponseSchema,
   ),
   'complete-barber-profile': contract(
     profiles.completeBarberProfileRequestSchema,

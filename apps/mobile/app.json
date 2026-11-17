@@ -11,7 +11,18 @@
       "expo-secure-store",
       [
         "expo-image-picker",
-        { "cameraPermission": false, "microphonePermission": false }
+        {
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow QuickTrimr to suggest service addresses near you while adding an address.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false
+        }
       ]
     ],
     "experiments": {

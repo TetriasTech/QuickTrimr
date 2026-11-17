@@ -34,3 +34,6 @@ It uses real local Auth links without committed passwords and restores pristine 
 Do not run reset verifiers concurrently: they own the same disposable QuickTrimr database.
 See [seed usage and deferred fields](../../supabase/seed/README.md) and
 [P0-T12 evidence](../../docs/qa/P0-T12.md).
+
+`import-gnaf.mjs` loads the independently licensed service-address directory into local QuickTrimr
+Supabase after migrations. See [the import and verification steps](../../docs/qa/P1-T05.md).

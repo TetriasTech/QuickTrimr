@@ -22,6 +22,7 @@ import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { PixelRatio, Text, View } from 'react-native';
 
+import { ClientAddressesScreen } from '@/features/addresses/client-addresses-screen';
 import { SignOutButton } from '@/features/auth/screens/sign-out-button';
 import { useMobileSession } from '@/features/session/session-provider';
 import { EdgeFunctionError } from '@/lib/api/invoke-edge-function';
@@ -84,6 +85,7 @@ function ClientProfileForm({
     });
   const [avatarUri, setAvatarUri] = useState(initial.draft.avatarUri);
   const [saved, setSaved] = useState(initial.saved);
+  const [showAddresses, setShowAddresses] = useState(false);
   const [hasAvatar, setHasAvatar] = useState(initial.hasAvatar);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [draftError, setDraftError] = useState(false);
@@ -171,6 +173,14 @@ function ClientProfileForm({
     },
   });
 
+  if (showAddresses)
+    return (
+      <ClientAddressesScreen
+        userId={userId}
+        onBack={() => setShowAddresses(false)}
+      />
+    );
+
   if (saved) {
     return (
       <Screen scroll>
@@ -180,6 +190,10 @@ function ClientProfileForm({
         <Text style={typography.body}>
           A service address is needed to finish setup.
         </Text>
+        <Button
+          label="Add a service address"
+          onPress={() => setShowAddresses(true)}
+        />
         <Button
           label="Edit profile"
           variant="secondary"

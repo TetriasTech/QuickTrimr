@@ -119,6 +119,10 @@ export const FOUNDATION_CONTRACT_EXAMPLES = {
       verificationStatus: verificationStatusSchema.enum.not_started,
     },
   ),
+  'manage-client-addresses': example(
+    { operation: 'list' },
+    { operation: 'list', addresses: [], nextCursor: null },
+  ),
   'complete-barber-profile': example(
     {
       displayName: 'Marcus Example',
