@@ -29,7 +29,10 @@ const postcode = z
 const text = (limit: number) => z.string().trim().max(limit);
 const requiredText = (limit: number, message: string) =>
   text(limit).min(1, message);
-const directoryId = requiredText(24, 'Choose a suggested address');
+export const addressDirectoryIdSchema = requiredText(
+  24,
+  'Choose a suggested address',
+);
 const street = requiredText(160, 'Enter a street address');
 const suburb = requiredText(100, 'Enter a suburb or locality');
 
@@ -50,7 +53,9 @@ const postalFields = clientAddressFieldsSchema.pick({
   postcode: true,
   unit: true,
 });
-const candidateSchema = postalFields.extend({ directoryId });
+export const addressDirectoryCandidateSchema = postalFields.extend({
+  directoryId: addressDirectoryIdSchema,
+});
 const savedAddressSchema = clientAddressFieldsSchema.extend({
   id: postgresUuidSchema,
   archivedAt: timestampSchema.nullable(),
@@ -62,6 +67,10 @@ const writeResult = z.strictObject({
 });
 
 export const minimumAddressSearchLength = 3;
+export const addressDirectoryQuerySchema = text(160).min(
+  minimumAddressSearchLength,
+  'Enter more of the address',
+);
 
 export const manageClientAddressesRequestSchema = z.discriminatedUnion(
   'operation',
@@ -72,10 +81,7 @@ export const manageClientAddressesRequestSchema = z.discriminatedUnion(
     }),
     z.strictObject({
       operation: z.literal('search'),
-      query: text(160).min(
-        minimumAddressSearchLength,
-        'Enter more of the address',
-      ),
+      query: addressDirectoryQuerySchema,
     }),
     z.strictObject({
       operation: z.literal('nearby'),
@@ -85,13 +91,13 @@ export const manageClientAddressesRequestSchema = z.discriminatedUnion(
     z.strictObject({
       operation: z.literal('create'),
       address: clientAddressFieldsSchema,
-      directoryId: directoryId.optional(),
+      directoryId: addressDirectoryIdSchema.optional(),
     }),
     z.strictObject({
       operation: z.literal('update'),
       id: postgresUuidSchema,
       address: clientAddressFieldsSchema,
-      directoryId: directoryId.optional(),
+      directoryId: addressDirectoryIdSchema.optional(),
     }),
     z.strictObject({ operation: z.literal('archive'), id: postgresUuidSchema }),
   ],
@@ -107,11 +113,11 @@ export const manageClientAddressesResponseSchema = z.discriminatedUnion(
     }),
     z.strictObject({
       operation: z.literal('search'),
-      candidates: z.array(candidateSchema),
+      candidates: z.array(addressDirectoryCandidateSchema),
     }),
     z.strictObject({
       operation: z.literal('nearby'),
-      candidates: z.array(candidateSchema),
+      candidates: z.array(addressDirectoryCandidateSchema),
     }),
     writeResult.extend({ operation: z.literal('create') }),
     writeResult.extend({ operation: z.literal('update') }),
@@ -120,7 +126,9 @@ export const manageClientAddressesResponseSchema = z.discriminatedUnion(
 );
 
 export type ClientAddressFields = z.infer<typeof clientAddressFieldsSchema>;
-export type ClientAddressCandidate = z.infer<typeof candidateSchema>;
+export type ClientAddressCandidate = z.infer<
+  typeof addressDirectoryCandidateSchema
+>;
 export type SavedClientAddress = z.infer<typeof savedAddressSchema>;
 export type ManageClientAddressesRequest = z.infer<
   typeof manageClientAddressesRequestSchema

@@ -1,5 +1,10 @@
 export const QUICKTRIMR_PRODUCT = 'QuickTrimr' as const;
 
+export {
+  barberPhotoLimits,
+  barberServiceRadiusKm,
+} from './barber-profile-config.ts';
+
 export type WorkspaceIdentity = {
   readonly product: typeof QUICKTRIMR_PRODUCT;
   readonly surface: 'mobile' | 'admin' | 'function';

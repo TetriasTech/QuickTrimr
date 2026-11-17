@@ -2276,10 +2276,10 @@ owner: Andrew
 phase: 1
 priority: High
 jiraKey: TRIMR-36
-dependsOn: [P0-D06, P0-T14, P1-T03]
+dependsOn: [P0-D06, P0-T14, P1-T03, P1-T05]
 affects: [P1-T11, P1-T12, P2-T01, P2-T04, P5-T03]
-knowledgeBase: [ADR-008, RULE-ONBOARD-03, RULE-ONBOARD-05, RULE-DISCOVERY-03, RULE-DISCOVERY-05]
-blockedByTbc: []
+knowledgeBase: [ADR-008, RULE-ONBOARD-03, RULE-ONBOARD-05, RULE-DISCOVERY-03, RULE-DISCOVERY-05, RULE-BARBER-SERVICE-AREA-01, RULE-BARBER-PHOTO-01, CFG-BARBER-SERVICE-RADIUS-KM, CFG-BARBER-PHOTO-LIMITS]
+blockedByTbc: [TBC-BARBER-SERVICE-AREA-POINT-SOURCE, TBC-BARBER-SERVICE-RADIUS, TBC-BARBER-PHOTO-LIMITS]
 labels: [quicktrimr, phase-1, mobile]
 ```
 
@@ -2293,21 +2293,20 @@ The barber's public identity and their Scheduled-booking reach. `RULE-DISCOVERY-
 
 Barber profile completion in `apps/mobile`: display name, bio, profile photo, years of experience, and service area with travel radius.
 
-Photo upload to Supabase Storage with a size and dimension limit, served through a signed URL rather than a public bucket.
+Photo upload to private Supabase Storage with the server-enforced JPEG and signed URL limits in `CFG-BARBER-PHOTO-LIMITS`.
 
-Service area as a private `geography(Point, 4326)` centre plus a radius, entered via Places autocomplete or current location.
+Service area as a private `geography(Point, 4326)` centre plus a radius, using a selected G-NAF address from the shared `P1-T05` directory or barber-confirmed foreground GPS (`RULE-BARBER-SERVICE-AREA-01`).
 
 A feature migration creates an RLS-protected `public_areas` table, and an idempotent loader imports
 the current Australian Bureau of Statistics Suburbs and Localities (SAL) boundary dataset into
 PostGIS with its source, licence attribution, checksum and dataset vintage. Each area stores its
 public code, label, boundary and a representative map point computed with `ST_PointOnSurface`,
 rather than from barber positions. On profile save, the server resolves the private service-area
-point to one SAL and stores that public-area reference. The raw Google Places label or geometry is
-not persisted as the public area projection.
+point to one SAL and stores that public-area reference. Only the ABS dataset supplies the public area projection.
 
-**An explicit public/private field split**, documented and enforced by the view or policy from `P0-T11`. Public: display name, bio, photo, experience, approximate area, ratings. Private: exact service-area centre, contact details, Stripe identifiers, verification internals.
+**An explicit public/private field split**, documented and enforced by the view or policy from `P0-T11`. Public: display name, bio, signed photo, experience, approximate area, and future ratings. Owner-only settings include the service-area centre and radius. Contact details, Stripe identifiers, storage paths and verification internals stay private.
 
-A radius bound, so a barber cannot set 500 km and appear in every search.
+Apply the inclusive 1–50 km Scheduled radius bounds in `CFG-BARBER-SERVICE-RADIUS-KM`, allowing fractions.
 
 **Contract example** — `complete-barber-profile`
 
@@ -2317,10 +2316,10 @@ A radius bound, so a barber cannot set 500 km and appear in every search.
   "yearsExperience": 10, "serviceAreaLat": -37.8136, "serviceAreaLng": 144.9631,
   "serviceRadiusKm": 12 }
 
-// 200 — note what comes back is the public projection
+// 200 — the authenticated barber's save result, including their radius
 { "id": "3b90...", "displayName": "Marcus T", "bio": "10 years, fades and beard work.",
   "yearsExperience": 10, "photoUrl": null, "serviceRadiusKm": 12,
-  "approximateArea": { "id": "sal:2021:example", "label": "Richmond",
+  "approximateArea": { "id": "sal:2026:example", "label": "Richmond",
     "mapPoint": { "lat": -37.82, "lng": 145.00 } },
   "onboardingComplete": false, "publishable": false }
 

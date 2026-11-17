@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@quicktrimr/shared": "../../../packages/shared/src/index.ts",
+    "@quicktrimr/validation": "../../../packages/validation/src/index.ts",
+    "jpeg-js": "npm:jpeg-js@0.4.4",
+    "zod": "npm:zod@4.6.5"
+  }
+}

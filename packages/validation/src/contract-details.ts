@@ -150,8 +150,14 @@ export const CONTRACT_DETAILS = {
   'complete-barber-profile': user(
     'P1-T06',
     [b],
-    ['RULE-ONBOARD-03', 'RULE-ONBOARD-05', 'RULE-DISCOVERY-05'],
-    'Own profile only. Private input coordinates resolve server-side to a SAL public area; never echo them in the response. Storage ownership, phone/photo validation and operational radius bounds belong to the owning feature; this contract invents no defaults.',
+    [
+      'RULE-ONBOARD-03',
+      'RULE-ONBOARD-05',
+      'RULE-DISCOVERY-05',
+      'RULE-BARBER-SERVICE-AREA-01',
+      'RULE-BARBER-PHOTO-01',
+    ],
+    'POST saves the authenticated barber’s profile. Supply a selected G-NAF directory ID, both confirmed GPS coordinates, or no new centre for an existing profile. Service radius is 1–50 km inclusive. The response returns an ABS SAL area and the owner’s radius without the private centre or storage key. GET returns { profile: null } before setup, then { profile } with a fresh signed photo link. POST /search with { query } returns { candidates } from G-NAF. POST /photo accepts JPEG bytes with Content-Type image/jpeg and returns { photoId } for the next save. The photo ID is scoped to the verified owner. Connect and service pricing determine later publication.',
   ),
   'create-stripe-connect-onboarding-link': user(
     'P1-T07',

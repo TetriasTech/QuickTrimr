@@ -16,8 +16,6 @@ import {
   type CompleteClientProfileRequest,
 } from '@quicktrimr/validation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import * as ImagePicker from 'expo-image-picker';
 import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { PixelRatio, Text, View } from 'react-native';
@@ -34,6 +32,7 @@ import {
   saveClientProfile,
   writeClientDraft,
 } from '../client-profile';
+import { pickProfileJpeg } from '../pick-profile-jpeg';
 
 import type { loadProfile } from '@/features/session/load-profile';
 
@@ -111,23 +110,12 @@ function ClientProfileForm({
     setPhotoBusy(true);
     setPhotoError('');
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-      });
-      const asset = result.assets?.[0];
-      if (!asset) return;
-      const image = ImageManipulator.manipulate(asset.uri);
-      const pixels = PixelRatio.getPixelSizeForLayoutSize(sizes.avatarLarge);
-      if (Math.max(asset.width, asset.height) > pixels) {
-        image.resize(
-          asset.width >= asset.height ? { width: pixels } : { height: pixels },
-        );
-      }
-      const jpeg = await (
-        await image.renderAsync()
-      ).saveAsync({ format: SaveFormat.JPEG });
-      setAvatarUri(jpeg.uri);
-      persist(getValues(), jpeg.uri);
+      const jpeg = await pickProfileJpeg(
+        PixelRatio.getPixelSizeForLayoutSize(sizes.avatarLarge),
+      );
+      if (!jpeg) return;
+      setAvatarUri(jpeg);
+      persist(getValues(), jpeg);
     } catch {
       setPhotoError('Could not use that photo. Try another image.');
     } finally {

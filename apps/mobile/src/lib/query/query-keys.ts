@@ -33,6 +33,10 @@ export const queryKeys = {
   onboarding: {
     clientProfile: (userId: string) =>
       ['onboarding', 'client-profile', userId] as const,
+    barberProfile: (userId: string) =>
+      ['onboarding', 'barber-profile', userId] as const,
+    barberAreaLookup: (userId: string, query: string) =>
+      ['onboarding', 'barber-area-lookup', userId, query] as const,
   },
   addresses: {
     list: (userId: string) => ['addresses', userId, 'list'] as const,
