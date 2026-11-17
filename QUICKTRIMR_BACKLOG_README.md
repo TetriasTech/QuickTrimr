@@ -7252,6 +7252,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-SERVICE-03` | `P0-D01`, `P1-T10`, `P5-T11` |
 | `RULE-SERVICE-04` | `P1-T11` |
 | `RULE-SERVICE-05` | `P0-D01`, `P0-T12`, `P1-T10`, `P1-T11`, `P2-T04`, `P2-T08`, `P5-T11` |
+| `CFG-ADMIN-SESSION-HOURS` | `P1-T02` |
 | `CFG-AVAIL-EXPIRY-MIN` | `P0-T18`, `P2-T08`, `P2-T09`, `P2-T15` |
 | `CFG-CANCEL-REFUND-PCT` | `P0-D03`, `P2-T08`, `P3-T07`, `P3-T08` |
 | `CFG-COMMISSION-PCT` | `P0-D02`, `P2-T08`, `P3-T01`, `P3-T04` |
