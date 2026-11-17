@@ -281,4 +281,6 @@ insert into public.barber_reliability_state (id, level, created_at, updated_at) 
 insert into public.barber_reliability_state (id, level, created_at, updated_at) values ('6d676b69-2cbb-5800-8099-9db7f800a120', 'limited', '2026-10-08T00:00:00.000Z', '2026-10-08T00:00:00.000Z') on conflict (id) do nothing;
 insert into public.barber_reliability_state (id, level, created_at, updated_at) values ('ed50f048-847d-557b-9964-f3db2fbf4b1d', 'restricted', '2026-10-08T00:00:00.000Z', '2026-10-08T00:00:00.000Z') on conflict (id) do nothing;
 insert into public.barber_reliability_state (id, level, created_at, updated_at) values ('127ff618-4dd5-5180-aa86-22a6eb62f804', 'suspended', '2026-10-08T00:00:00.000Z', '2026-10-08T00:00:00.000Z') on conflict (id) do nothing;
+-- Local-only Connect fixture. The synthetic platform ID prevents provider calls.
+insert into private.stripe_connect_accounts (barber_id, platform_account_id, operation_id, reserved_at, stripe_account_id) values ('b3f6b21b-4f55-5e28-8ebe-45c4466af5c1', 'acct_QuickTrimrSeedPlatform', '52211d3c-6b29-508b-b767-b9202bd59074', '2026-10-08T00:00:00.000Z', 'acct_QuickTrimrSeedPending') on conflict (barber_id) do nothing;
 commit;

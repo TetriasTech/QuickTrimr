@@ -83,3 +83,6 @@ verify_jwt = true
 
 [functions.complete-barber-profile]
 verify_jwt = true
+
+[functions.create-stripe-connect-onboarding-link]
+verify_jwt = true

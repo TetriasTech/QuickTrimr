@@ -1260,6 +1260,8 @@ Request (decoded envelope only for Stripe):
 | 422 | `{"error":"validation_failed","fields":{"_request":"Invalid request or server-side business validation"}}` | Malformed input or server-side business validation failed; fields identifies invalid inputs. |
 | 500 | `{"error":"internal_error"}` | Unexpected failure; safe error only, no internals or provider payload. |
 | 409 | `{"error":"onboarding_complete"}` | Onboarding is already verified; refresh status rather than retrying a new link. |
+| 409 | `{"error":"stripe_account_reconciliation_required"}` | An earlier account creation must be reconciled before retrying. |
+| 502 | `{"error":"stripe_configuration_unsupported"}` | The account or sandbox does not support the required payout controls. |
 | 502 | `{"error":"stripe_unavailable"}` | Provider unavailable; do not report a money effect as successful. Reconcile unknown outcomes before retrying. |
 
 ### decline-booking-request
