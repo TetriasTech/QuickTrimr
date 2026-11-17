@@ -170,6 +170,16 @@ export const CONTRACT_DETAILS = {
         'onboarding_complete',
         'Onboarding is already verified; refresh status rather than retrying a new link.',
       ),
+      error(
+        409,
+        'stripe_account_reconciliation_required',
+        'An earlier account creation must be reconciled before retrying.',
+      ),
+      error(
+        502,
+        'stripe_configuration_unsupported',
+        'The account or sandbox does not support the required payout controls.',
+      ),
       ...stripeErrors,
     ],
   ),

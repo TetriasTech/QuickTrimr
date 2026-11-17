@@ -74,6 +74,7 @@ browser bundle. Never use `next.config`'s `env` option to export a private value
 | `SUPABASE_ANON_KEY` | Edge Functions: runtime-provided anon credential for caller-scoped requests |
 | `SUPABASE_SERVICE_ROLE_KEY` | Edge Functions only: runtime-provided privileged credential; bypasses RLS |
 | `STRIPE_SECRET_KEY` | Edge Functions only: Stripe API credential |
+| `STRIPE_CONNECT_SANDBOX_ACCOUNT_ID` | Edge Functions only: expected customer-owned sandbox for Connect |
 | `STRIPE_WEBHOOK_SECRET` | Edge Functions only: signing secret for the exact endpoint/listener |
 | `GOOGLE_MAPS_SERVER_API_KEY` | Edge Functions only: Google Routes and Places credential |
 | `STRIPE_CONNECT_RETURN_URL` | Edge Functions only: approved Connect return destination, not client input |

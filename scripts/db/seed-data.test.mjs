@@ -43,12 +43,26 @@ test('committed insert-only seed matches deterministic generation, with fixed ti
     .filter((line) => line.startsWith('insert '));
   assert.ok(statements.length > 0);
   assert.ok(
-    statements.every((line) => / on conflict \(id\) do nothing;$/.test(line)),
+    statements.every(
+      (line) =>
+        / on conflict \(id\) do nothing;$/.test(line) ||
+        (line.startsWith('insert into private.stripe_connect_accounts ') &&
+          / on conflict \(barber_id\) do nothing;$/.test(line)),
+    ),
   );
   assert.doesNotMatch(
     sql,
-    /\b(?:update|delete|truncate|alter|create|drop|password|token|stripe_account_id)\b/i,
+    /\b(?:update|delete|truncate|alter|create|drop|password|token)\b/i,
   );
+  const connect = statements.filter((line) =>
+    line.startsWith('insert into private.stripe_connect_accounts '),
+  );
+  assert.equal(connect.length, 1);
+  assert.ok(connect[0].includes(seedId('user/barber/pending')));
+  assert.deepEqual(connect[0].match(/acct_[A-Za-z0-9]+/g), [
+    'acct_QuickTrimrSeedPlatform',
+    'acct_QuickTrimrSeedPending',
+  ]);
   for (const row of [...fixture.auth, ...Object.values(fixture.rows).flat()]) {
     assert.equal(row.created_at, seedTimestamp);
     assert.equal(row.updated_at, seedTimestamp);

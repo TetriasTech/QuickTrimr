@@ -2385,6 +2385,8 @@ Authenticated barber only. Client and admin roles rejected.
 
 If the barber has no `stripe_account_id`, create the Connect account of the type chosen in `P0-T18` and **store the id before returning**. If they have one, reuse it.
 
+Persist the create intent before calling Stripe. Retry an ambiguous create against the same sandbox and operation key within Stripe's replay window. An unresolved intent outside the replay window requires reconciliation before any new account creation. Keep the Stripe association and create intent in server-only storage.
+
 Apply and verify `P0-T18`'s payout-control and fee configuration for each account (`RULE-EARN-07`), including reused accounts; no default automatic schedule or on-demand control may bypass the approved run. This configures the account, not the Phase 3 payout worker. Bank details remain in Stripe's secure correction flow, never a QuickTrimr log or client-supplied payout destination.
 
 Create an account link with the return and refresh URLs from `P0-T18`, and return the URL. Account links are short-lived, so this is called each time onboarding is opened or resumed — which is exactly why account creation must not repeat.
@@ -2413,8 +2415,14 @@ Audit log on account creation and on each link issue (`ADR-013`).
 // 409 — onboarding already complete
 { "error": "onboarding_complete" }
 
-// 502 — Stripe unavailable; nothing was created
+// 502 — Stripe unavailable; no partial account association or link is returned
 { "error": "stripe_unavailable" }
+
+// 502 — required Connect configuration was rejected
+{ "error": "stripe_configuration_unsupported" }
+
+// 409 — earlier create needs reconciliation
+{ "error": "stripe_account_reconciliation_required" }
 ```
 
 **Acceptance criteria**
@@ -2426,7 +2434,7 @@ Audit log on account creation and on each link issue (`ADR-013`).
 - [ ] **Concurrent first calls create exactly one Connect account** — tested with real parallel requests.
 - [ ] A client or admin caller is rejected with 403.
 - [ ] The Stripe secret key never appears in a response or a log.
-- [ ] A Stripe outage returns `502 stripe_unavailable` and leaves no partial state.
+- [ ] A Stripe outage returns `502 stripe_unavailable`. A failed create leaves no linked account or creation audit. An ambiguous create retains its idempotency intent for recovery. If a later call to Stripe fails, the already-recorded account remains reusable.
 - [ ] Audit logs are written for account creation and link issue.
 - [ ] Errors are typed and reveal no Stripe internals to the caller.
 

@@ -29,7 +29,7 @@ export async function apiRequest(status, path, token, options = {}) {
       prefer: 'return=representation',
       ...options.headers,
     },
-    signal: AbortSignal.timeout(10000),
+    signal: options.signal ?? AbortSignal.timeout(10000),
     redirect: 'error',
   });
 }

@@ -162,20 +162,25 @@ Saved sandbox Settings → Connect → Express Dashboard → Features show **Man
 and **Edit payout schedule: Off** during targeted inspection. They were already off and were not
 changed. The retained [Features navigation image](../qa/evidence/P0-T18-express-payout-controls.jpg)
 shows only top payment controls, not those payout switches; it does not prove their state.
-The account's API schedule
-remains manual, payouts enabled, settlement delay two days. Settings → Connect → Payouts →
-Instant Payouts shows **A$0/day**. This current aggregate limit is **not proof of a durable
-Instant Payouts opt-out**; no such off switch was observed. See the
-[current limit](../qa/evidence/P0-T18-instant-payout-limit.jpg).
+The account's API schedule remains manual, payouts enabled, settlement delay two days.
+Settings → Connect → Payouts → Instant Payouts shows **A$0/day**. Stripe Support confirmed
+that connected accounts cannot access Instant Payouts while the platform feature is disabled
+and only the platform can request to enable it. The sandbox has no observed standalone
+Instant Payouts switch. See the [limit capture](../qa/evidence/P0-T18-instant-payout-limit.jpg)
+and the [2026-11-17 sandbox follow-up](../qa/P0-T18.md#2026-11-17-sandbox-payout-follow-up).
 
 Andrew opened the actual Express preview manually and approved read-only inspection of the
 test payout/bank settings without printing/saving field values or changing data. Broad page
 capture remained blocked; targeted locators inspected the actual embedded Stripe frames.
-Settings shows Professional details, Personal details and Payout details, but no bank-change
-or correction control was found. Balance/settings exposed no payout-initiation, withdrawal,
-Instant or schedule-edit action buttons in the inspected surfaces. These observations are not
-a durable Instant opt-out or verified correction flow. No credentials/bank values changed,
-and no profile/bank values or detail screenshots were saved from the follow-up.
+Settings shows Professional details, Personal details and Payout details. The inspected preview
+exposed no bank-change, withdrawal, Instant Payouts or schedule-edit action. The platform's
+**Connect → Connected accounts → Overview → Payout information → External accounts** menu
+offers **Generate remediation link** on the synthetic test account. Stripe Support confirmed
+that it also supports routine corrections without a failed payout and that the Express account
+owner must authenticate to complete the update. The owner can also use
+[Express payout settings](https://support.stripe.com/express/questions/update-bank-account-or-debit-card-for-payouts).
+In the signed-in Chrome session, the sandbox action copied a Stripe-hosted link to the clipboard.
+Opening it reached an SMS one-time-code prompt in Stripe test mode. The check stopped at that prompt.
 
 The provider documents an AUD payout minimum of **A$0.01**, AU settlement timing of **two
 business days**, and a **90-day** manual holding maximum for Australia. See
@@ -348,9 +353,9 @@ is recorded in the QA audit rather than treated as a real-person exposure after 
 
 ## Evidence still required
 
-The [QA report](../qa/P0-T18.md) tracks each acceptance criterion. Outstanding Stripe proof
-includes complete payout controls and secure bank correction. Express shows the paid one-cent
-payout row; an exact-ID UI detail view remains unverified. Remaining checks also include
+The [QA report](../qa/P0-T18.md) tracks each acceptance criterion. The sandbox bank correction
+link reaches owner authentication. A completed bank update has yet to be exercised. Express
+shows the paid one-cent payout row, with the exact-ID UI detail view still unverified. Remaining checks also include
 other supported-method deadlines and a genuine capture failure. Test fee responsibility is
 configured; production invoices cannot be inferred and are outside this sandbox scope.
 Active capabilities, hosted callbacks and separate one-cent transfer/paid-bank-payout references
