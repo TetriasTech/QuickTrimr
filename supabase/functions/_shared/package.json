@@ -1,0 +1,16 @@
+{
+  "name": "@quicktrimr/function-shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@quicktrimr/domain": "workspace:*",
+    "@quicktrimr/validation": "workspace:*",
+    "stripe": "23.0.0",
+    "zod": "4.6.5"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  }
+}

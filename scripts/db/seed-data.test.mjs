@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { SHARED_ENUMS } from '../../packages/shared/src/index.ts';
+import {
+  SHARED_ENUMS,
+  VERIFICATION_STATUS,
+} from '../../packages/shared/src/index.ts';
 
 import { bookingSnapshotExample } from './core-fixtures.mjs';
 import { coreTables } from './core-schema.mjs';
@@ -57,12 +60,19 @@ test('committed insert-only seed matches deterministic generation, with fixed ti
   const connect = statements.filter((line) =>
     line.startsWith('insert into private.stripe_connect_accounts '),
   );
-  assert.equal(connect.length, 1);
-  assert.ok(connect[0].includes(seedId('user/barber/pending')));
-  assert.deepEqual(connect[0].match(/acct_[A-Za-z0-9]+/g), [
-    'acct_QuickTrimrSeedPlatform',
-    'acct_QuickTrimrSeedPending',
-  ]);
+  assert.equal(connect.length, VERIFICATION_STATUS.length);
+  for (const status of VERIFICATION_STATUS) {
+    const row = connect.find((line) =>
+      line.includes(seedId(`user/barber/${status}`)),
+    );
+    assert.ok(row?.includes(`'${status}'`));
+    assert.ok(row.includes('acct_QuickTrimrSeedPlatform'));
+    assert.ok(
+      (row.match(/acct_[A-Za-z0-9]+/g) ?? []).every((id) =>
+        id.startsWith('acct_QuickTrimrSeed'),
+      ),
+    );
+  }
   for (const row of [...fixture.auth, ...Object.values(fixture.rows).flat()]) {
     assert.equal(row.created_at, seedTimestamp);
     assert.equal(row.updated_at, seedTimestamp);

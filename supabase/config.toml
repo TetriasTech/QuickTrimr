@@ -86,3 +86,10 @@ verify_jwt = true
 
 [functions.create-stripe-connect-onboarding-link]
 verify_jwt = true
+
+[functions.refresh-stripe-connect-status]
+verify_jwt = true
+
+[functions.stripe-webhook]
+# Provider ingress authenticates Stripe-Signature on original bytes.
+verify_jwt = false

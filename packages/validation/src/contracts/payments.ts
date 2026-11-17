@@ -83,7 +83,10 @@ export type CreateRefundResponse = z.infer<typeof createRefundResponseSchema>;
 export const stripeWebhookRequestSchema = z.object({
   id: nonEmptyStringSchema,
   type: nonEmptyStringSchema,
-  data: z.object({ object: z.record(z.string(), z.unknown()) }),
+  data: z.object({ object: z.record(z.string(), z.unknown()) }).optional(),
+  related_object: z
+    .object({ id: nonEmptyStringSchema, type: nonEmptyStringSchema })
+    .optional(),
 });
 export type StripeWebhookRequest = z.infer<typeof stripeWebhookRequestSchema>;
 export const stripeWebhookResponseSchema = z.strictObject({

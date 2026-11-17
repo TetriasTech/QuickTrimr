@@ -2456,9 +2456,9 @@ owner: Andrew
 phase: 1
 priority: High
 jiraKey: TRIMR-38
-dependsOn: [P1-T06, P1-T07]
+dependsOn: [P1-T06, P1-T07, P1-T09]
 affects: [P1-T11, P3-T05]
-knowledgeBase: [RULE-ONBOARD-04, RULE-COPY-01, ENUM-VERIFICATION-STATUS]
+knowledgeBase: [RULE-ONBOARD-04, RULE-CONNECT-STATUS-01, RULE-COPY-01, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, mobile, stripe]
 ```
@@ -2511,8 +2511,8 @@ phase: 1
 priority: High
 jiraKey: TRIMR-39
 dependsOn: [P0-T18, P1-T07]
-affects: [P2-T04, P3-T03, P3-T11, P5-T03]
-knowledgeBase: [ADR-013, RULE-ONBOARD-04, RULE-PAY-07, RULE-PAY-10, ENUM-VERIFICATION-STATUS]
+affects: [P1-T08, P2-T04, P3-T03, P3-T11, P5-T03]
+knowledgeBase: [ADR-013, RULE-ONBOARD-04, RULE-CONNECT-STATUS-01, RULE-PAY-07, RULE-PAY-10, ENUM-VERIFICATION-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, backend, stripe, security]
 ```
@@ -2526,6 +2526,8 @@ This ticket establishes the **webhook pattern** the whole payment phase inherits
 **Scope**
 
 `refresh-stripe-connect-status` Edge Function: fetch the account, map `charges_enabled`, `payouts_enabled`, `details_submitted` and requirements to `ENUM-VERIFICATION-STATUS`, and persist.
+
+Apply Andrew's approved `RULE-CONNECT-STATUS-01` mapping. Preserve both `RULE-ONBOARD-04` eligibility gates when adapting the existing Accounts v2 integration. Receive the signed v2 account, merchant/recipient capability, requirement and closure notifications as well as legacy `account.updated`; retrieve current state rather than applying an older snapshot. Persist event deduplication and the status/audit change together. Serialize account refreshes without holding a database transaction across provider I/O.
 
 A webhook endpoint handling `account.updated`, establishing:
 
@@ -3032,6 +3034,8 @@ It is also the highest-volume privacy surface in QuickTrimr. Every client who se
 `search-available-now-barbers` and the Scheduled equivalent, or one function branching on booking type.
 
 Filters: booking type, service category, client point, radius, and eligibility. Eligibility excludes barbers who fail `RULE-ONBOARD-04`, have no active price for the category, or are `suspended`. An active reliability cooldown excludes Available Now only. Use the shared read-side eligibility helper from `P2-T01`. `restricted` alone is **demotion, not exclusion** (`RULE-RELY-06`).
+
+Join the service-only `private.connect_eligible_barbers` projection from `P1-T09` for the Stripe gate. It requires the stored verification state and both provider capability gates; a public profile or completed profile form alone cannot grant eligibility.
 
 PostGIS distance query against the GiST index (`ADR-008`). Results bounded and paginated — never "fetch all and sort".
 

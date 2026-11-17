@@ -1,0 +1,11 @@
+{
+  "result": "PASS",
+  "actualSignedEvents": 2,
+  "concurrentFirstDeliveries": 12,
+  "concurrentReplays": 72,
+  "duplicateEffects": 0,
+  "restrictedBarbersExcluded": 2,
+  "maxAcknowledgementMs": 1072,
+  "roleAndCrossUserApiDenial": true,
+  "unlinkedAndPendingVerified": true
+}
