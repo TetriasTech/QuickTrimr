@@ -30,6 +30,10 @@ export const queryKeys = {
   session: {
     profile: (userId: string | null) => ['session', 'profile', userId] as const,
   },
+  onboarding: {
+    clientProfile: (userId: string) =>
+      ['onboarding', 'client-profile', userId] as const,
+  },
   bookings: {
     all: rootKeys.bookings,
     lists: () => [...rootKeys.bookings, 'list'] as const,

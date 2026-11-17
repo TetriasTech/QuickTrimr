@@ -6,7 +6,8 @@ import {
   type CreateOrSyncProfileRequest,
 } from '@quicktrimr/validation';
 
-import { createSupabaseUserVerifier } from './supabase-user.ts';
+import { createSupabaseUserVerifier } from '../_shared/auth/supabase-user.mts';
+import { json } from '../_shared/responses/json.mts';
 
 type Options = {
   supabaseUrl: string;
@@ -15,12 +16,6 @@ type Options = {
   fetcher?: typeof fetch;
   log?: Pick<Console, 'warn' | 'error'>;
 };
-
-function json(body: unknown, status: number, headers?: HeadersInit) {
-  const responseHeaders = new Headers(headers);
-  responseHeaders.set('Cache-Control', 'no-store');
-  return Response.json(body, { status, headers: responseHeaders });
-}
 
 function roleForbidden() {
   return json({ error: 'forbidden' }, 403);

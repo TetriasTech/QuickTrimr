@@ -3,9 +3,11 @@ import {
   createOrSyncProfileRequestSchema,
   userRoleSchema,
 } from '@quicktrimr/validation';
-import { FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js';
 
 import { invokeEdgeFunction } from '../../lib/api/invoke-edge-function.ts';
+import { supabaseEdgeTransport } from '../../lib/api/supabase-edge-transport.ts';
+
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export async function loadProfile(
   supabase: SupabaseClient,
@@ -36,27 +38,7 @@ export async function loadProfile(
     : session.user.user_metadata.signup_role;
   const request = createOrSyncProfileRequestSchema.parse({ role });
   const profile = await invokeEdgeFunction(
-    {
-      async invoke(name, { body }) {
-        const result = await supabase.functions.invoke<unknown>(name, {
-          body: JSON.stringify(body),
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          signal,
-        });
-        if (result.error instanceof FunctionsHttpError) {
-          const response = result.error.context as Response;
-          return {
-            status: response.status,
-            body: (await response.json()) as unknown,
-          };
-        }
-        if (result.error) throw result.error;
-        return { status: 200, body: result.data };
-      },
-    },
+    supabaseEdgeTransport(supabase, session.access_token, signal),
     'create-or-sync-profile',
     request,
   );

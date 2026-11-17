@@ -22,6 +22,7 @@ type SessionState =
 type SessionContextValue = {
   supabase: SupabaseClient;
   state: SessionState;
+  userId: string | null;
   retry: () => void;
 };
 
@@ -82,6 +83,8 @@ export function SessionProvider({
       value={{
         supabase,
         state,
+        userId:
+          state.status === 'signed-in' ? (session?.user.id ?? null) : null,
         retry: () => {
           profile.refetch().catch(() => undefined);
         },
