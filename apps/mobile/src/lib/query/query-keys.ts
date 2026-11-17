@@ -34,6 +34,11 @@ export const queryKeys = {
     clientProfile: (userId: string) =>
       ['onboarding', 'client-profile', userId] as const,
   },
+  addresses: {
+    list: (userId: string) => ['addresses', userId, 'list'] as const,
+    search: (userId: string, query: string) =>
+      ['addresses', userId, 'search', query] as const,
+  },
   bookings: {
     all: rootKeys.bookings,
     lists: () => [...rootKeys.bookings, 'list'] as const,

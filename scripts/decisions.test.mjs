@@ -79,8 +79,8 @@ test('Google deferral retains a named-owner foundation follow-up independent of 
   );
 });
 
-test('first Places, Maps and Routes consumers directly wait on deferred Google verification', () => {
-  for (const id of ['P1-T05', 'P2-T07', 'P4-T05']) {
+test('Maps and Routes consumers directly wait on deferred Google verification', () => {
+  for (const id of ['P2-T07', 'P4-T05']) {
     const ticket = backlogTicket(id);
     assert.ok(ticket.dependsOn.includes('P0-T20'), id);
     assert.ok(!ticket.dependsOn.includes('P0-T18'), id);
@@ -210,16 +210,13 @@ test('Google development quota decision preserves approval and project-specific 
   assert.match(google.body, /effective metric\/scope\/limit evidence/);
 });
 
-test('Places address autocomplete keeps the existing Edge-Function-only trust boundary', () => {
+test('Independent client address lookup retains its server-only boundary', () => {
   const address = backlogTicket('P1-T05');
-  assert.match(
-    address.body,
-    /Places autocomplete calls go through Edge Functions using the backend-only key/,
-  );
-  assert.doesNotMatch(
-    address.body,
-    /The Google client key is used for autocomplete/,
-  );
+  assert.ok(address.knowledgeBase.includes('RULE-ADDRESS-01'));
+  assert.ok(address.knowledgeBase.includes('RULE-ADDRESS-02'));
+  assert.ok(!address.dependsOn.includes('P0-T20'));
+  assert.match(address.body, /verified-client Edge Function/);
+  assert.match(address.body, /service-address lookup uses no Maps key/);
 });
 
 function section(markdown, start, end) {

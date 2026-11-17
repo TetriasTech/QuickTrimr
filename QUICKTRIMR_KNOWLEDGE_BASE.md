@@ -72,7 +72,7 @@ This file and the backlog must never disagree. Three rules keep them honest:
 - `RULE-OPS-DEV-PLACEHOLDERS` — On 2026-10-14 Andrew authorized development placeholders because final app IDs and callback domains do not yet exist. Use `CFG-DEV-MOBILE-IDENTIFIERS` and `CFG-DEV-PROVIDER-URLS` for this setup. They authorize local development only, not production domains, release signing or store publication. Derive Android's real signing SHA-1 from the selected development keystore; never invent a fingerprint. Placeholder callbacks must become working local probe routes before they count as verified integration evidence.
 - `RULE-OPS-STRIPE-SANDBOX-ACK` — On 2026-10-15 Andrew explicitly authorized submitting the reviewed refunds/chargebacks acknowledgement in the dedicated Quick Trimr sandbox. The disclosed responsibilities cover refunds, chargebacks, fines, seller compliance/support and unrecovered connected-account negative balances; the dialog also discloses Radar Pro plan rates of A$0.13 per screened transaction and A$7 per connected account. This approves that sandbox acknowledgement only, not live activation, live billing/plan acceptance or production legal terms. These displayed provider rates are an observation, not a tunable QuickTrimr config value or proof of actual sandbox billing. Record the saved acknowledgement and verify the actual Connect controls; approval alone does not complete `P0-T18`. Customer live confirmation remains `P6-T11`.
 - `RULE-OPS-STRIPE-TEST-ONBOARDING` — On 2026-10-15 Andrew explicitly approved the separate connected-account terms and completion of Stripe-hosted onboarding for the synthetic P0-T18 Express fixture `acct_1UQZXTJHIzBQ6oGf` in the dedicated customer sandbox. Use Stripe test data only, never Joel's or a real barber's personal or bank details. This permits the reviewed test flow, not live activation, real-business declarations or production legal acceptance. Recheck provider capabilities, payout controls and actual callback delivery afterward; completing the form alone does not prove account eligibility or complete `P0-T18`.
-- `RULE-OPS-GOOGLE-DEV-DEFERRAL` — On 2026-10-20 Andrew approved deferring Google development billing and its remaining provider verification from `P0-T18` to the Tony-owned foundation follow-up `P0-T20`. Keep the existing customer-owned `quicktrimr-dev` project unbilled until that follow-up is undertaken. Preserve the approved development budget, alert and quota policy; approval is not evidence that settings were applied. The customer must enter payment details and accept billing terms personally. `P0-T18` retains its Stripe acceptance criteria and the unbilled-project handoff; it is not complete merely because Google work moved. This is a narrow Phase 0 sequencing exception: unrelated work may proceed only after its own readiness gate passes, while Google-dependent address autocomplete, map rendering and ETA remain blocked until `P0-T20` has actual API, restricted-key and budget/quota evidence. No staging/production approval or waiver of end-to-end testing is granted.
+- `RULE-OPS-GOOGLE-DEV-DEFERRAL` — On 2026-10-20 Andrew approved deferring Google development billing and its remaining provider verification from `P0-T18` to the Tony-owned foundation follow-up `P0-T20`. Keep the existing customer-owned `quicktrimr-dev` project unbilled until that follow-up is undertaken. Preserve the approved development budget, alert and quota policy; approval is not evidence that settings were applied. The customer must enter payment details and accept billing terms personally. `P0-T18` retains its Stripe acceptance criteria and the unbilled-project handoff; it is not complete merely because Google work moved. This is a narrow Phase 0 sequencing exception: unrelated work may proceed only after its own readiness gate passes, while Google map rendering and ETA remain blocked until `P0-T20` has actual API, restricted-key and budget/quota evidence. Client service-address lookup uses its independently licensed source under `RULE-ADDRESS-01`. No staging/production approval or waiver of end-to-end testing is granted.
 
 QuickTrimr connects clients who need a haircut with barbers who travel to them. A client either requests a barber **immediately** (Available Now) or **for a future time** (Scheduled). The barber accepts or declines.
 
@@ -466,6 +466,11 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-ONBOARD-03` — Barber onboarding collects profile, photo, service area and travel radius, offered services and prices, and Stripe Connect.
 - `RULE-ONBOARD-04` — **A barber cannot receive a paid booking until their Stripe Connect account satisfies charges-enabled and payouts-enabled requirements.** Discovery excludes them. This is enforced server-side in search and at request creation, not by hiding a toggle.
 - `RULE-ONBOARD-05` — Barber public profile fields and private fields are separated. Discovery and the client-facing profile return public fields only.
+
+### Client service addresses
+
+- `RULE-ADDRESS-01` — Andrew approved an independently licensed Australian address dataset for service-address autocomplete and persisted coordinates on 2026-11-17. Resolve the address on the server from that source and store its point in PostGIS. Manual entry goes through the same resolver. Device location may suggest candidate addresses with foreground consent; the client confirms the address before saving. Google remains the provider for maps and routes. Do not derive saved service-address coordinates from Google Places.
+- `RULE-ADDRESS-02` — Andrew approved allowing clients to save any resolvable Australian service address on 2026-11-17. Barber coverage and availability determine booking eligibility. Address entry does not imply that a barber serves the address.
 
 ### Service catalogue and pricing
 
@@ -934,7 +939,7 @@ tests that detect drift between the inventory, schemas, fixtures and documentati
 existing contracts compatible unless an explicit KB/backlog inconsistency requires a recorded
 correction. This is contract work, not implementation of the later features or provider calls.
 
-The inventory is not a grant of 49 public HTTP endpoints. User-facing calls authenticate the
+The inventory is not a grant of public HTTP access. User-facing calls authenticate the
 verified JWT and resolve permissions server-side (`ADR-001`, `RULE-ADMIN-01`); server-only
 operations remain inaccessible to mobile/admin callers and recheck authoritative persisted state
 (`ADR-011`). Stripe webhooks authenticate the original raw body using the provider signature
@@ -961,6 +966,7 @@ Function inventory:
 
 ```txt
 auth / onboarding    create-or-sync-profile  complete-client-profile  complete-barber-profile
+                     manage-client-addresses
                      create-stripe-connect-onboarding-link  refresh-stripe-connect-status
 
 services / pricing   create-service-category  update-service-category  archive-service-category
@@ -1059,6 +1065,8 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-STRIPE-RADAR-PLAN` | **RESOLVED → `RULE-OPS-STRIPE-SANDBOX-ACK`** — Andrew explicitly authorized clicking Acknowledge on 2026-10-15 after the actual sandbox dialog, responsibilities and Radar Pro rates were disclosed. Approval is limited to that sandbox acknowledgement; saved provider state and Connect controls still need evidence. No live activation, billing/plan acceptance or production legal terms are authorized. | `P0-T18` new Connect account provisioning and payout-control proof; downstream onboarding remains gated by its completion | Andrew during `P0-T18`; customer live confirmation remains `P6-T11` |
 | `TBC-ADMIN-BARBER-STATUS-CONTRACT` | **RESOLVED → `RULE-ADMIN-BARBER-STATUS-ALIAS`** — Andrew confirmed the alias on 2026-11-05, with the same audited admin-only reliability safeguards and no manual Stripe verification override. | `P0-T08` all-inventory contracts; `P5-T13` alias implementation | Tony or Andrew |
 | `TBC-ADMIN-SESSION-LIFETIME` | **RESOLVED → `CFG-ADMIN-SESSION-HOURS`** — Andrew approved Option A, eight hours from successful admin sign-in. | `P1-T02` expiry implementation and tests; Phase 5 tickets that depend on the admin guard | Andrew |
+| `TBC-CLIENT-ADDRESS-POINT-SOURCE` | **RESOLVED → `RULE-ADDRESS-01`** — Andrew approved an independently licensed Australian source for lookup and saved coordinates, keeping Google for maps and routes. | `P1-T05` address save and autocomplete; downstream discovery and booking coordinate source | Andrew |
+| `TBC-CLIENT-ADDRESS-REGION` | **RESOLVED → `RULE-ADDRESS-02`** — Andrew approved accepting any resolvable Australian address, with booking eligibility based on barber coverage and availability. | `P1-T05` supported-region validation and fixtures | Andrew |
 
 ---
 

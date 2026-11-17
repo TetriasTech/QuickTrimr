@@ -11,6 +11,7 @@ import { CONTRACTS } from '../../packages/validation/src/contracts/index.ts';
 import { renderContracts } from '../api/contracts.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const contractCount = Object.keys(CONTRACTS).length;
 
 for (const app of ['mobile', 'admin'])
   test(`${app} fixture imports retain schema-inferred types under the actual app tsconfig`, () => {
@@ -64,16 +65,16 @@ test('API docs exactly match executable schemas, fixtures and error status/code 
   const headings = [...docs.matchAll(/^### ([a-z-]+)$/gm)].map(
     (match) => match[1],
   );
-  assert.equal(headings.length, 49);
-  assert.equal(new Set(headings).size, 49);
+  assert.equal(headings.length, contractCount);
+  assert.equal(new Set(headings).size, contractCount);
   assert.deepEqual(headings.toSorted(), Object.keys(CONTRACTS).sort());
   assert.equal(
     (docs.match(/Shared request schema: `\w+Schema`/g) ?? []).length,
-    49,
+    contractCount,
   );
   assert.equal(
     (docs.match(/Shared response schema: `\w+Schema`/g) ?? []).length,
-    49,
+    contractCount,
   );
 });
 
@@ -105,7 +106,7 @@ for (const app of ['mobile', 'admin'])
         },
       };
       runInNewContext(result.outputFiles[0].text, context, { timeout: 5000 });
-      assert.equal(context.fixtureCount, 49);
+      assert.equal(context.fixtureCount, contractCount);
       assert.equal(context.sample, 4500);
       assert.ok(
         !Object.keys(result.metafile.inputs).some((path) =>

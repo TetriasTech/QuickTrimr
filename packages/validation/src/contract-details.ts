@@ -137,6 +137,16 @@ export const CONTRACT_DETAILS = {
     ['RULE-ONBOARD-02', 'ADR-001', 'ADR-005'],
     'Own profile only. Accept Australian mobile numbers in domestic or international form and store +61 format. An optional attachAvatar flag links the caller’s existing upload from private storage. Onboarding is complete only when required profile information AND an active address exist; the success fixture assumes the address already exists. Verification status is unchanged.',
   ),
+  'manage-client-addresses': user(
+    'P1-T05',
+    [c],
+    ['RULE-ADDRESS-01', 'RULE-ADDRESS-02', 'RULE-ONBOARD-02', 'ADR-001'],
+    'Own saved addresses only. List active addresses, search directory candidates, or suggest nearby candidates with explicit device consent. The server resolves each saved point against the Australian directory. Write success returns server-owned onboarding state.',
+    [
+      notFound,
+      error(409, 'address_archived', 'An archived address cannot be edited.'),
+    ],
+  ),
   'complete-barber-profile': user(
     'P1-T06',
     [b],

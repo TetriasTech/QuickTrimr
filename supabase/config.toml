@@ -77,3 +77,6 @@ verify_jwt = true
 [functions.complete-client-profile]
 enabled = true
 verify_jwt = true
+
+[functions.manage-client-addresses]
+verify_jwt = true
