@@ -119,8 +119,9 @@ and alerts. Never fall back to an unrestricted key to make a client call work.
 [Google key security guidance](https://developers.google.com/maps/api-security-best-practices)
 
 `ADR-008` means **Places as well as Routes stays server-side**. The public maps keys do not
-authorize client-side autocomplete or routing. P0-T18 must provision separate platform keys
-within its client tier, plus the distinct server tier; no accounts or keys are created here.
+authorize client-side autocomplete or routing. P0-T20 provisions separate platform keys within the client tier and a distinct server key.
+The [Google development verification record](../qa/P0-T20.md) records the saved restrictions,
+provider checks, and project budget.
 
 ## Local, staging and production
 
