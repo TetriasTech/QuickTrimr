@@ -186,9 +186,16 @@ export const CONTRACT_DETAILS = {
   'refresh-stripe-connect-status': user(
     'P1-T09',
     [b],
-    ['RULE-ONBOARD-04', 'RULE-PAY-07'],
-    'Own account only. Map verified provider state to shared verification status; never accept a client-selected status or identity documents.',
-    stripeErrors,
+    ['RULE-ONBOARD-04', 'RULE-CONNECT-STATUS-01', 'RULE-PAY-07'],
+    'Own account only. Map current provider state using RULE-CONNECT-STATUS-01. Read both merchant and recipient capabilities and preserve the charges/payouts gates. An unlinked barber receives not_started with false flags. Never accept a client-selected status, Stripe account ID or identity documents.',
+    [
+      error(
+        409,
+        'stripe_refresh_in_progress',
+        'Another refresh holds the account lease; retry after it completes.',
+      ),
+      ...stripeErrors,
+    ],
   ),
   'create-service-category': user(
     'P1-T10',
@@ -403,7 +410,7 @@ export const CONTRACT_DETAILS = {
     roles: [] as readonly UserRole[],
     rules: ['RULE-PAY-07', 'RULE-PAY-06', 'RULE-PAY-10'],
     notes:
-      'Provider ingress, not a user JWT endpoint. Verify Stripe-Signature against the ORIGINAL RAW BODY before SDK decoding/Zod parsing or any write. requestSchema describes only a minimal decoded event envelope AFTER verification; object remains opaque and must be decoded using the pinned SDK before projection. Fixtures are unsigned and cannot authenticate anything. Extra provider envelope keys are stripped; never log, return or retain a full payload. Duplicate and irrelevant events acknowledge 200; persistence/reconciliation belong to owning tickets.',
+      'Provider ingress. Verify Stripe-Signature against ORIGINAL RAW BYTES before JSON decoding, validation or any write. Snapshot account.updated and Accounts v2 account/capability/requirements/closure notifications trigger a fresh provider read under a DB-owned account lease. Commit event ID, status and safe audit together. Duplicates and irrelevant events acknowledge 200. A busy lease or failed required effect returns processing_failed for Stripe to retry. Decoded fixtures are unsigned and cannot authenticate anything. Personal provider fields and raw payloads are never persisted or logged.',
     errors: [
       error(
         400,

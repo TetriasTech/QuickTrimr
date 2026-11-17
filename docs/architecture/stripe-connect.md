@@ -331,12 +331,20 @@ then replay its retained raw bytes/signature in three parallel batches and send 
 signature. Keep every payload/secret private and stop both processes. Reconcile the existing
 metadata/event before repeating the case; a repeated idempotent update need not emit another event.
 
-This is actual connected-account notification evidence, **not** added v2 support in the committed
-snapshot probe. P1-T09 still names legacy account flags and `account.updated`; its implementation
-contract needs an explicit v2 mapping before it is picked up, preserving both `RULE-ONBOARD-04`
-eligibility gates. P3-T03 must extend that eventual durable handler, not reuse this diagnostic
-observer as a business webhook service. Active-state capability mapping is now observed above;
-the later consumer contract still needs its explicit v2 projection before implementation.
+P1-T09 now implements the application handler separately from this historical diagnostic
+probe. It verifies the original raw bytes, receives v2 capability/requirements/account/closure
+events and legacy account updates, and retrieves current provider state. Andrew's approved
+`RULE-CONNECT-STATUS-01` preserves both `RULE-ONBOARD-04` gates. A DB-owned lease prevents stale
+refresh commits, and event receipts commit atomically with status and safe audit changes.
+P3-T03 extends that handler. See [P1-T09 verification](../qa/P1-T09.md).
+
+For local serving, Connect thin events can target `/functions/v1/stripe-webhook/thin` and
+legacy snapshot events `/functions/v1/stripe-webhook/snapshot`. Both enter the same signature-
+verifying Edge Function. Stripe requires separate destination URLs for the two event formats.
+`STRIPE_WEBHOOK_SECRET` supplies the snapshot/listener signing secret and optional
+`STRIPE_CONNECT_WEBHOOK_SECRET` supplies a separate thin-event destination's secret. The live
+verifier configures only its temporary local thin listener and removes its environment file
+afterward. Provider-hosted staging/release destinations remain deployment-ticket work.
 
 After the completed checks, a browser inspection encountered the API-keys page with the full
 sandbox secret revealed, causing it to appear in tool output. No key value is retained in

@@ -36,6 +36,7 @@ export async function apiRequest(status, path, token, options = {}) {
 
 export async function apiJson(status, path, token, options = {}) {
   const response = await apiRequest(status, path, token, options);
+  if (response.status === 204) return { status: 204, body: null };
   let body;
   try {
     body = await response.json();
