@@ -466,6 +466,8 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-ONBOARD-03` — Barber onboarding collects profile, photo, service area and travel radius, offered services and prices, and Stripe Connect.
 - `RULE-ONBOARD-04` — **A barber cannot receive a paid booking until their Stripe Connect account satisfies charges-enabled and payouts-enabled requirements.** Discovery excludes them. This is enforced server-side in search and at request creation, not by hiding a toggle.
 - `RULE-ONBOARD-05` — Barber public profile fields and private fields are separated. Discovery and the client-facing profile return public fields only.
+- `RULE-BARBER-SERVICE-AREA-01` — Andrew approved G-NAF address lookup and barber-confirmed foreground GPS for the private Scheduled service-area centre. Resolve a selected G-NAF address to its directory point on the server. Store the centre and configured travel radius privately. Resolve either source to the Australian Bureau of Statistics Suburb or Locality (SAL) for the public area under `RULE-DISCOVERY-05`. The saved service area is separate from an Available Now location. No Google Places result supplies the saved centre.
+- `RULE-BARBER-PHOTO-01` — Andrew approved normalized JPEG profile photos, enforced server-side with `CFG-BARBER-PHOTO-LIMITS`. Store photos in a private bucket and serve them by expiring signed URLs. Keep storage paths private.
 
 ### Client service addresses
 
@@ -1016,6 +1018,8 @@ These are read from config. **A literal `5`, `12`, `20`, `60` or `2` inside feat
 | `CFG-LATE-CANCEL-WINDOW-HOURS` | `12` | Late-cancellation window for Scheduled bookings (`RULE-CANCEL-02`). |
 | `CFG-ETA-REFRESH-MIN` | `3` | Fixed ETA refresh interval in minutes (`RULE-ETA-04`). |
 | `CFG-ETA-STALE-MIN` | `6` | ETA is stale after two missed refresh intervals (`RULE-ETA-03`). |
+| `CFG-BARBER-SERVICE-RADIUS-KM` | `{"min":1,"max":50}` | Inclusive Scheduled service-radius bounds in kilometres. Fractional values are allowed (`RULE-BARBER-SERVICE-AREA-01`). |
+| `CFG-BARBER-PHOTO-LIMITS` | `{"maxBytes":5242880,"maxPixelsPerSide":2048,"signedUrlSeconds":600}` | Server-enforced byte and longest-side limits for normalized JPEG profile photos, and signed URL lifetime (`RULE-BARBER-PHOTO-01`). |
 | `CFG-PAYOUT-SCHEDULE` | `{"frequency":"weekly","weekday":"Monday","time":"10:00","timezone":"Australia/Sydney"}` | Scheduled processing start and strict availability cut-off, local daylight saving; not a bank-arrival promise (`RULE-EARN-07`). Freeze the scheduled instant/config on the batch; late workers do not move it. |
 | `CFG-PAYOUT-MIN-CENTS` | `1` | Integer AUD cents; pay every positive eligible total, with no additional QuickTrimr minimum (`RULE-EARN-07`). |
 | `CFG-CANCEL-REFUND-PCT` | `scheduled: 75; available_now: 50` | Client late-cancellation refund percentage of booked service price; snapshot at request time, round refund up (`RULE-CANCEL-07`). |
@@ -1067,6 +1071,9 @@ Config stored in the database lives in a platform config table, is updatable onl
 | `TBC-ADMIN-SESSION-LIFETIME` | **RESOLVED → `CFG-ADMIN-SESSION-HOURS`** — Andrew approved Option A, eight hours from successful admin sign-in. | `P1-T02` expiry implementation and tests; Phase 5 tickets that depend on the admin guard | Andrew |
 | `TBC-CLIENT-ADDRESS-POINT-SOURCE` | **RESOLVED → `RULE-ADDRESS-01`** — Andrew approved an independently licensed Australian source for lookup and saved coordinates, keeping Google for maps and routes. | `P1-T05` address save and autocomplete; downstream discovery and booking coordinate source | Andrew |
 | `TBC-CLIENT-ADDRESS-REGION` | **RESOLVED → `RULE-ADDRESS-02`** — Andrew approved accepting any resolvable Australian address, with booking eligibility based on barber coverage and availability. | `P1-T05` supported-region validation and fixtures | Andrew |
+| `TBC-BARBER-SERVICE-AREA-POINT-SOURCE` | **RESOLVED → `RULE-BARBER-SERVICE-AREA-01`** — Andrew approved server-resolved G-NAF lookup or confirmed foreground GPS, with public area from the versioned ABS SAL. | `P1-T06` location entry, persisted centre and SAL resolution for Scheduled discovery | Andrew |
+| `TBC-BARBER-SERVICE-RADIUS` | **RESOLVED → `CFG-BARBER-SERVICE-RADIUS-KM`** — Andrew approved 1–50 km inclusive, with fractional values allowed. | `P1-T06` radius validation and `P2-T04` Scheduled coverage | Andrew |
+| `TBC-BARBER-PHOTO-LIMITS` | **RESOLVED → `RULE-BARBER-PHOTO-01`, `CFG-BARBER-PHOTO-LIMITS`** — Andrew approved JPEG, up to 5 MiB and 2,048 px on the longest edge, with 10-minute signed URLs. | `P1-T06` photo upload and signed display; later client-facing profile photos in `P1-T12` | Andrew |
 
 ---
 

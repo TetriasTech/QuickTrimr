@@ -37,3 +37,6 @@ See [seed usage and deferred fields](../../supabase/seed/README.md) and
 
 `import-gnaf.mjs` loads the independently licensed service-address directory into local QuickTrimr
 Supabase after migrations. See [the import and verification steps](../../docs/qa/P1-T05.md).
+
+`import-abs-sal.mjs` loads the pinned ABS Suburbs and Localities release for barber public areas.
+See [the local import and profile verification steps](../../docs/qa/P1-T06.md).

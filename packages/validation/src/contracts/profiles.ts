@@ -1,4 +1,4 @@
-import { USER_ROLE_VALUE } from '@quicktrimr/shared';
+import { barberServiceRadiusKm, USER_ROLE_VALUE } from '@quicktrimr/shared';
 import { z } from 'zod';
 
 import {
@@ -7,13 +7,18 @@ import {
   longitudeSchema,
   nonEmptyStringSchema,
   nonNegativeIntegerSchema,
-  positiveNumberSchema,
   postgresUuidSchema,
   timestampSchema,
   userRoleSchema,
   verificationStatusSchema,
 } from '../primitives.ts';
 import { requestObject } from '../request-object.ts';
+
+import {
+  addressDirectoryCandidateSchema,
+  addressDirectoryIdSchema,
+  addressDirectoryQuerySchema,
+} from './client-addresses.ts';
 
 export const httpsUrlSchema = z
   .url()
@@ -77,15 +82,51 @@ export type CompleteClientProfileResponse = z.infer<
   typeof completeClientProfileResponseSchema
 >;
 
-// Structural validation only: phone normalization, configured service-radius
-// bounds, storage ownership and address/Connect completeness require server data.
-export const completeBarberProfileRequestSchema = requestObject({
-  displayName: nonEmptyStringSchema,
-  bio: z.string(),
+const radiusMessage = `Enter a radius from ${barberServiceRadiusKm.min} to ${barberServiceRadiusKm.max} km.`;
+const serviceRadiusSchema = z
+  .number()
+  .min(barberServiceRadiusKm.min, radiusMessage)
+  .max(barberServiceRadiusKm.max, radiusMessage);
+export const barberPhotoIdSchema = z.string().regex(/^[a-f0-9]{64}$/);
+export const barberProfileFieldsSchema = z.strictObject({
+  displayName: nonEmptyStringSchema.trim().min(1, 'Enter a display name.'),
+  bio: z.string().trim(),
   yearsExperience: nonNegativeIntegerSchema,
-  serviceAreaLat: latitudeSchema,
-  serviceAreaLng: longitudeSchema,
-  serviceRadiusKm: positiveNumberSchema,
+  serviceRadiusKm: serviceRadiusSchema,
+});
+export const barberProfileFormSchema = barberProfileFieldsSchema.extend({
+  yearsExperience: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, 'Enter years of experience as a whole number.')
+    .transform(Number)
+    .pipe(barberProfileFieldsSchema.shape.yearsExperience),
+  serviceRadiusKm: z
+    .string()
+    .trim()
+    .regex(/^\d+(?:[.,]\d+)?$/, radiusMessage)
+    .transform((value) => Number(value.replace(',', '.')))
+    .pipe(serviceRadiusSchema),
+});
+export type BarberProfileFormInput = z.input<typeof barberProfileFormSchema>;
+export type BarberProfileFields = z.output<typeof barberProfileFormSchema>;
+// Omitting the centre retains a previously configured centre. The server
+// requires a selected address or GPS point for the first save.
+export const completeBarberProfileRequestSchema = requestObject({
+  ...barberProfileFieldsSchema.shape,
+  serviceAreaLat: latitudeSchema.optional(),
+  serviceAreaLng: longitudeSchema.optional(),
+  serviceAreaDirectoryId: addressDirectoryIdSchema.optional(),
+  photoId: barberPhotoIdSchema.optional(),
+}).superRefine((input, ctx) => {
+  const hasLat = input.serviceAreaLat !== undefined;
+  const hasLng = input.serviceAreaLng !== undefined;
+  if (hasLat !== hasLng || (input.serviceAreaDirectoryId && hasLat))
+    ctx.addIssue({
+      code: 'custom',
+      path: ['serviceAreaDirectoryId'],
+      message: 'Choose one service-area centre.',
+    });
 });
 export type CompleteBarberProfileRequest = z.infer<
   typeof completeBarberProfileRequestSchema
@@ -95,8 +136,12 @@ export const completeBarberProfileResponseSchema = z.strictObject({
   displayName: nonEmptyStringSchema,
   bio: z.string(),
   yearsExperience: nonNegativeIntegerSchema,
-  photoUrl: httpsUrlSchema.nullable(),
-  serviceRadiusKm: positiveNumberSchema,
+  // A same-origin link lets the app use its configured Supabase base URL.
+  photoUrl: z
+    .string()
+    .startsWith('/storage/v1/object/sign/barber-avatars/')
+    .nullable(),
+  serviceRadiusKm: serviceRadiusSchema,
   approximateArea: publicAreaSchema,
   onboardingComplete: z.boolean(),
   publishable: z.boolean(),
@@ -104,6 +149,19 @@ export const completeBarberProfileResponseSchema = z.strictObject({
 export type CompleteBarberProfileResponse = z.infer<
   typeof completeBarberProfileResponseSchema
 >;
+
+export const ownBarberProfileResultSchema = z.strictObject({
+  profile: completeBarberProfileResponseSchema.nullable(),
+});
+export const barberAreaLookupSchema = z.strictObject({
+  query: addressDirectoryQuerySchema,
+});
+export const barberAreaLookupResultSchema = z.strictObject({
+  candidates: z.array(addressDirectoryCandidateSchema),
+});
+export const barberPhotoUploadResultSchema = z.strictObject({
+  photoId: barberPhotoIdSchema,
+});
 
 export const createStripeConnectOnboardingLinkRequestSchema = requestObject({});
 export type CreateStripeConnectOnboardingLinkRequest = z.infer<
