@@ -48,7 +48,7 @@ function useConnectController(supabase: SupabaseClient, userId: string) {
   }, []);
 
   async function refresh() {
-    const result = await refetch({ throwOnError: true });
+    const result = await refetch({ throwOnError: true, cancelRefetch: false });
     if (!result.data) throw new Error('Status unavailable.');
     return result.data;
   }
@@ -97,7 +97,7 @@ function useConnectController(supabase: SupabaseClient, userId: string) {
   useEffect(() => {
     const listener = AppState.addEventListener('change', (state) => {
       if (state === 'active' && !running.current)
-        refetch().catch(() => undefined);
+        refetch({ cancelRefetch: false }).catch(() => undefined);
     });
     return () => listener.remove();
   }, [refetch]);

@@ -256,3 +256,35 @@ test('loading disables actions and repeated presses open only one browser sessio
     finish?.({ type: WebBrowser.WebBrowserResultType.CANCEL });
   });
 });
+
+test('repeated status retry taps share one in-flight provider read', async () => {
+  const f = fixture('pending');
+  await render(f.ui);
+  await waitFor(() => expect(screen.getByText('Pending')).toBeOnTheScreen());
+  f.setUnavailable(true);
+  await fireEvent.press(
+    screen.getByRole('button', { name: 'Check Stripe status' }),
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeEnabled(),
+  );
+  f.setUnavailable(false);
+  const before = f.invoke.mock.calls.length;
+  const original = f.invoke.getMockImplementation()!;
+  let release: (() => void) | undefined;
+  f.invoke.mockImplementationOnce(async (name) => {
+    await new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    return original(name);
+  });
+  const retry = screen.getByRole('button', { name: 'Try again' });
+  await fireEvent.press(retry);
+  // The first provider read stays unresolved while another tap arrives.
+  await fireEvent.press(retry);
+  await act(async () => {
+    release?.();
+  });
+  await waitFor(() => expect(screen.getByText('Pending')).toBeOnTheScreen());
+  expect(f.invoke.mock.calls.length - before).toBe(1);
+});

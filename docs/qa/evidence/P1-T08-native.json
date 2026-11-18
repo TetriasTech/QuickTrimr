@@ -12,6 +12,15 @@
   "stripeReturnTriggeredStatusCheck": true,
   "providerTimeoutRetryRecoveredPending": true,
   "onboardingDataSubmitted": false,
-  "nativeRefreshCallbackCompleted": false,
-  "remainingBlocker": "Mac locked at Safari's Open in Expo Go handoff"
+  "nativeRefreshCallbackCompleted": true,
+  "refreshCallbackSource": "approved local bridge, injected expiry redirect",
+  "refreshRecoveredAfterColdReload": true,
+  "accountsAfterRefresh": 1,
+  "linksBeforeRefresh": 1,
+  "linksAfterRefresh": 2,
+  "renewedHostedPageOpened": true,
+  "controlledLocalOutageDisplayedLoadingAndRetry": true,
+  "localRuntimeRestored": true,
+  "retryRecoveredPending": true,
+  "remainingBlocker": null
 }
