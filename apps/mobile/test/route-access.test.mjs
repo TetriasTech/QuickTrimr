@@ -10,10 +10,11 @@ test('signed-out sessions can access only the auth group', () => {
     client: false,
     barber: false,
     modals: false,
+    connect: false,
   });
 });
 
-test('incomplete authenticated sessions can access only onboarding', () => {
+test('incomplete sessions reach onboarding and only barbers reach the Connect callback', () => {
   for (const role of ['client', 'barber']) {
     assert.deepEqual(
       getRouteAccess({ status: 'signed-in', role, onboardingComplete: false }),
@@ -23,6 +24,7 @@ test('incomplete authenticated sessions can access only onboarding', () => {
         client: false,
         barber: false,
         modals: false,
+        connect: role === 'barber',
       },
     );
   }
@@ -41,6 +43,7 @@ test('complete client sessions reach the client journey and shared modals', () =
       client: true,
       barber: false,
       modals: true,
+      connect: false,
     },
   );
 });
@@ -58,6 +61,7 @@ test('complete barber sessions reach the barber journey and shared modals', () =
       client: false,
       barber: true,
       modals: true,
+      connect: true,
     },
   );
 });

@@ -4,6 +4,10 @@ The Expo Router shell separates the unauthenticated, client and barber journeys 
 On iOS and Android, Supabase Auth sessions are persisted with Expo SecureStore. After sign-in, the
 app uses `create-or-sync-profile` to decide which journey or onboarding screen to open.
 
+Barber Stripe setup uses a hosted browser session and server status refresh. See the
+[P1-T08 verification and callback guide](../../docs/qa/P1-T08.md) for the local loopback
+bridge and sandbox checks.
+
 From the repository root:
 
 ```bash

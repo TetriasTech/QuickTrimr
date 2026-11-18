@@ -23,6 +23,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Text, View } from 'react-native';
 
 import { SignOutButton } from '@/features/auth/screens/sign-out-button';
+import { ConnectCard } from '@/features/connect/connect-card';
 import { useMobileSession } from '@/features/session/session-provider';
 import { EdgeFunctionError } from '@/lib/api/invoke-edge-function';
 import { mobileEnv } from '@/lib/env';
@@ -315,6 +316,7 @@ function BarberProfileForm({
         Public areas use the Australian Bureau of Statistics Suburbs and
         Localities dataset, CC BY 4.0.
       </Text>
+      <ConnectCard />
       <SignOutButton />
     </Screen>
   );

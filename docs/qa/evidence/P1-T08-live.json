@@ -1,0 +1,10 @@
+{
+  "check": "P1-T08 mobile API + Stripe sandbox",
+  "unlinked": true,
+  "abandonmentPending": true,
+  "returnWithoutCompletionPending": true,
+  "freshLinks": 2,
+  "clientDenied": true,
+  "signedOutDenied": true,
+  "browserExercised": false
+}

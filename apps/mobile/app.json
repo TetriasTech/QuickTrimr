@@ -23,7 +23,8 @@
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
