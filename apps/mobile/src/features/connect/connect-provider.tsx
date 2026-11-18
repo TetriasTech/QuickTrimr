@@ -30,7 +30,6 @@ function useConnectController(supabase: SupabaseClient, userId: string) {
   const status = useQuery({
     queryKey: queryKeys.onboarding.connectStatus(userId),
     queryFn: ({ signal }) => api.refresh(signal),
-    retry: false,
     gcTime: 0,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

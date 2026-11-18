@@ -89,6 +89,17 @@ test('return without completion refetches pending and ignores a forged verified 
   ]);
 });
 
+test('onboarding runs with the React Native abort signal surface without throwIfAborted', async () => {
+  const nativeSignal = { aborted: false };
+  const { calls, dependencies } = setup({ signal: nativeSignal });
+  assert.equal(await runConnectOnboarding(dependencies), 'returned');
+  assert.equal(calls.at(-1), 'refresh');
+  nativeSignal.aborted = true;
+  await assert.rejects(runConnectOnboarding(dependencies), {
+    name: 'AbortError',
+  });
+});
+
 test('abandonment rechecks status and the next user action requests a fresh link', async () => {
   const { calls, dependencies } = setup({
     openBrowser: async () => ({ type: 'cancel' }),

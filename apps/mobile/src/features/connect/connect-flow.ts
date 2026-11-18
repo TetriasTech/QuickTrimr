@@ -47,7 +47,12 @@ export async function runConnectOnboarding({
   now = Date.now,
 }: ConnectFlowDependencies): Promise<'returned' | 'renewal_needed'> {
   function active() {
-    signal.throwIfAborted();
+    // React Native's abort-controller polyfill does not expose throwIfAborted.
+    if (signal.aborted) {
+      const error = new Error('Connect flow cancelled.');
+      error.name = 'AbortError';
+      throw error;
+    }
   }
   // One automatic renewal per user action prevents a broken redirect loop.
   for (let attempt = 0; attempt < 2; attempt++) {

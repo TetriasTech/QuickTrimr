@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-19",
+  "timezone": "Australia/Sydney",
+  "device": "iPhone 17 / iOS 26.5",
+  "environment": "local Supabase and customer Stripe sandbox",
+  "browserExercised": true,
+  "accountsBeforeNativeStart": 0,
+  "accountsAfterNativeStart": 1,
+  "hostedStartOpened": true,
+  "abandonmentRemainedPending": true,
+  "resumeOpenedHostedPage": true,
+  "stripeReturnTriggeredStatusCheck": true,
+  "providerTimeoutRetryRecoveredPending": true,
+  "onboardingDataSubmitted": false,
+  "nativeRefreshCallbackCompleted": false,
+  "remainingBlocker": "Mac locked at Safari's Open in Expo Go handoff"
+}
