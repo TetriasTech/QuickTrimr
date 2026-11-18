@@ -35,7 +35,9 @@ test('the root navigator protects every journey with typed route access', async 
     assert.equal(source.includes(`name="${group}"`), true, group);
   }
   assert.match(source, /name=["']onboarding["']/);
-  assert.equal((source.match(/<Stack\.Protected /g) ?? []).length, 5);
+  assert.match(source, /guard={access\.connect}/);
+  assert.match(source, /name="connect"/);
+  assert.equal((source.match(/<Stack\.Protected /g) ?? []).length, 6);
 });
 
 test('the Metro resolution probe imports all four shared workspace packages', async () => {

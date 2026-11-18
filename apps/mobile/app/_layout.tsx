@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Text } from 'react-native';
 
 import { SignOutButton } from '@/features/auth/screens/sign-out-button';
+import { ConnectProvider } from '@/features/connect/connect-provider';
 import { getRouteAccess } from '@/features/session/route-access';
 import {
   SessionProvider,
@@ -14,7 +15,7 @@ import { createMobileSupabase } from '@/lib/api/supabase';
 import { MobileQueryProvider } from '@/lib/query/query-provider';
 
 function RootNavigator() {
-  const { state, retry } = useMobileSession();
+  const { state, retry, supabase, userId } = useMobileSession();
   if (state.status === 'loading')
     return (
       <Screen>
@@ -34,9 +35,12 @@ function RootNavigator() {
   }
   const access = getRouteAccess(state);
 
-  return (
+  const navigation = (
     <>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={access.connect}>
+          <Stack.Screen name="connect" />
+        </Stack.Protected>
         <Stack.Protected guard={access.auth}>
           <Stack.Screen name="(auth)" />
         </Stack.Protected>
@@ -59,6 +63,13 @@ function RootNavigator() {
       </Stack>
       <StatusBar style="auto" />
     </>
+  );
+  return state.status === 'signed-in' && state.role === 'barber' && userId ? (
+    <ConnectProvider key={userId} userId={userId} supabase={supabase}>
+      {navigation}
+    </ConnectProvider>
+  ) : (
+    navigation
   );
 }
 
