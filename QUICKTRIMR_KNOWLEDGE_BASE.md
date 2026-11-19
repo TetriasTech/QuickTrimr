@@ -351,6 +351,8 @@ Ownership is vertical (`ADR-012`). One named owner per ticket.
 
 - `RULE-DEV-PHASE1-OWNERSHIP` — Andrew confirmed that he and Tony agreed Andrew would take over project delivery. Andrew is the sole named owner and Jira assignee for all Phase 1 work, including its admin-auth and Stripe Connect slices. This supersedes the default division of work for Phase 1; it does not change delivery or security requirements, prerequisites, or the named owners on tickets in other phases.
 
+- `RULE-DEV-PHASE2-OWNERSHIP` — On 2026-11-20 Andrew instructed that all Phase 2 tickets be created in Jira and assigned to him. Andrew is the sole named owner and Jira assignee for all 15 Phase 2 tickets (`P2-T01`–`P2-T15`), including request acceptance and expiry, and the Phase 2 Jira epic. This supersedes the default division of work for Phase 2 only. Delivery, security and readiness requirements and dependency ordering are unchanged; creating tickets does not start them or close their dependencies. Other phases retain their recorded ownership, including the existing Phase 1 handover.
+
 ### 6.2 Shared foundations
 
 Shared constants, enums, Zod schemas and UI primitives are built **first**, in Phase 0, because both engineers build against them. They still have one owner each; they are just sequenced early.

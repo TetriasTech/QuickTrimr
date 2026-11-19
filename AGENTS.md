@@ -133,6 +133,10 @@ There is no "Shared" owner and no separate integration ticket — integration is
 **Phase 1 handover:** Andrew owns every Phase 1 ticket, including admin authentication and
 Stripe Connect work (`RULE-DEV-PHASE1-OWNERSHIP`). Other phases keep their recorded owners.
 
+**Phase 2 handover:** Andrew owns every Phase 2 ticket, including request acceptance and expiry,
+and its Jira epic (`RULE-DEV-PHASE2-OWNERSHIP`). This is a Phase 2 exception to the default split;
+other phases retain their recorded ownership, including the Phase 1 handover above.
+
 ## Commands
 
 ```bash

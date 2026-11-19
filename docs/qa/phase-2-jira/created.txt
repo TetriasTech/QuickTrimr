@@ -1,0 +1,25 @@
+Phase 2 — Available Now, Discovery & Booking Requests
+  15 tickets, 15 to create, 0 already in Jira
+
+Authoring as: shared Tetrias service account
+Target project: TRIMR — QuickTrimr
+
+Created epic: TRIMR-43
+  P2-T01 → TRIMR-44  Available Now session model and queries
+  P2-T02 → TRIMR-45  Barber Available Now toggle
+  P2-T03 → TRIMR-46  Available Now auto-disable rules
+  P2-T04 → TRIMR-47  Nearby barber search
+  P2-T05 → TRIMR-48  Client discovery filters
+  P2-T06 → TRIMR-49  Barber results list
+  P2-T07 → TRIMR-50  Client map view
+  P2-T08 → TRIMR-51  Create booking request
+  P2-T09 → TRIMR-52  Client booking request submission
+  P2-T10 → TRIMR-53  Barber request inbox query
+  P2-T11 → TRIMR-54  Barber request inbox UI
+  P2-T12 → TRIMR-55  Accept booking request
+  P2-T13 → TRIMR-56  Decline booking request
+  P2-T14 → TRIMR-57  Barber accept and decline UI
+  P2-T15 → TRIMR-58  Booking request expiry
+
+Created 15 issues, 91 links, under TRIMR-43.
+jiraKey written back to QUICKTRIMR_BACKLOG_README.md — commit it, or the next run duplicates.
