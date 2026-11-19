@@ -9,3 +9,4 @@ export {
   connectVerificationStatus,
   type ConnectVerificationInput,
 } from './connect-verification.ts';
+export { bookingEligibility, availableNowBoundsFit } from './availability.ts';

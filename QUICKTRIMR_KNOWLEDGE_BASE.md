@@ -534,6 +534,7 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 - `RULE-AVAIL-05` — A barber may hold **one** accepted, active Available Now job at a time. Accepting a second is rejected server-side, under concurrency.
 - `RULE-AVAIL-06` — An Available Now request expires after `CFG-AVAIL-EXPIRY-MIN`. On expiry the payment authorisation is cancelled.
 - `RULE-AVAIL-07` — When a barber accepts, their remaining pending Available Now requests are resolved safely — expired or declined — and each client is told.
+- `RULE-AVAIL-08` — Andrew approved Available Now session bounds on 2026-11-20 (Option A). Radius uses the inclusive fractional-kilometre bounds in `CFG-AVAIL-SESSION-RADIUS-KM`. On every start/update, the end time must be strictly after current server time and no later than `CFG-AVAIL-SESSION-MAX-HOURS` from that server time. These are session bounds, separate from the Scheduled service radius and the five-minute booking-request expiry. A new start still replaces a previous active session under `RULE-AVAIL-01`.
 
 ### Scheduled bookings
 
@@ -1017,6 +1018,8 @@ These are read from config. **A literal `5`, `12`, `20`, `60` or `2` inside feat
 |---|---|---|
 | `CFG-COMMISSION-PCT` | 20 | Percentage of booked service price only. Snapshotted per booking; rounding and processing-fee treatment per `RULE-PAY-11`. |
 | `CFG-AVAIL-EXPIRY-MIN` | `5` | Available Now request expiry, minutes (`RULE-AVAIL-06`). |
+| `CFG-AVAIL-SESSION-RADIUS-KM` | `{"min":1,"max":50}` | Inclusive Available Now session-radius bounds in kilometres; fractions allowed (`RULE-AVAIL-08`). |
+| `CFG-AVAIL-SESSION-MAX-HOURS` | `12` | Maximum future Available Now session end time from current server time on each start/update. The end must be strictly in the future (`RULE-AVAIL-08`). |
 | `CFG-SCHED-EXPIRY-HOURS` | `2` | Scheduled request expiry, hours (`RULE-SCHED-02`). |
 | `CFG-COMPLETION-RESPONSE-MIN` | `60` | Client response window after barber marks complete (`RULE-COMPLETE-02`). |
 | `CFG-NO-ACTION-WARNING-HOURS` | `6` | Before the final completion prompt (`RULE-COMPLETE-04`). |
@@ -1057,6 +1060,7 @@ Config stored in the database lives in a platform config table, is updatable onl
 
 | ID | Question | Blocks | Decided by |
 |---|---|---|---|
+| `TBC-AVAIL-SESSION-BOUNDS` | **RESOLVED → `RULE-AVAIL-08`, `CFG-AVAIL-SESSION-RADIUS-KM`, `CFG-AVAIL-SESSION-MAX-HOURS`** — Andrew approved Option A on 2026-11-20: 1–50 km inclusive, fractions allowed, with `serverNow < availableUntil <= serverNow + 12 hours` on start/update. Separate from Scheduled radius and booking-request expiry. | `P2-T01` session validation and bounded tests; downstream `P2-T02` controls and session consumers | Andrew |
 | `TBC-SERVICE-PRICE-BOUND-CHANGES` | **RESOLVED → `RULE-SERVICE-06`** — Andrew approved Option A on 2026-11-19: reject narrowing until active prices fit, ignore archived services and preserve booking snapshots. | `P1-T10` category updates; downstream pricing, discovery/request validation and `P5-T11` impact confirmation | Andrew |
 | `TBC-SERVICE-CATEGORIES` | **RESOLVED → `RULE-SERVICE-05`** | Catalogue, barber pricing, discovery, seed data | `P0-D01` |
 | `TBC-COMMISSION-PCT` | **RESOLVED → `RULE-PAY-11`** — 20% of booked service price, confirmed by Andrew on 2026-09-30. | Every payment, earning and payout row | `P0-D02` |

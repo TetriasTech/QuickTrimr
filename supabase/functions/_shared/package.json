@@ -13,6 +13,6 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
-    "test": "node --test catalogue/test/*.test.mjs services/test/*.test.mjs"
+    "test": "node --test catalogue/test/*.test.mjs services/test/*.test.mjs availability/test/*.test.mjs"
   }
 }
