@@ -1,0 +1,10 @@
+Client environment boundary: PASS
+API contracts: 51 documented functions; no drift
+Deterministic seed SQL: PASS.
+tickets:   108
+owners:    Andrew 56, Tony 52
+phases:    P0:28 P1:12 P2:15 P3:12 P4:15 P5:13 P6:11 P7:2
+kb ids:    197 defined, 0 TBC open
+jira:      68/108 not yet created
+
+OK

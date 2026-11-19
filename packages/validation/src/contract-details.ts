@@ -125,6 +125,20 @@ const reliability = user(
 );
 
 export const CONTRACT_DETAILS = {
+  'get-public-barber-profile': user(
+    'P1-T12',
+    [c],
+    [
+      'RULE-ONBOARD-05',
+      'RULE-ONBOARD-04',
+      'RULE-DISCOVERY-04',
+      'RULE-DISCOVERY-05',
+      'RULE-BARBER-PHOTO-01',
+      'CFG-BARBER-PHOTO-LIMITS',
+      'RULE-REVIEW-04',
+    ],
+    'Client-only read of the P1-T06 public projection; current Connect gate required. Missing/incomplete/ineligible targets return profile:null. Active services are keyset-paged in catalogue order. Photo links expire using the existing photo config. Null/zero ratings are honest Phase 1 placeholders, not a client-written score. No discovery or booking eligibility is granted.',
+  ),
   'create-or-sync-profile': user(
     'P1-T03',
     [c, b],

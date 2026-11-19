@@ -2,13 +2,13 @@ import { barberPhotoLimits } from '@quicktrimr/shared';
 import {
   barberAreaLookupResultSchema,
   barberAreaLookupSchema,
-  barberPhotoIdSchema,
   completeBarberProfileRequestSchema,
   completeBarberProfileResponseSchema,
   postgresUuidSchema,
 } from '@quicktrimr/validation';
 
 import { createSupabaseUserVerifier } from '../_shared/auth/supabase-user.mts';
+import { signBarberPhoto } from '../_shared/profiles/signed-photo.ts';
 import { json } from '../_shared/responses/json.mts';
 
 import { normalizeBarberPhoto, photoObject } from './photo.ts';
@@ -75,24 +75,6 @@ export function createCompleteBarberProfileHandler({
       );
     if (!isRecord(body)) throw new Error('Missing barber profile result');
     return body;
-  }
-
-  async function signPhoto(userId: string, id: unknown) {
-    if (id === null) return null;
-    const path = `/object/sign/${photoObject(userId, barberPhotoIdSchema.parse(id))}`;
-    const result = await backend(
-      `/storage/v1${path}`,
-      JSON.stringify({ expiresIn: barberPhotoLimits.signedUrlSeconds }),
-    );
-    const body: unknown = await result.json();
-    if (
-      !result.ok ||
-      !isRecord(body) ||
-      typeof body.signedURL !== 'string' ||
-      !body.signedURL.startsWith(`${path}?token=`)
-    )
-      throw new Error('Photo signing failed');
-    return `/storage/v1${body.signedURL}`;
   }
 
   return async (request: Request) => {
@@ -170,7 +152,13 @@ export function createCompleteBarberProfileHandler({
       const { photoId, ...fields } = result.profile;
       const profile = completeBarberProfileResponseSchema.parse({
         ...fields,
-        photoUrl: await signPhoto(userId, photoId),
+        photoUrl: await signBarberPhoto({
+          baseUrl,
+          serviceRoleKey,
+          userId,
+          photoId,
+          fetcher,
+        }),
       });
       return json(read ? { profile } : profile, 200);
     } catch (error) {

@@ -1,0 +1,46 @@
+$ pnpm --recursive --if-present typecheck
+Scope: 21 of 22 workspace projects
+packages/shared typecheck$ tsc --noEmit
+packages/shared typecheck: Done
+packages/validation typecheck$ tsc --noEmit
+packages/ui typecheck$ tsc --noEmit
+packages/domain typecheck$ tsc --noEmit
+supabase/functions/workspace-contract typecheck$ tsc --noEmit
+packages/domain typecheck: Done
+packages/validation typecheck: Done
+supabase/functions/workspace-contract typecheck: Done
+packages/ui typecheck: Done
+apps/mobile typecheck$ tsc --noEmit
+supabase/functions/_shared typecheck$ tsc --noEmit
+.../functions/archive-barber-service typecheck$ tsc --noEmit
+apps/admin typecheck$ next typegen && tsc --noEmit
+apps/admin typecheck: Generating route types...
+apps/admin typecheck: ✓ Types generated successfully
+.../functions/archive-barber-service typecheck: Done
+.../functions/archive-service-category typecheck$ tsc --noEmit
+supabase/functions/_shared typecheck: Done
+.../functions/complete-barber-profile typecheck$ tsc --noEmit
+apps/admin typecheck: Done
+.../functions/complete-client-profile typecheck$ tsc --noEmit
+.../functions/archive-service-category typecheck: Done
+.../functions/create-or-sync-profile typecheck$ tsc --noEmit
+apps/mobile typecheck: Done
+.../functions/create-service-category typecheck$ tsc --noEmit
+.../functions/complete-barber-profile typecheck: Done
+...create-stripe-connect-onboarding-link typecheck$ tsc --noEmit
+.../functions/complete-client-profile typecheck: Done
+.../functions/get-public-barber-profile typecheck$ tsc --noEmit
+.../functions/create-or-sync-profile typecheck: Done
+.../functions/manage-client-addresses typecheck$ tsc --noEmit
+.../functions/create-service-category typecheck: Done
+.../refresh-stripe-connect-status typecheck$ tsc --noEmit
+.../functions/get-public-barber-profile typecheck: Done
+supabase/functions/stripe-webhook typecheck$ tsc --noEmit
+...create-stripe-connect-onboarding-link typecheck: Done
+.../functions/update-service-category typecheck$ tsc --noEmit
+.../functions/manage-client-addresses typecheck: Done
+supabase/functions/upsert-barber-service typecheck$ tsc --noEmit
+.../refresh-stripe-connect-status typecheck: Done
+.../functions/update-service-category typecheck: Done
+supabase/functions/upsert-barber-service typecheck: Done
+supabase/functions/stripe-webhook typecheck: Done

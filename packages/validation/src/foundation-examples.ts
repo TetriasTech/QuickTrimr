@@ -64,7 +64,7 @@ function side(valid: Readonly<Record<string, unknown>>) {
         ...valid,
         [first]: typeof valid[first] === 'string' ? 42 : 'invalid-value',
       },
-      { ...valid, [first]: null },
+      { ...valid, [first]: Array.isArray(valid[first]) ? {} : [] },
       missing,
     ],
   };
@@ -99,6 +99,31 @@ const reliability = example(
 );
 
 export const FOUNDATION_CONTRACT_EXAMPLES = {
+  'get-public-barber-profile': example(
+    { barberId: BARBER },
+    {
+      profile: {
+        barberId: BARBER,
+        displayName: 'Marcus Example',
+        bio: 'Mobile barber serving the local area.',
+        yearsExperience: 10,
+        photoUrl: null,
+        approximateArea: area,
+        rating: null,
+        ratingCount: 0,
+        services: [
+          {
+            id: ID,
+            serviceCategoryId: CATEGORY,
+            displayName: 'Skin Fade',
+            description: 'A skin fade.',
+            priceCents: 4550,
+          },
+        ],
+        nextServicesCursor: null,
+      },
+    },
+  ),
   'create-or-sync-profile': example(
     { role: USER_ROLE_VALUE.BARBER },
     {

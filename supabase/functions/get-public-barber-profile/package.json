@@ -1,0 +1,19 @@
+{
+  "name": "@quicktrimr/function-get-public-barber-profile",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@quicktrimr/shared": "workspace:*",
+    "@quicktrimr/validation": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/deno": "2.7.0"
+  }
+}

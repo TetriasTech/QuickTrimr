@@ -6,14 +6,13 @@ import {
   geographicPointSchema,
   integerCentsSchema,
   nonEmptyStringSchema,
-  nonNegativeIntegerSchema,
   positiveNumberSchema,
   postgresUuidSchema,
   timestampSchema,
 } from '../primitives.ts';
 import { requestObject } from '../request-object.ts';
 
-import { httpsUrlSchema, publicAreaSchema } from './profiles.ts';
+import { publicBarberIdentityShape } from './public-barber-profile.ts';
 
 // RULE-DISCOVERY-05's public bands, never exact distance or barber coordinates.
 export const distanceBandSchema = z.union([
@@ -47,14 +46,9 @@ export type SearchAvailableNowBarbersRequest = z.infer<
 export const searchAvailableNowBarbersResponseSchema = z.strictObject({
   results: z.array(
     z.strictObject({
-      barberId: postgresUuidSchema,
-      displayName: nonEmptyStringSchema,
-      photoUrl: httpsUrlSchema.nullable(),
+      ...publicBarberIdentityShape,
       priceCents: integerCentsSchema,
-      approximateArea: publicAreaSchema,
       distanceBand: distanceBandSchema,
-      rating: z.number().finite().min(1).max(5).nullable(),
-      ratingCount: nonNegativeIntegerSchema,
       availableUntil: timestampSchema.nullable(),
     }),
   ),
