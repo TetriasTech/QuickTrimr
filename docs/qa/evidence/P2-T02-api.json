@@ -1,0 +1,18 @@
+{
+  "result": "PASS",
+  "checks": [
+    "Three real parent-lock location races: queued keep-location updates preserve the concurrently committed point instead of restoring a stale point",
+    {
+      "addressSearchPlan": {
+        "estimatedSourceRows": 16491840,
+        "priorQueryIndexes": ["address_directory_pkey"],
+        "boundQueryIndexes": ["address_directory_search_idx"]
+      }
+    },
+    "Real owner GET: auth/role/query rejection, config projection, isolated owners, strict session fields; actual directory search/start; keep-location fractional edit; forged/unknown manual variants and foreign edits denied",
+    "All five server-owned levels, optional recovery time, human review/reinstatement; reads preserve state; current cooldown blocks stale activation while stop succeeds",
+    "All session states and server elapsed-active projection; existing statuses preserved without implementing workers; new RPCs deny authenticated direct calls"
+  ],
+  "applicationReset": false,
+  "providerCalls": false
+}

@@ -18,7 +18,13 @@ const inputs = {
 };
 function fixture(
   operation,
-  { role = 'barber', authStatus = 200, rpcStatus = 200, rpcBody } = {},
+  {
+    role = 'barber',
+    authStatus = 200,
+    rpcStatus = 200,
+    rpcBody,
+    read = false,
+  } = {},
 ) {
   const calls = [],
     logs = [];
@@ -49,7 +55,12 @@ function fixture(
         );
       if (path === '/rest/v1/profiles')
         return Response.json(role ? [{ role }] : []);
-      assert.equal(path, '/rest/v1/rpc/manage_available_now_session');
+      assert.equal(
+        path,
+        read
+          ? '/rest/v1/rpc/get_available_now_state'
+          : '/rest/v1/rpc/available_now_mobile_input',
+      );
       return Response.json(rpcBody ?? expected, { status: rpcStatus });
     },
   });
@@ -57,12 +68,21 @@ function fixture(
     calls,
     logs,
     expected,
-    invoke: (input = inputs[operation], auth = true) =>
+    invoke: (
+      input = inputs[operation],
+      auth = true,
+      method = 'POST',
+      search = '',
+    ) =>
       handler(
-        new Request('http://localhost/function', {
-          method: 'POST',
+        new Request('http://localhost/function' + search, {
+          method,
           headers: auth ? { authorization: 'Bearer fixture-user' } : {},
-          body: typeof input === 'string' ? input : JSON.stringify(input),
+          ...(method === 'GET'
+            ? {}
+            : {
+                body: typeof input === 'string' ? input : JSON.stringify(input),
+              }),
         }),
       ),
   };
@@ -161,4 +181,54 @@ test('database-configured bounds return field errors, never SQL details', async 
     r = await f.invoke();
   assert.equal(r.status, 422);
   assert.deepEqual(await r.json(), { error: 'validation_failed', fields });
+});
+
+const state = {
+  serverNow: '2026-11-20T08:00:00Z',
+  config: { minRadiusKm: 1, maxRadiusKm: 50, maxHours: 12 },
+  onboardingEligible: true,
+  reliability: {
+    level: 'good_standing',
+    cooldownUntil: null,
+    recoveryEligibleAt: null,
+    reviewRequired: false,
+    requiresHumanReinstatement: false,
+    availableNowAllowed: true,
+  },
+  session: null,
+};
+test('owner GET uses verified identity only, rejects query selection and strict private projection additions', async () => {
+  const f = fixture('start', { read: true, rpcBody: state });
+  const r = await f.invoke(undefined, true, 'GET');
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), state);
+  assert.deepEqual(JSON.parse(f.calls.at(-1).options.body), {
+    p_user_id: owner,
+  });
+  assert.equal(
+    (await f.invoke(undefined, true, 'GET', '?userId=forged')).status,
+    422,
+  );
+  for (const role of ['client', 'admin', null])
+    assert.equal(
+      (
+        await fixture('start', { role, read: true }).invoke(
+          undefined,
+          true,
+          'GET',
+        )
+      ).status,
+      403,
+    );
+  assert.equal(
+    (await fixture('start', { read: true }).invoke(undefined, false, 'GET'))
+      .status,
+    401,
+  );
+  const bad = fixture('start', {
+    read: true,
+    rpcBody: { ...state, lat: -37.8 },
+  });
+  assert.equal((await bad.invoke(undefined, true, 'GET')).status, 500);
+  assert.deepEqual(bad.logs, ['available_now_request_failed']);
 });

@@ -2936,8 +2936,8 @@ phase: 2
 priority: Highest
 jiraKey: TRIMR-45
 dependsOn: [P0-T14, P2-T01]
-affects: [P2-T11]
-knowledgeBase: [RULE-AVAIL-01, RULE-AVAIL-02, RULE-AVAIL-03, RULE-RELY-06, RULE-COPY-01, ENUM-AVAIL-STATUS]
+affects: [P1-T05, P1-T06, P2-T11]
+knowledgeBase: [RULE-AVAIL-01, RULE-AVAIL-02, RULE-AVAIL-03, RULE-AVAIL-08, CFG-AVAIL-SESSION-RADIUS-KM, CFG-AVAIL-SESSION-MAX-HOURS, RULE-ONBOARD-04, RULE-RELY-06, RULE-COPY-01, ENUM-AVAIL-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile, maps]
 ```
@@ -2952,6 +2952,12 @@ Location permission denial must not block it. `RULE-AVAIL-02` allows a manual lo
 
 A toggle in the barber journey with: GPS or manual location, a radius control, and an available-until picker.
 
+The screen's read contract is `GET start-available-now-session`, with no caller-selected user/session ID: verified barber identity returns the latest own session, server time, live config bounds, Connect eligibility and current server-owned reliability/recovery projection. This UI slice owns that authenticated read adapter; the existing P2-T01 write/state rules remain unchanged. The read never runs offence/recovery processing or fabricates recovery dates when none is stored. P3-T12 supplies the optional server-owned recovery timing. Test this read side with seeded states.
+
+This slice also corrects the shared address lookup's generic-plan regression, preserving the existing bounded projection and parameterized input; P1-T05/P1-T06 callers retain the same contract.
+
+Manual selection reuses the independently licensed address-directory search from P1-T06. Start/update may supply `directoryId` with `locationSource: manual`; the server resolves its point and public area. Existing coordinate input remains supported. An update may supply `keepLocation: true` instead, to preserve the own session point without exposing it in a response. These are mutually exclusive input variants.
+
 Handle permission denied, permission restricted, and location unavailable — each falling back to manual entry rather than an error.
 
 Show the active session state: how long remains, current radius, and how the location was set.
@@ -2961,6 +2967,26 @@ Show the barber's current reliability standing and recovery information from the
 When a session auto-disables (`RULE-AVAIL-03`), the barber is told **why** — time elapsed, missed requests, or a job accepted. A toggle that silently flips off reads as a bug and gets reported as one.
 
 Copy must not promise QuickTrimr notifies the barber of every nearby client (`RULE-COPY-01`).
+
+**Read contract example** — `GET start-available-now-session` (barber JWT, no query parameters)
+
+```jsonc
+// 200 — no session yet; recovery timing is absent until its producer writes it
+{ "serverNow": "2026-11-20T08:00:00Z",
+  "config": { "minRadiusKm": 1, "maxRadiusKm": 50, "maxHours": 12 },
+  "onboardingEligible": true,
+  "reliability": { "level": "good_standing", "cooldownUntil": null,
+    "recoveryEligibleAt": null, "reviewRequired": false,
+    "requiresHumanReinstatement": false, "availableNowAllowed": true },
+  "session": null }
+// 403 — a stored non-barber role cannot read this projection
+{ "error": "forbidden" }
+// POST start/update location alternatives (same radius/end-time and existing responses)
+{ "directoryId": "GAACTTEST001", "locationSource": "manual", "radiusKm": 8,
+  "availableUntil": "2026-11-20T09:00:00Z" }
+{ "sessionId": "5c22...", "keepLocation": true, "radiusKm": 8,
+  "availableUntil": "2026-11-20T09:00:00Z" }
+```
 
 **Acceptance criteria**
 
@@ -2976,9 +3002,9 @@ Copy must not promise QuickTrimr notifies the barber of every nearby client (`RU
 
 **Tests** — permission-denied path reaching an active session via manual location; each auto-disable reason rendering distinctly; the toggle reflecting server state after a failed start.
 
-**Out of scope** — the session backend (`P2-T01`); auto-disable logic (`P2-T03`); the request inbox (`P2-T11`).
+**Out of scope** — changing the session state/activation rules delivered by `P2-T01`; auto-disable logic (`P2-T03`); the request inbox (`P2-T11`).
 
-**Sync notes** — the reasons this screen displays are set by `P2-T03`. A new auto-disable reason needs a case here or it renders as unknown.
+**Sync notes** — P2-T11 can reuse this screen/state query. P3-T12 writes server-owned recovery timing under the existing parent-first lock order; a null timing is shown as unavailable, never guessed from login or updated-at. Read refreshes never reset a cooldown. P2-T03 status/reason transitions are tested here as seeded read states; this ticket does not implement their producers. The reasons this screen displays are set by `P2-T03`. A new auto-disable reason needs a case here or it renders as unknown.
 
 ---
 

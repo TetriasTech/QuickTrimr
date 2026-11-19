@@ -41,6 +41,16 @@ function RootNavigator() {
         <Stack.Protected guard={access.connect}>
           <Stack.Screen name="connect" />
         </Stack.Protected>
+        <Stack.Protected guard={access.availability}>
+          <Stack.Screen
+            name="available-now"
+            options={{
+              headerShown: true,
+              title: 'Available Now',
+              headerBackButtonDisplayMode: 'minimal',
+            }}
+          />
+        </Stack.Protected>
         <Stack.Protected guard={access.services}>
           <Stack.Screen
             name="barber-services"

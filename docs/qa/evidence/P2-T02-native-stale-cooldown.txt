@@ -1,0 +1,55 @@
+Window: "iPhone 17", App: Simulator.
+0 standard window iPhone 17 – iOS 26.5, Secondary Actions: Raise
+	1 button Action
+	2 button Volume Up
+	3 button Volume Down
+	4 button Sleep/Wake
+	5 container
+		6 back button Description: onboarding, ID: BackButton
+		7 heading Description: Available Now, Secondary Actions: Cancel
+		8 text Description: Off — you switched availability off, Secondary Actions: Cancel
+		9 switch (disabled) Description: Available Now, Value: 0, ID: available-now-toggle, Secondary Actions: Cancel
+		10 text Description: Switch on when you are ready to receive Available Now requests. Clients see your approximate area., Secondary Actions: Cancel
+		11 text Description: Your standing, Secondary Actions: Cancel
+		12 text Description: Standing: Limited, Secondary Actions: Cancel
+		13 text Description: Available Now is paused until 20/11/2026, 10:20:43 am. Refresh then to check your standing., Secondary Actions: Cancel
+		14 text Description: Recovery eligibility: 21/11/2026, 9:20:43 am. The server rechecks your standing., Secondary Actions: Cancel
+		15 text Description: Area: QA Synthetic West, Secondary Actions: Cancel
+		16 text Description: Radius: 2.5 km, Secondary Actions: Cancel
+		17 text Description: Location: GPS, Secondary Actions: Cancel
+		18 text Description: Session end time: 20/11/2026, 8:59:21 pm, Secondary Actions: Cancel
+		19 text Description: Available Now location, Secondary Actions: Cancel
+		20 text Description: Choose where you are working now. Clients see the suburb or locality., Secondary Actions: Cancel
+		21 text Description: 1 QAZX30a134 Street, Synthetic ACT 2600, Secondary Actions: Cancel
+		22 button Description: Change location, Secondary Actions: Cancel
+		23 text Secondary Actions: Cancel, Description: Address search uses G-NAF © Geoscape Australia, licensed by the Commonwealth of Australia under the Open G-NAF User Licence.
+		24 text Description: Radius: 1–50 km, including fractions., Secondary Actions: Cancel
+		25 text Description: Radius (km), Secondary Actions: Cancel
+		26 text field (settable) Description: Radius (km), Value: 2.5, Secondary Actions: Cancel
+		27 text Description: End time: strictly in the future, up to 12 hours from server time., Secondary Actions: Cancel
+		28 text Description: 20/11/2026, 8:59:21 pm, Secondary Actions: Cancel
+		29 button Description: Choose end date, Secondary Actions: Cancel
+		30 button Description: Choose end time, Secondary Actions: Cancel
+		31 text Description: Your availability restriction changed. Check your standing above., Secondary Actions: Cancel
+		32 text Description: Last checked: 20/11/2026, 9:20:53 am. Eligibility and expiry are decided by the server., Secondary Actions: Cancel
+		33 button Description: Refresh availability, Secondary Actions: Cancel
+		34 image Description: gearshape.fill, Secondary Actions: Cancel
+	35 toolbar
+		36 button Description: Home, Secondary Actions: Move previous, Move next, Remove from toolbar
+		37 checkbox Description: Save Screen, Value: 1, Secondary Actions: Move previous, Move next, Remove from toolbar
+		38 button Description: Rotate, Secondary Actions: Move previous, Move next, Remove from toolbar
+	39 close button
+	40 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	41 minimize button
+	42 text iPhone 17 iOS 26.5
+43 menu bar
+	44 Simulator
+	45 File
+	46 Edit
+	47 Device
+	48 I/O
+	49 Features
+	50 Window
+	51 Help
+
+The focused UI element is 0 standard window iPhone 17 – iOS 26.5, Secondary Actions: Raise

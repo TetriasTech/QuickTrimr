@@ -6,6 +6,7 @@ import {
   stopAvailableNowSessionRequestSchema,
   stopAvailableNowSessionResponseSchema,
   userRoleSchema,
+  ownAvailableNowStateSchema,
 } from '@quicktrimr/validation';
 import { z } from 'zod';
 
@@ -31,7 +32,15 @@ const failureSchema = z.object({
   details: z.string().nullable().optional(),
 });
 const fieldsSchema = z.partialRecord(
-  z.enum(['radiusKm', 'availableUntil', 'lat', 'lng', 'locationSource']),
+  z.enum([
+    'radiusKm',
+    'availableUntil',
+    'lat',
+    'lng',
+    'locationSource',
+    'directoryId',
+    'keepLocation',
+  ]),
   z.string(),
 );
 export function createAvailableNowHandler({
@@ -53,8 +62,11 @@ export function createAvailableNowHandler({
   const verifyRole = createStoredRoleVerifier({ baseUrl, anonKey, fetcher });
   const schema = schemas[operation];
   return async (request: Request): Promise<Response> => {
-    if (request.method !== 'POST')
-      return json({ error: 'method_not_allowed' }, 405, { Allow: 'POST' });
+    const read = operation === 'start' && request.method === 'GET';
+    if (request.method !== 'POST' && !read)
+      return json({ error: 'method_not_allowed' }, 405, {
+        Allow: operation === 'start' ? 'GET, POST' : 'POST',
+      });
     try {
       const caller = await verifyRole(
         request.headers.get('authorization'),
@@ -62,6 +74,39 @@ export function createAvailableNowHandler({
       );
       if ('error' in caller)
         return json({ error: caller.error }, caller.status);
+      if (read) {
+        if (new URL(request.url).search)
+          return json(
+            {
+              error: 'validation_failed',
+              fields: { _request: 'No query parameters are accepted.' },
+            },
+            422,
+          );
+        const response = await fetcher(
+          new URL('/rest/v1/rpc/get_available_now_state', baseUrl),
+          {
+            method: 'POST',
+            headers: {
+              apikey: serviceRoleKey,
+              authorization: `Bearer ${serviceRoleKey}`,
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({ p_user_id: caller.userId }),
+            redirect: 'error',
+            signal: AbortSignal.timeout(10_000),
+          },
+        );
+        const result: unknown = await response.json();
+        if (response.ok)
+          return json(ownAvailableNowStateSchema.parse(result), 200);
+        if (
+          response.status === 403 &&
+          failureSchema.parse(result).message === 'available_now_forbidden'
+        )
+          return json({ error: 'forbidden' }, 403);
+        throw new Error('available_now_read_failed');
+      }
       const input = schema.request.safeParse(
         await request.json().catch(() => null),
       );
@@ -72,7 +117,7 @@ export function createAvailableNowHandler({
         return json({ error: 'validation_failed', fields }, 422);
       }
       const response = await fetcher(
-        new URL('/rest/v1/rpc/manage_available_now_session', baseUrl),
+        new URL('/rest/v1/rpc/available_now_mobile_input', baseUrl),
         {
           method: 'POST',
           headers: {

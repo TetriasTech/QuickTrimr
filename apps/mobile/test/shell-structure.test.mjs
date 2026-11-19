@@ -40,7 +40,9 @@ test('the root navigator protects every journey with typed route access', async 
   assert.match(source, /name="connect"/);
   assert.match(source, /guard={access\.services}/);
   assert.match(source, /name="barber-services"/);
-  assert.equal((source.match(/<Stack\.Protected /g) ?? []).length, 7);
+  assert.match(source, /guard={access\.availability}/);
+  assert.match(source, /name="available-now"/);
+  assert.equal((source.match(/<Stack\.Protected /g) ?? []).length, 8);
 });
 
 test('the Metro resolution probe imports all four shared workspace packages', async () => {

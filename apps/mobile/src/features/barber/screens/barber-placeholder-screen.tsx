@@ -15,6 +15,10 @@ export function BarberPlaceholderScreen() {
       </Text>
       <ConnectCard />
       <Button
+        label="Available Now"
+        onPress={() => router.push('/available-now')}
+      />
+      <Button
         label="Services & prices"
         onPress={() => router.push('/barber-services')}
       />

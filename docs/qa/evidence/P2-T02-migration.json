@@ -1,0 +1,7 @@
+{
+  "result": "PASS",
+  "checks": [
+    "Fresh migration chain and seeded upgrade; sessions/audits preserved, RLS retained, new RPCs service-only"
+  ],
+  "applicationReset": false
+}
