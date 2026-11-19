@@ -48,6 +48,8 @@ Ownership is **vertical** (`ADR-012`). Each ticket has exactly one named owner w
 
 There is no "Shared" owner. The previous backlog's `Owner stream: Shared` produced tickets nobody owned; foundation tickets have one owner too, they are just sequenced first.
 
+**Phase handovers:** Andrew owns every Phase 1 ticket (`RULE-DEV-PHASE1-OWNERSHIP`) and every Phase 2 ticket, including request acceptance and expiry (`RULE-DEV-PHASE2-OWNERSHIP`). Their Jira epics are also assigned to Andrew. Other phases retain their recorded owners.
+
 ---
 
 ## 3. Ticket Format
@@ -2828,6 +2830,8 @@ Works against mock fixtures from `P0-T08` so it can be built before search exist
 
 **Goal:** a client can find a barber and send a request; exactly one acceptance can win it.
 
+**Ownership:** Andrew owns all 15 Phase 2 tickets and its Jira epic under `RULE-DEV-PHASE2-OWNERSHIP`. Readiness and delivery requirements are unchanged.
+
 **No money in this phase.** `P2-T12` accepts a request and stops short of Stripe; `P2-T15` expires one and stops short of cancelling an authorisation. `P3-T06` wires payment into both. That split is deliberate — the previous backlog had acceptance capturing payment, which made Phase 2 depend on Phase 3 and the phase gates a fiction.
 
 **Gate:** a client sends a request, a barber sees it, exactly one acceptance wins under concurrent attempts, and unanswered requests expire on their own.
@@ -2843,7 +2847,7 @@ issueType: Task
 owner: Andrew
 phase: 2
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-44
 dependsOn: [P0-D04, P0-D06, P0-T06, P0-T10, P1-T06]
 affects: [P2-T02, P2-T03, P2-T04, P2-T08, P2-T12, P3-T12]
 knowledgeBase: [ADR-008, RULE-AVAIL-01, RULE-AVAIL-02, RULE-DISCOVERY-05, RULE-RELY-06, ENUM-AVAIL-STATUS]
@@ -2930,7 +2934,7 @@ issueType: Story
 owner: Andrew
 phase: 2
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-45
 dependsOn: [P0-T14, P2-T01]
 affects: [P2-T11]
 knowledgeBase: [RULE-AVAIL-01, RULE-AVAIL-02, RULE-AVAIL-03, RULE-RELY-06, RULE-COPY-01, ENUM-AVAIL-STATUS]
@@ -2987,7 +2991,7 @@ issueType: Task
 owner: Andrew
 phase: 2
 priority: High
-jiraKey: null
+jiraKey: TRIMR-46
 dependsOn: [P0-D04, P0-D07, P2-T01]
 affects: [P2-T02, P2-T12, P3-T12]
 knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-03, RULE-AVAIL-05, RULE-RELY-06, ENUM-AVAIL-STATUS, CFG-MISSED-REQUEST-THRESHOLD]
@@ -3054,7 +3058,7 @@ issueType: Task
 owner: Andrew
 phase: 2
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-47
 dependsOn: [P0-D01, P0-D04, P0-D06, P1-T09, P1-T11, P2-T01]
 affects: [P2-T05, P2-T06, P2-T07, P2-T09]
 knowledgeBase: [ADR-008, RULE-DISCOVERY-01, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-04, RULE-SERVICE-05, RULE-RELY-06, CFG-RELIABILITY-SEARCH-PENALTY, RULE-SERVICE-06]
@@ -3140,7 +3144,7 @@ issueType: Story
 owner: Andrew
 phase: 2
 priority: High
-jiraKey: null
+jiraKey: TRIMR-48
 dependsOn: [P0-D08, P0-T15, P1-T05, P2-T04]
 affects: [P2-T06, P2-T07, P2-T09]
 knowledgeBase: [ADR-003, RULE-DISCOVERY-01, RULE-SCHED-04, ENUM-BOOKING-TYPE, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS]
@@ -3195,7 +3199,7 @@ issueType: Story
 owner: Andrew
 phase: 2
 priority: High
-jiraKey: null
+jiraKey: TRIMR-49
 dependsOn: [P0-T15, P1-T12, P2-T04, P2-T05]
 affects: [P2-T09]
 knowledgeBase: [RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-05]
@@ -3247,7 +3251,7 @@ issueType: Story
 owner: Andrew
 phase: 2
 priority: Medium
-jiraKey: null
+jiraKey: TRIMR-50
 dependsOn: [P0-D06, P0-T20, P2-T04, P2-T05]
 affects: []
 knowledgeBase: [ADR-004, ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-DISCOVERY-04, RULE-DISCOVERY-05]
@@ -3306,7 +3310,7 @@ issueType: Task
 owner: Andrew
 phase: 2
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-51
 dependsOn: [P0-D01, P0-D02, P0-D03, P0-D04, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11, P2-T01]
 affects: [P2-T09, P2-T10, P2-T12, P2-T13, P2-T15, P3-T01, P3-T06, P4-T01]
 knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS, RULE-SERVICE-06]
@@ -3408,7 +3412,7 @@ issueType: Story
 owner: Andrew
 phase: 2
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-52
 dependsOn: [P0-D08, P0-T14, P1-T12, P2-T05, P2-T08]
 affects: [P3-T08, P4-T01]
 knowledgeBase: [ADR-006, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-06, RULE-SCHED-02, RULE-SCHED-04, RULE-CANCEL-07, RULE-COPY-01, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS]
@@ -3463,7 +3467,7 @@ issueType: Task
 owner: Andrew
 phase: 2
 priority: High
-jiraKey: null
+jiraKey: TRIMR-53
 dependsOn: [P0-T11, P2-T08]
 affects: [P2-T11, P2-T12, P2-T13]
 knowledgeBase: [ROLE-BARBER, RULE-DISCOVERY-04, ENUM-REQUEST-STATUS]
@@ -3531,7 +3535,7 @@ issueType: Story
 owner: Andrew
 phase: 2
 priority: High
-jiraKey: null
+jiraKey: TRIMR-54
 dependsOn: [P0-T14, P2-T02, P2-T10]
 affects: [P2-T14]
 knowledgeBase: [RULE-AVAIL-05, RULE-AVAIL-06, RULE-SCHED-02, ENUM-REQUEST-STATUS]
@@ -3583,10 +3587,10 @@ Empty state distinguishing "you're not Available Now" — with a link to the tog
 id: P2-T12
 title: "Accept booking request"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 2
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-55
 dependsOn: [P0-D04, P0-T07, P2-T01, P2-T03, P2-T08, P2-T10]
 affects: [P2-T14, P3-T02, P3-T06, P4-T01, P4-T02]
 knowledgeBase: [ADR-010, ADR-013, RULE-REQUEST-05, RULE-AVAIL-05, RULE-AVAIL-07, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
@@ -3668,7 +3672,7 @@ issueType: Task
 owner: Andrew
 phase: 2
 priority: High
-jiraKey: null
+jiraKey: TRIMR-56
 dependsOn: [P2-T08, P2-T10]
 affects: [P2-T14, P2-T15, P3-T06]
 knowledgeBase: [ADR-013, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS]
@@ -3741,7 +3745,7 @@ issueType: Story
 owner: Andrew
 phase: 2
 priority: High
-jiraKey: null
+jiraKey: TRIMR-57
 dependsOn: [P2-T11, P2-T12, P2-T13]
 affects: [P4-T02]
 knowledgeBase: [RULE-REQUEST-05, RULE-AVAIL-05, RULE-RELY-06, RULE-COPY-01, ENUM-REQUEST-STATUS]
@@ -3793,10 +3797,10 @@ Copy must not imply the client has been charged (`RULE-COPY-01`) — at this poi
 id: P2-T15
 title: "Booking request expiry"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 2
 priority: High
-jiraKey: null
+jiraKey: TRIMR-58
 dependsOn: [P0-D07, P2-T03, P2-T08]
 affects: [P3-T06, P4-T01]
 knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-06, RULE-SCHED-02, RULE-REQUEST-05, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS]

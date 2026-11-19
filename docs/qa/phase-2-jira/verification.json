@@ -1,0 +1,161 @@
+{
+  "project": "TRIMR",
+  "epic": "TRIMR-43",
+  "epicAssignedTo": "Andrew",
+  "createdTickets": 15,
+  "acceptanceCriteria": 148,
+  "verifiedPrerequisites": 63,
+  "verifiedImpactLinks": 28,
+  "tickets": [
+    {
+      "id": "P2-T01",
+      "key": "TRIMR-44",
+      "title": "Available Now session model and queries",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 11,
+      "verifiedPrerequisites": 5,
+      "verifiedImpactLinks": 5
+    },
+    {
+      "id": "P2-T02",
+      "key": "TRIMR-45",
+      "title": "Barber Available Now toggle",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 9,
+      "verifiedPrerequisites": 2,
+      "verifiedImpactLinks": 1
+    },
+    {
+      "id": "P2-T03",
+      "key": "TRIMR-46",
+      "title": "Available Now auto-disable rules",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 11,
+      "verifiedPrerequisites": 3,
+      "verifiedImpactLinks": 2
+    },
+    {
+      "id": "P2-T04",
+      "key": "TRIMR-47",
+      "title": "Nearby barber search",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 12,
+      "verifiedPrerequisites": 6,
+      "verifiedImpactLinks": 4
+    },
+    {
+      "id": "P2-T05",
+      "key": "TRIMR-48",
+      "title": "Client discovery filters",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 9,
+      "verifiedPrerequisites": 4,
+      "verifiedImpactLinks": 3
+    },
+    {
+      "id": "P2-T06",
+      "key": "TRIMR-49",
+      "title": "Barber results list",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 8,
+      "verifiedPrerequisites": 4,
+      "verifiedImpactLinks": 1
+    },
+    {
+      "id": "P2-T07",
+      "key": "TRIMR-50",
+      "title": "Client map view",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 8,
+      "verifiedPrerequisites": 4,
+      "verifiedImpactLinks": 0
+    },
+    {
+      "id": "P2-T08",
+      "key": "TRIMR-51",
+      "title": "Create booking request",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 15,
+      "verifiedPrerequisites": 11,
+      "verifiedImpactLinks": 5
+    },
+    {
+      "id": "P2-T09",
+      "key": "TRIMR-52",
+      "title": "Client booking request submission",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 11,
+      "verifiedPrerequisites": 5,
+      "verifiedImpactLinks": 0
+    },
+    {
+      "id": "P2-T10",
+      "key": "TRIMR-53",
+      "title": "Barber request inbox query",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 7,
+      "verifiedPrerequisites": 2,
+      "verifiedImpactLinks": 3
+    },
+    {
+      "id": "P2-T11",
+      "key": "TRIMR-54",
+      "title": "Barber request inbox UI",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 9,
+      "verifiedPrerequisites": 3,
+      "verifiedImpactLinks": 1
+    },
+    {
+      "id": "P2-T12",
+      "key": "TRIMR-55",
+      "title": "Accept booking request",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 11,
+      "verifiedPrerequisites": 6,
+      "verifiedImpactLinks": 1
+    },
+    {
+      "id": "P2-T13",
+      "key": "TRIMR-56",
+      "title": "Decline booking request",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 9,
+      "verifiedPrerequisites": 2,
+      "verifiedImpactLinks": 2
+    },
+    {
+      "id": "P2-T14",
+      "key": "TRIMR-57",
+      "title": "Barber accept and decline UI",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 9,
+      "verifiedPrerequisites": 3,
+      "verifiedImpactLinks": 0
+    },
+    {
+      "id": "P2-T15",
+      "key": "TRIMR-58",
+      "title": "Booking request expiry",
+      "owner": "Andrew",
+      "status": "To Do",
+      "acceptanceCriteria": 9,
+      "verifiedPrerequisites": 3,
+      "verifiedImpactLinks": 0
+    }
+  ]
+}
