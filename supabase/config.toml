@@ -93,3 +93,12 @@ verify_jwt = true
 [functions.stripe-webhook]
 # Provider ingress authenticates Stripe-Signature on original bytes.
 verify_jwt = false
+
+[functions.create-service-category]
+verify_jwt = true
+
+[functions.update-service-category]
+verify_jwt = true
+
+[functions.archive-service-category]
+verify_jwt = true

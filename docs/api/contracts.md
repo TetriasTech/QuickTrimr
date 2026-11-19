@@ -1224,6 +1224,7 @@ Request (decoded envelope only for Stripe):
 | 403 | `{"error":"forbidden"}` | Caller lacks the required role, ownership or internal-service permission. |
 | 422 | `{"error":"validation_failed","fields":{"_request":"Invalid request or server-side business validation"}}` | Malformed input or server-side business validation failed; fields identifies invalid inputs. |
 | 500 | `{"error":"internal_error"}` | Unexpected failure; safe error only, no internals or provider payload. |
+| 409 | `{"error":"slug_exists"}` | The slug is already assigned to a category. |
 
 ### create-stripe-connect-onboarding-link
 
@@ -2100,9 +2101,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P1-T10. Caller: **user**. Roles: admin.
 
-Rules: `RULE-SERVICE-03`, `RULE-SERVICE-04`.
+Rules: `RULE-SERVICE-03`, `RULE-SERVICE-04`, `RULE-SERVICE-06`.
 
-Update a category without changing booking snapshots. Slug is not an update input; the server must reject attempted slug mutation.
+Update a category without changing booking snapshots. Slug is not an update input. Reject bounds excluding active barber prices; archived services do not block. Omitted description is preserved.
 
 Shared request schema: `updateServiceCategoryRequestSchema`.
 Shared response schema: `createServiceCategoryResponseSchema`, `updateServiceCategoryResponseSchema`.
@@ -2142,6 +2143,7 @@ Request (decoded envelope only for Stripe):
 | 500 | `{"error":"internal_error"}` | Unexpected failure; safe error only, no internals or provider payload. |
 | 404 | `{"error":"not_found"}` | Requested entity is missing or not accessible; never expose another user’s record. |
 | 409 | `{"error":"slug_immutable"}` | An attempt was made to change the category’s stable slug. |
+| 409 | `{"error":"category_price_conflict"}` | The proposed range would exclude an active barber price; correct the affected active prices first. |
 
 ### upsert-barber-service
 

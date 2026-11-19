@@ -39,8 +39,7 @@ const geoOffsets = [
   [0.21, 0.03],
 ];
 
-// RULE-SERVICE-05. Catalogue attributes aren't columns until P1-T10. This map
-// preserves the category identities and validates illustrative service prices.
+// RULE-SERVICE-05. Initial catalogue data; runtime consumers read the database.
 export const launchCategories = [
   { slug: 'haircut', name: 'Haircut', order: 1, min: 2000, max: 15000 },
   { slug: 'skin_fade', name: 'Skin Fade', order: 2, min: 2500, max: 17500 },
@@ -241,7 +240,16 @@ export function buildSeed() {
     });
   });
   for (const category of launchCategories) {
-    add('service_categories', { id: seedId(`category/${category.slug}`) });
+    add('service_categories', {
+      id: seedId(`category/${category.slug}`),
+      slug: category.slug,
+      display_name: category.name,
+      description: '',
+      display_order: category.order,
+      min_price_cents: category.min,
+      max_price_cents: category.max,
+      archived_at: null,
+    });
     for (const barber of barbers)
       add('barber_services', {
         id: seedId(`service/${barber.id.replaceAll('-', '')}/${category.slug}`),
@@ -422,7 +430,7 @@ export function renderSeed() {
     '-- No schema changes, passwords, provider calls, updates, deletes or fictional transitions.',
     ...launchCategories.map(
       (c) =>
-        `-- Category ${c.slug}: ${seedId(`category/${c.slug}`)} (attributes deferred to P1-T10).`,
+        `-- Category ${c.slug}: ${seedId(`category/${c.slug}`)} (RULE-SERVICE-05).`,
     ),
     'begin;',
     ...authSql,

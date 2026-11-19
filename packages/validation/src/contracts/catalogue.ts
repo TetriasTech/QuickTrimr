@@ -9,12 +9,17 @@ import {
 } from '../primitives.ts';
 import { requestObject } from '../request-object.ts';
 
+// Physical PostgreSQL integer storage boundary, not a configurable price policy.
+const categoryCentsSchema = integerCentsSchema.refine(
+  (value) => value <= 2_147_483_647,
+  'Must fit integer-cent storage',
+);
 const categoryFields = {
-  displayName: nonEmptyStringSchema,
+  displayName: nonEmptyStringSchema.trim().min(1),
   description: z.string().optional(),
   displayOrder: nonNegativeIntegerSchema,
-  minPriceCents: integerCentsSchema,
-  maxPriceCents: integerCentsSchema,
+  minPriceCents: categoryCentsSchema,
+  maxPriceCents: categoryCentsSchema,
 };
 function priceRange(
   value: { minPriceCents: number; maxPriceCents: number },
@@ -28,7 +33,7 @@ function priceRange(
     });
 }
 export const createServiceCategoryRequestSchema = requestObject({
-  slug: nonEmptyStringSchema,
+  slug: nonEmptyStringSchema.trim().min(1),
   ...categoryFields,
 }).superRefine(priceRange);
 export type CreateServiceCategoryRequest = z.infer<
@@ -45,6 +50,9 @@ export const createServiceCategoryResponseSchema = z
 export type CreateServiceCategoryResponse = z.infer<
   typeof createServiceCategoryResponseSchema
 >;
+export const serviceCategoryListSchema = z.array(
+  createServiceCategoryResponseSchema,
+);
 
 export const updateServiceCategoryRequestSchema = requestObject({
   id: postgresUuidSchema,

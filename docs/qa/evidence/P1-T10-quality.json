@@ -1,0 +1,56 @@
+{
+  "ticket": "P1-T10 / TRIMR-40",
+  "date": "2026-11-19",
+  "checks": [
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "output": "P1-T10-types.txt"
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0,
+      "output": "P1-T10-lint.txt"
+    },
+    {
+      "command": "pnpm test",
+      "exitCode": 0,
+      "output": "P1-T10-tests.txt"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "output": "P1-T10-format.txt"
+    },
+    {
+      "command": "node scripts/api/contracts.mjs --check",
+      "exitCode": 0,
+      "output": "API contracts: 50 documented functions; no drift"
+    },
+    {
+      "command": "node scripts/db/seed-data.mjs --check",
+      "exitCode": 0,
+      "output": "Deterministic seed SQL: PASS."
+    },
+    {
+      "command": "node scripts/check-client-env.mjs",
+      "exitCode": 0,
+      "output": "Client environment boundary: PASS"
+    },
+    {
+      "command": "node scripts/jira/generate-indexes.mjs --check",
+      "exitCode": 0,
+      "output": "tickets:   108\nowners:    Andrew 56, Tony 52\nphases:    P0:28 P1:12 P2:15 P3:12 P4:15 P5:13 P6:11 P7:2\nkb ids:    197 defined, 0 TBC open\njira:      68/108 not yet created\n\nOK"
+    }
+  ],
+  "audit": {
+    "scope": "P1-T10 / TRIMR-40 delivered slice",
+    "critical": 0,
+    "major": 0,
+    "minor": 0
+  },
+  "boundaries": [
+    "Backend API is the acceptance surface; UI belongs to P5-T11.",
+    "Legacy destructive core/seed runners excluded; their pre-existing Phase 1 schema/profile drift is recorded in docs/qa/P1-T10.md."
+  ]
+}

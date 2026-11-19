@@ -64,7 +64,7 @@ function checkCatalog() {
     'No numeric/float/money column.',
   );
   const money = columns.filter((column) => column.column.endsWith('_cents'));
-  assert.equal(money.length, 12);
+  assert.equal(money.length, 14); // P1-T10 adds the category's integer-cent bounds.
   assert.ok(
     money.every(
       (column) =>
@@ -202,10 +202,10 @@ function checkCatalog() {
     grants.every(
       (grant) =>
         grant.read === (grant.role !== 'anon') &&
-        grant.write &&
+        grant.write === (grant.table !== 'service_categories') &&
         !grant.truncate,
     ),
-    'Authenticated column-read/DML grants must exist; anon reads and all TRUNCATE must be revoked.',
+    'Column reads and RLS-gated DML grants must match; category DML uses audited RPC only; anon reads and all TRUNCATE are revoked.',
   );
   assert.equal(
     queryLocal(
