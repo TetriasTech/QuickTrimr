@@ -2760,7 +2760,7 @@ priority: Medium
 jiraKey: TRIMR-42
 dependsOn: [P0-D01, P1-T10, P1-T11]
 affects: [P2-T06, P2-T09, P4-T15]
-knowledgeBase: [RULE-ONBOARD-05, RULE-DISCOVERY-04, RULE-REVIEW-04]
+knowledgeBase: [RULE-ONBOARD-05, RULE-ONBOARD-04, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-BARBER-PHOTO-01, CFG-BARBER-PHOTO-LIMITS, RULE-REVIEW-04]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, mobile]
 ```
@@ -2777,7 +2777,31 @@ A barber profile screen in the client journey: photo, display name, bio, years o
 
 Data comes from the **public projection** defined in `P1-T06` (`RULE-ONBOARD-05`). This screen must not have a query path to private fields.
 
-Location rendered at whatever precision `P0-D06` decides — until then, an approximate area, never an exact point (`RULE-DISCOVERY-04`).
+Location uses the versioned ABS SAL label and shared representative area point decided by `P0-D06` (`RULE-DISCOVERY-05`), never the barber's private centre, radius or exact distance.
+
+`get-public-barber-profile` is a client-only read of the server-only `P1-T06` projection. Recheck the stored client role and the target's current Connect eligibility server-side; unknown, incomplete or ineligible profiles return `profile: null`. An eligible profile can have no active services, which renders an explicit empty state without making it discoverable. Services include only active barber prices joined to active categories, in catalogue order, with bounded keyset pages. No discovery, availability or request eligibility is granted here. Ratings remain `null` / zero until the Phase 4 aggregate exists.
+
+**Contract example** — `get-public-barber-profile`
+
+```jsonc
+// request; servicesAfter is an optional cursor returned by the preceding page
+{ "barberId": "44444444-4444-4444-8444-444444444444" }
+// 200; photoUrl is null or an expiring signed photo link, not a storage-path field
+{ "profile": { "barberId": "44444444-4444-4444-8444-444444444444",
+  "displayName": "Marcus Example", "bio": "Mobile barber serving the local area.",
+  "yearsExperience": 10, "photoUrl": null,
+  "approximateArea": { "id": "sal:2021:example", "label": "Richmond",
+    "mapPoint": { "lat": -37.82, "lng": 145.00 } },
+  "rating": null, "ratingCount": 0,
+  "services": [{ "id": "11111111-1111-4111-8111-111111111111",
+    "serviceCategoryId": "55555555-5555-4555-8555-555555555555",
+    "displayName": "Skin Fade", "description": "A skin fade.", "priceCents": 4550 }],
+  "nextServicesCursor": null } }
+// 200 — missing, incomplete or no longer Connect-eligible
+{ "profile": null }
+// 401 / 403 / 422: shared safe error envelope; field errors identify malformed input
+{ "error": "validation_failed", "fields": { "barberId": "Invalid UUID" } }
+```
 
 An empty rating state for a barber with no reviews that does not imply a score.
 
@@ -2797,7 +2821,7 @@ Works against mock fixtures from `P0-T08` so it can be built before search exist
 
 **Out of scope** — search and discovery (`P2-T04`, `P2-T06`); sending a request (`P2-T09`); review listing (`P4-T15`).
 
-**Sync notes** — `P2-T06` renders a summary card from the same projection. If they use different queries they will drift, and one will eventually return a field the other filters out.
+**Sync notes** — `P2-T06` renders a summary card from the same projection. Share its public identity/area/photo/rating schema with the profile contract. Preserve its selected service ID when opening the profile; read the current service price from the server, never a route amount. `P2-T04` must reuse the server-only `P1-T06` projection and apply its own geography/availability/active-service gates. `P2-T09` still creates snapshots and rechecks request eligibility. `P4-T15` replaces the honest empty rating with the server aggregate and review listing. Generated traceability updates are left to the post-merge automation (`RULE-DEV-CI`).
 
 ---
 ## Phase 2 — Available Now, Discovery & Booking Requests

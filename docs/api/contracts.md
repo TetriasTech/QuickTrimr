@@ -1340,6 +1340,67 @@ Request (decoded envelope only for Stripe):
 | 404 | `{"error":"not_found"}` | Requested entity is missing or not accessible; never expose another user’s record. |
 | 500 | `{"error":"internal_error"}` | Unexpected internal failure; persist/reconcile recoverable work, never blind retry unknown money effects. |
 
+### get-public-barber-profile
+
+Owner ticket: P1-T12. Caller: **user**. Roles: client.
+
+Rules: `RULE-ONBOARD-05`, `RULE-ONBOARD-04`, `RULE-DISCOVERY-04`, `RULE-DISCOVERY-05`, `RULE-BARBER-PHOTO-01`, `CFG-BARBER-PHOTO-LIMITS`, `RULE-REVIEW-04`.
+
+Client-only read of the P1-T06 public projection; current Connect gate required. Missing/incomplete/ineligible targets return profile:null. Active services are keyset-paged in catalogue order. Photo links expire using the existing photo config. Null/zero ratings are honest Phase 1 placeholders, not a client-written score. No discovery or booking eligibility is granted.
+
+Shared request schema: `getPublicBarberProfileRequestSchema`.
+Shared response schema: `getPublicBarberProfileResponseSchema`.
+Exports: [packages/validation contracts](../../packages/validation/src/contracts/index.ts). Payload types are z.infer, not parallel interfaces.
+
+Request (decoded envelope only for Stripe):
+
+```json
+{
+  "barberId": "44444444-4444-4444-8444-444444444444"
+}
+```
+
+200 response:
+
+```json
+{
+  "profile": {
+    "barberId": "44444444-4444-4444-8444-444444444444",
+    "displayName": "Marcus Example",
+    "photoUrl": null,
+    "approximateArea": {
+      "id": "sal:2021:example",
+      "label": "Richmond",
+      "mapPoint": {
+        "lat": -37.82,
+        "lng": 145
+      }
+    },
+    "rating": null,
+    "ratingCount": 0,
+    "bio": "Mobile barber serving the local area.",
+    "yearsExperience": 10,
+    "services": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "serviceCategoryId": "55555555-5555-4555-8555-555555555555",
+        "displayName": "Skin Fade",
+        "description": "A skin fade.",
+        "priceCents": 4550
+      }
+    ],
+    "nextServicesCursor": null
+  }
+}
+```
+
+| Status | Error response | When |
+| --- | --- | --- |
+| 401 | `{"error":"unauthenticated"}` | Missing or invalid verified user JWT. |
+| 403 | `{"error":"forbidden"}` | Caller lacks the required role, ownership or internal-service permission. |
+| 422 | `{"error":"validation_failed","fields":{"_request":"Invalid request or server-side business validation"}}` | Malformed input or server-side business validation failed; fields identifies invalid inputs. |
+| 500 | `{"error":"internal_error"}` | Unexpected failure; safe error only, no internals or provider payload. |
+
 ### manage-client-addresses
 
 Owner ticket: P1-T05. Caller: **user**. Roles: client.
@@ -1771,7 +1832,6 @@ Request (decoded envelope only for Stripe):
       "barberId": "44444444-4444-4444-8444-444444444444",
       "displayName": "Marcus Example",
       "photoUrl": null,
-      "priceCents": 4500,
       "approximateArea": {
         "id": "sal:2021:example",
         "label": "Richmond",
@@ -1780,9 +1840,10 @@ Request (decoded envelope only for Stripe):
           "lng": 145
         }
       },
-      "distanceBand": "2-5km",
       "rating": 4.8,
       "ratingCount": 37,
+      "priceCents": 4500,
+      "distanceBand": "2-5km",
       "availableUntil": "2026-11-02T01:00:00Z"
     }
   ],

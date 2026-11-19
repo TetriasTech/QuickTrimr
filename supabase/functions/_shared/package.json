@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@quicktrimr/shared": "workspace:*",
     "@quicktrimr/domain": "workspace:*",
     "@quicktrimr/validation": "workspace:*",
     "stripe": "23.0.0",

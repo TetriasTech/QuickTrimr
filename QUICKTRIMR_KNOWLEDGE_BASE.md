@@ -977,6 +977,8 @@ auth / onboarding    create-or-sync-profile  complete-client-profile  complete-b
 services / pricing   create-service-category  update-service-category  archive-service-category
                      upsert-barber-service  archive-barber-service
 
+public profiles      get-public-barber-profile
+
 available now        start-available-now-session  update-available-now-session
                      stop-available-now-session  search-available-now-barbers
                      auto-disable-unresponsive-barber

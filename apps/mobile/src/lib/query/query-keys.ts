@@ -27,6 +27,10 @@ function stableFilters(filters: DiscoveryKeyFilters): DiscoveryKeyFilters {
  * instead of assembling arrays that can drift away from mutation invalidation.
  */
 export const queryKeys = {
+  publicProfiles: {
+    detail: (userId: string, barberId: string) =>
+      ['public-profiles', userId, barberId.toLowerCase()] as const,
+  },
   session: {
     profile: (userId: string | null) => ['session', 'profile', userId] as const,
   },

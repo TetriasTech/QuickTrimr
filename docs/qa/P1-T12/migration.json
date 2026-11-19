@@ -1,0 +1,7 @@
+{
+  "result": "PASS",
+  "checks": [
+    "All 13 migrations replay in an isolated database; seeded upgrade preserves prices/bookings/audits; RPC service-only; RLS and ID-only view retained"
+  ],
+  "applicationReset": false
+}

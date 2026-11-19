@@ -46,6 +46,7 @@ import {
 } from './lifecycle.ts';
 import * as payments from './payments.ts';
 import * as profiles from './profiles.ts';
+import * as publicProfiles from './public-barber-profile.ts';
 import {
   createReviewRequestSchema,
   createReviewResponseSchema,
@@ -62,6 +63,7 @@ export * from './discovery.ts';
 export * from './lifecycle.ts';
 export * from './payments.ts';
 export * from './profiles.ts';
+export * from './public-barber-profile.ts';
 export * from './reviews.ts';
 export * from './workers.ts';
 
@@ -152,6 +154,10 @@ function contract<Request extends z.ZodType, Response extends z.ZodType>(
 
 export const CONTRACTS = {
   ...CORE_CONTRACTS,
+  'get-public-barber-profile': contract(
+    publicProfiles.getPublicBarberProfileRequestSchema,
+    publicProfiles.getPublicBarberProfileResponseSchema,
+  ),
   'create-or-sync-profile': contract(
     profiles.createOrSyncProfileRequestSchema,
     profiles.createOrSyncProfileResponseSchema,

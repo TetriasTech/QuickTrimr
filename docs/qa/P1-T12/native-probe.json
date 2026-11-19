@@ -1,0 +1,6 @@
+{
+  "slowFailureOnlyForSyntheticPair": true,
+  "loadingObserved": true,
+  "typedErrorObserved": true,
+  "originalFunctionRestored": true
+}

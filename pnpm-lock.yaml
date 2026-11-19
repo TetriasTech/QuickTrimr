@@ -342,6 +342,9 @@ importers:
       '@quicktrimr/domain':
         specifier: workspace:*
         version: link:../../../packages/domain
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
       '@quicktrimr/validation':
         specifier: workspace:*
         version: link:../../../packages/validation
@@ -441,6 +444,22 @@ importers:
       stripe:
         specifier: 23.0.0
         version: 23.0.0(@types/node@26.6.3)
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
+  supabase/functions/get-public-barber-profile:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
       zod:
         specifier: 4.6.5
         version: 4.6.5
