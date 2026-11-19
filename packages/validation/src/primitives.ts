@@ -37,6 +37,12 @@ export const integerCentsSchema = z
   .transform(toIntegerCents);
 export type IntegerCentsValue = z.infer<typeof integerCentsSchema>;
 
+// Physical PostgreSQL integer storage boundary, not a configurable price policy.
+export const postgresIntegerCentsSchema = integerCentsSchema.refine(
+  (value) => value <= 2_147_483_647,
+  'Must fit integer-cent storage',
+);
+
 export const nonEmptyStringSchema = z.string().min(1);
 export const nonNegativeIntegerSchema = z.number().int().nonnegative();
 export const positiveNumberSchema = z.number().finite().positive();

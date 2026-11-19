@@ -482,7 +482,7 @@ export async function verifyBaselineApi({
             token,
             {
               method,
-              ...(table === 'service_categories'
+              ...(['service_categories', 'barber_services'].includes(table)
                 ? { httpStatus: 403, code: '42501' }
                 : {}),
               ...(method === 'POST'

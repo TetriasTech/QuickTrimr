@@ -17,6 +17,7 @@ export type RouteAccess = {
   barber: boolean;
   modals: boolean;
   connect: boolean;
+  services: boolean;
 };
 
 export function getRouteAccess(session: AppSession): RouteAccess {
@@ -28,6 +29,7 @@ export function getRouteAccess(session: AppSession): RouteAccess {
       barber: false,
       modals: false,
       connect: false,
+      services: false,
     };
   }
 
@@ -40,5 +42,6 @@ export function getRouteAccess(session: AppSession): RouteAccess {
     barber: ready && session.role === 'barber',
     modals: ready,
     connect: session.role === 'barber',
+    services: session.role === 'barber',
   };
 }

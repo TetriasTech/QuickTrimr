@@ -1,0 +1,11 @@
+{
+  "ticket": "P1-T10 / TRIMR-40",
+  "result": "PASS",
+  "isolation": "separate local database; platform DDL only; removed after verification",
+  "checks": [
+    "All 11 migrations replay on an empty application schema; exact five RULE-SERVICE-05 categories and initialization audits",
+    "Unknown legacy identity rejects and rolls back all added columns; no invented mapping or deletion",
+    "Invalid legacy price rejects atomically; corrected seeded upgrade preserves every booking, line, service ID and price",
+    "Two seed reruns preserve edited catalogue metadata and historical amounts"
+  ]
+}

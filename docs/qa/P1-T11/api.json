@@ -1,0 +1,41 @@
+{
+  "ticket": "P1-T11 / TRIMR-41",
+  "result": "PASS",
+  "transport": "local Auth + Edge + PostgREST",
+  "checks": [
+    "All auth/role denials precede parsing; six parallel identical creates produce one ID/row/audit",
+    "Both bounds and adjacent cents; fractional/negative/overflow rejection; 45.50 stored as 4550 integer cents; exact repricing audit; pre-existing booking unchanged",
+    "Cross-barber/client raw reads denied; foreign archive 404; forged owner cannot redirect writes; joined catalogue contains only own service",
+    "25 direct POST/PATCH/DELETE/PUT/upsert denials; client RPC denied; privileged delete/truncate/owner-reassignment guarded",
+    "Four parallel archives have one timestamp/audit; historical rows retained; re-enable keeps ID; enabled=false archives; snapshots unchanged",
+    "Injected audit failure rolls back price and audit together",
+    "Six observed overlapping API races, three of each winner: current bounds enforced and all booking snapshots unchanged",
+    "Unknown/archived categories reject upsert; own archive still works; database role revocation applies to existing JWT"
+  ],
+  "raceOutcomes": [
+    {
+      "winner": "category",
+      "statuses": [422, 200]
+    },
+    {
+      "winner": "category",
+      "statuses": [422, 200]
+    },
+    {
+      "winner": "category",
+      "statuses": [422, 200]
+    },
+    {
+      "winner": "price",
+      "statuses": [409, 200]
+    },
+    {
+      "winner": "price",
+      "statuses": [409, 200]
+    },
+    {
+      "winner": "price",
+      "statuses": [409, 200]
+    }
+  ]
+}

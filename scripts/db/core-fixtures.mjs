@@ -187,6 +187,7 @@ export function coreFixtures(users) {
     candidates.service_categories.id,
   );
   candidates.client_profiles.id = users.candidateClient;
+  candidates.barber_services.barber_id = users.barberA;
   candidates.barber_profiles.id = users.candidateBarber;
   candidates.available_now_sessions.barber_id = users.barberA;
   candidates.barber_earnings.booking_id = secondBooking.id;

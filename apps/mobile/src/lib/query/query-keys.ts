@@ -31,6 +31,8 @@ export const queryKeys = {
     profile: (userId: string | null) => ['session', 'profile', userId] as const,
   },
   onboarding: {
+    barberServices: (userId: string) =>
+      ['onboarding', 'barber-services', userId] as const,
     connectStatus: (userId: string) =>
       ['onboarding', 'connect-status', userId] as const,
     clientProfile: (userId: string) =>

@@ -1,0 +1,31 @@
+{
+  "ticket": "P1-T11 / TRIMR-41",
+  "result": "PASS",
+  "device": "iPhone 17 / iOS 26.5 / Expo Go",
+  "environment": "local QuickTrimr Auth + Edge + PostgREST",
+  "checks": [
+    "Native input 45.50 saved as integer 4550; no category or price was preselected",
+    "Injected native save failure retained the 46.25 draft; database price remained 4550 and pre-existing booking/line stayed unchanged",
+    "Native retry saved the preserved 46.25 draft as 4625 cents; original booking and line remain at 4550 with unchanged financial snapshots",
+    "Native disable archived the same service ID at 4625 cents without changing the existing booking or line",
+    "Native re-enable restored the original service ID and 4625-cent price; original booking snapshots remain unchanged",
+    "Native load failure and Try again recovery exercised through a temporary public catalogue read-grant restriction; original grant restored; reloaded price remained 46.25",
+    "Software decimal keyboard edited the price; Save remained visible above it; draft restored to the saved value and keyboard visibility restored",
+    "No temporary failure probes or replay databases remain; same service is active at 4625 cents and pre-existing booking/line remain unchanged"
+  ],
+  "prices": {
+    "initialSavedCents": 4550,
+    "currentServiceCents": 4625,
+    "unchangedBookingCents": 4550
+  },
+  "screenshots": [
+    "initial.png",
+    "validation.png",
+    "saved.png",
+    "save-failure.png",
+    "retry-saved.png",
+    "archived.png",
+    "load-error.png",
+    "keyboard.png"
+  ]
+}

@@ -2676,7 +2676,7 @@ priority: High
 jiraKey: TRIMR-41
 dependsOn: [P0-D01, P1-T06, P1-T10]
 affects: [P1-T12, P2-T04, P2-T08, P5-T03]
-knowledgeBase: [ADR-009, RULE-SERVICE-02, RULE-SERVICE-04, RULE-SERVICE-05, RULE-ONBOARD-04, RULE-SERVICE-06]
+knowledgeBase: [ADR-009, ADR-013, RULE-SERVICE-02, RULE-SERVICE-04, RULE-SERVICE-05, RULE-ONBOARD-04, RULE-SERVICE-06]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, mobile, database]
 ```
@@ -2692,6 +2692,10 @@ Prices are integer cents. A price entry field is the single most likely place a 
 A screen in the barber journey listing active categories with a toggle and a price field per category.
 
 `upsert-barber-service` and `archive-barber-service` Edge Functions. A barber may only write their own rows.
+
+Upsert is keyed by the verified barber and category, retaining the same service ID across price changes, archival and reactivation. `enabled` is derived from `archived_at`; an upsert with `enabled: false` archives the service. The dedicated archive operation takes `serviceId`, is idempotent, and returns `404 not_found` for an unknown or foreign service without disclosing ownership. All actual mutations append safe previous/new audit values (`ADR-013`). Raw table writes are not a mobile mutation path.
+
+The mobile screen is reachable during barber setup and from the barber journey. It reads bounded pages of active categories joined to the caller's own service rows under RLS. No category is preselected and no price is defaulted.
 
 Prices validated against the category's `minPriceCents` and `maxPriceCents` (`RULE-SERVICE-05`), server-side as well as in the form. A barber who bypasses the form must still be bounded.
 

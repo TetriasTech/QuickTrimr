@@ -102,3 +102,9 @@ verify_jwt = true
 
 [functions.archive-service-category]
 verify_jwt = true
+
+[functions.upsert-barber-service]
+verify_jwt = true
+
+[functions.archive-barber-service]
+verify_jwt = true
