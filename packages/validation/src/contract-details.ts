@@ -233,15 +233,22 @@ export const CONTRACT_DETAILS = {
   'upsert-barber-service': user(
     'P1-T11',
     [b],
-    ['RULE-SERVICE-02', 'RULE-SERVICE-03', 'RULE-SERVICE-04'],
-    'Own service only. Server checks price against the category’s current configured bounds; old booking snapshots do not change.',
+    [
+      'RULE-SERVICE-02',
+      'RULE-SERVICE-03',
+      'RULE-SERVICE-04',
+      'RULE-SERVICE-05',
+      'RULE-SERVICE-06',
+      'ADR-013',
+    ],
+    'Own service only, keyed by the verified barber and category. Reuse the service ID on reactivation; enabled=false archives. Server checks current category bounds atomically; booking snapshots never change. Actual mutations append previous/new audit values.',
     [error(404, 'category_unavailable', 'Category missing or archived.')],
   ),
   'archive-barber-service': user(
     'P1-T11',
     [b],
     ['RULE-SERVICE-04'],
-    'Own service only; idempotent archive, preserve history and booking snapshots.',
+    'Own service only; foreign and unknown IDs return not_found. Idempotent archive preserves history, service identity and booking snapshots; append one audit for the actual change.',
     [notFound],
   ),
   'start-available-now-session': user(

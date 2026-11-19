@@ -202,7 +202,8 @@ function checkCatalog() {
     grants.every(
       (grant) =>
         grant.read === (grant.role !== 'anon') &&
-        grant.write === (grant.table !== 'service_categories') &&
+        grant.write ===
+          !['service_categories', 'barber_services'].includes(grant.table) &&
         !grant.truncate,
     ),
     'Column reads and RLS-gated DML grants must match; category DML uses audited RPC only; anon reads and all TRUNCATE are revoked.',

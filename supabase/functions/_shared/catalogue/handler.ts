@@ -3,15 +3,14 @@ import {
   archiveServiceCategoryResponseSchema,
   createServiceCategoryRequestSchema,
   createServiceCategoryResponseSchema,
-  postgresUuidSchema,
   updateServiceCategoryRequestSchema,
   updateServiceCategoryResponseSchema,
   userRoleSchema,
 } from '@quicktrimr/validation';
-import { z } from 'zod';
 
-import { createSupabaseUserVerifier } from '../auth/supabase-user.mts';
+import { createStoredRoleVerifier } from '../auth/stored-role.ts';
 import { json } from '../responses/json.mts';
+export { supabaseRuntimeConfig as categoryRuntimeConfig } from '../services/runtime-config.ts';
 
 export type CategoryOperation = 'create' | 'update' | 'archive';
 type Options = {
@@ -36,22 +35,6 @@ const schemas = {
     response: archiveServiceCategoryResponseSchema,
   },
 };
-const roleRowsSchema = z.array(z.strictObject({ role: userRoleSchema })).max(1);
-
-export function categoryRuntimeConfig(
-  get: (name: string) => string | undefined,
-) {
-  function required(name: string) {
-    const value = get(name);
-    if (!value) throw new Error(`Missing Edge runtime variable ${name}.`);
-    return value;
-  }
-  return {
-    supabaseUrl: required('SUPABASE_URL'),
-    anonKey: required('SUPABASE_ANON_KEY'),
-    serviceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY'),
-  };
-}
 
 export function createCategoryMutationHandler({
   operation,
@@ -62,7 +45,7 @@ export function createCategoryMutationHandler({
   log = console,
 }: Options) {
   const baseUrl = new URL(supabaseUrl);
-  const verifyUser = createSupabaseUserVerifier({ baseUrl, anonKey, fetcher });
+  const verifyRole = createStoredRoleVerifier({ baseUrl, anonKey, fetcher });
   const schema = schemas[operation];
 
   return async (request: Request): Promise<Response> => {
@@ -70,27 +53,12 @@ export function createCategoryMutationHandler({
       return json({ error: 'method_not_allowed' }, 405, { Allow: 'POST' });
     try {
       const authorization = request.headers.get('authorization');
-      const identity = postgresUuidSchema.safeParse(
-        await verifyUser(authorization),
+      const identity = await verifyRole(
+        authorization,
+        userRoleSchema.enum.admin,
       );
-      if (!identity.success) return json({ error: 'unauthenticated' }, 401);
-      // Fetch only the caller's role, with their own bearer token, before parsing
-      // mutation input or reading any operational category data.
-      const roleUrl = new URL('/rest/v1/profiles', baseUrl);
-      roleUrl.search = new URLSearchParams({
-        id: `eq.${identity.data}`,
-        select: 'role',
-        limit: '1',
-      }).toString();
-      const roleResponse = await fetcher(roleUrl, {
-        headers: { apikey: anonKey, authorization: authorization! },
-        redirect: 'error',
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!roleResponse.ok) throw new Error('Role lookup unavailable.');
-      const roles = roleRowsSchema.parse(await roleResponse.json());
-      if (roles[0]?.role !== userRoleSchema.enum.admin)
-        return json({ error: 'forbidden' }, 403);
+      if ('error' in identity)
+        return json({ error: identity.error }, identity.status);
 
       const body: unknown = await request.json().catch(() => null);
       if (
@@ -117,7 +85,7 @@ export function createCategoryMutationHandler({
             'content-type': 'application/json',
           },
           body: JSON.stringify({
-            p_user_id: identity.data,
+            p_user_id: identity.userId,
             p_operation: operation,
             p_input: parsed.data,
           }),

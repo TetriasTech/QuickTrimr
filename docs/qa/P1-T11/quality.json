@@ -1,0 +1,60 @@
+{
+  "ticket": "P1-T11 / TRIMR-41",
+  "date": "2026-11-19",
+  "checks": [
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "output": "types.txt"
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0,
+      "output": "lint.txt"
+    },
+    {
+      "command": "pnpm test",
+      "exitCode": 0,
+      "output": "tests.txt"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "output": "format.txt"
+    },
+    {
+      "command": "node scripts/api/contracts.mjs --check",
+      "exitCode": 0,
+      "output": "API contracts: 50 documented functions; no drift"
+    },
+    {
+      "command": "node scripts/db/seed-data.mjs --check",
+      "exitCode": 0,
+      "output": "Deterministic seed SQL: PASS."
+    },
+    {
+      "command": "node scripts/check-client-env.mjs",
+      "exitCode": 0,
+      "output": "Client environment boundary: PASS"
+    },
+    {
+      "command": "node scripts/jira/generate-indexes.mjs --check",
+      "exitCode": 0,
+      "output": "tickets:   108\nowners:    Andrew 56, Tony 52\nphases:    P0:28 P1:12 P2:15 P3:12 P4:15 P5:13 P6:11 P7:2\nkb ids:    197 defined, 0 TBC open\njira:      68/108 not yet created\n\nOK"
+    }
+  ],
+  "tests": {
+    "node": 350,
+    "jest": 35,
+    "vitest": 26,
+    "total": 411
+  },
+  "audit": {
+    "scope": "P1-T11 slice, shared role/runtime helpers and affected category validation/replay code",
+    "critical": 0,
+    "major": 0,
+    "minorFound": 1,
+    "minorFixed": 1,
+    "remaining": 0
+  }
+}

@@ -41,6 +41,12 @@ function RootNavigator() {
         <Stack.Protected guard={access.connect}>
           <Stack.Screen name="connect" />
         </Stack.Protected>
+        <Stack.Protected guard={access.services}>
+          <Stack.Screen
+            name="barber-services"
+            options={{ headerShown: true, title: 'Services & prices' }}
+          />
+        </Stack.Protected>
         <Stack.Protected guard={access.auth}>
           <Stack.Screen name="(auth)" />
         </Stack.Protected>

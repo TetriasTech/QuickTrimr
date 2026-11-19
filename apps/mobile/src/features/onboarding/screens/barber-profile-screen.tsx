@@ -18,6 +18,7 @@ import {
   type CompleteBarberProfileResponse,
 } from '@quicktrimr/validation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Text, View } from 'react-native';
@@ -317,6 +318,11 @@ function BarberProfileForm({
         Localities dataset, CC BY 4.0.
       </Text>
       <ConnectCard />
+      <Button
+        label="Services & prices"
+        variant="secondary"
+        onPress={() => router.push('/barber-services')}
+      />
       <SignOutButton />
     </Screen>
   );

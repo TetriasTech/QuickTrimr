@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import {
-  integerCentsSchema,
+  postgresIntegerCentsSchema,
   nonEmptyStringSchema,
   nonNegativeIntegerSchema,
   postgresUuidSchema,
@@ -9,17 +9,12 @@ import {
 } from '../primitives.ts';
 import { requestObject } from '../request-object.ts';
 
-// Physical PostgreSQL integer storage boundary, not a configurable price policy.
-const categoryCentsSchema = integerCentsSchema.refine(
-  (value) => value <= 2_147_483_647,
-  'Must fit integer-cent storage',
-);
 const categoryFields = {
   displayName: nonEmptyStringSchema.trim().min(1),
   description: z.string().optional(),
   displayOrder: nonNegativeIntegerSchema,
-  minPriceCents: categoryCentsSchema,
-  maxPriceCents: categoryCentsSchema,
+  minPriceCents: postgresIntegerCentsSchema,
+  maxPriceCents: postgresIntegerCentsSchema,
 };
 function priceRange(
   value: { minPriceCents: number; maxPriceCents: number },

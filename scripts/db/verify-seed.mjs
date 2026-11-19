@@ -293,6 +293,7 @@ async function candidates(status) {
     ]),
   );
   rows.profiles.id = users.candidateProfile;
+  rows.barber_services.barber_id = users.barberA;
   rows.service_categories = categoryFixture(rows.service_categories.id);
   rows.client_profiles.id = users.candidateClient;
   rows.barber_profiles.id = users.candidateBarber;
@@ -367,7 +368,7 @@ async function checkApi(status) {
             session.token,
             {
               method,
-              ...(table === 'service_categories'
+              ...(['service_categories', 'barber_services'].includes(table)
                 ? { httpStatus: 403, code: '42501' }
                 : {}),
               ...(method === 'POST'

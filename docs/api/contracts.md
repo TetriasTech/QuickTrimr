@@ -440,7 +440,7 @@ Owner ticket: P1-T11. Caller: **user**. Roles: barber.
 
 Rules: `RULE-SERVICE-04`.
 
-Own service only; idempotent archive, preserve history and booking snapshots.
+Own service only; foreign and unknown IDs return not_found. Idempotent archive preserves history, service identity and booking snapshots; append one audit for the actual change.
 
 Shared request schema: `archiveBarberServiceRequestSchema`.
 Shared response schema: `archiveBarberServiceResponseSchema`, `archiveServiceCategoryResponseSchema`.
@@ -2149,9 +2149,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P1-T11. Caller: **user**. Roles: barber.
 
-Rules: `RULE-SERVICE-02`, `RULE-SERVICE-03`, `RULE-SERVICE-04`.
+Rules: `RULE-SERVICE-02`, `RULE-SERVICE-03`, `RULE-SERVICE-04`, `RULE-SERVICE-05`, `RULE-SERVICE-06`, `ADR-013`.
 
-Own service only. Server checks price against the category’s current configured bounds; old booking snapshots do not change.
+Own service only, keyed by the verified barber and category. Reuse the service ID on reactivation; enabled=false archives. Server checks current category bounds atomically; booking snapshots never change. Actual mutations append previous/new audit values.
 
 Shared request schema: `upsertBarberServiceRequestSchema`.
 Shared response schema: `upsertBarberServiceResponseSchema`.

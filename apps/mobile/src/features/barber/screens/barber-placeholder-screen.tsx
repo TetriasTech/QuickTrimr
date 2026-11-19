@@ -1,4 +1,5 @@
-import { Screen, spacing, typography } from '@quicktrimr/ui';
+import { Button, Screen, spacing, typography } from '@quicktrimr/ui';
+import { router } from 'expo-router';
 import { Text } from 'react-native';
 
 import { SignOutButton } from '@/features/auth/screens/sign-out-button';
@@ -13,6 +14,10 @@ export function BarberPlaceholderScreen() {
         being prepared.
       </Text>
       <ConnectCard />
+      <Button
+        label="Services & prices"
+        onPress={() => router.push('/barber-services')}
+      />
       <SignOutButton />
     </Screen>
   );

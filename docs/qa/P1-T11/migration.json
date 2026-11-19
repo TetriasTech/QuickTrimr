@@ -1,0 +1,10 @@
+{
+  "ticket": "P1-T11 / TRIMR-41",
+  "result": "PASS",
+  "isolation": "separate local database; platform DDL only; removed after verification",
+  "checks": [
+    "All 12 migrations replay; one barber/category key, RLS, SELECT-only policies and no direct DML grants",
+    "Duplicate legacy services reject atomically without selecting/deleting a historical row; corrected seeded upgrade preserves all service IDs/prices and booking snapshots",
+    "Two insert-only seed reruns preserve the upgraded services and bookings"
+  ]
+}
