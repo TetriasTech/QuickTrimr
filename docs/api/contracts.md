@@ -1902,7 +1902,7 @@ Owner ticket: P2-T01. Caller: **user**. Roles: barber.
 
 Rules: `RULE-AVAIL-01`, `RULE-AVAIL-02`, `RULE-AVAIL-08`, `RULE-RELY-06`.
 
-Own session only. Recheck onboarding and current reliability under a parent-row lock. Atomically replace any prior active session. Session bounds come from CFG-AVAIL-SESSION-RADIUS-KM and CFG-AVAIL-SESSION-MAX-HOURS. RULE-AVAIL-05 is enforced at acceptance by P2-T12.
+Own session only. Recheck onboarding and current reliability under a parent-row lock. Atomically replace any prior active session. Session bounds come from CFG-AVAIL-SESSION-RADIUS-KM and CFG-AVAIL-SESSION-MAX-HOURS. RULE-AVAIL-05 is enforced at acceptance by P2-T12. GET on the same route is the P2-T02 owner-only state/config read (no query parameters), validated by ownAvailableNowStateSchema. Manual directoryId input resolves on the server.
 
 Shared request schema: `startAvailableNowSessionRequestSchema`.
 Shared response schema: `startAvailableNowSessionResponseSchema`, `updateAvailableNowSessionResponseSchema`.
@@ -1912,11 +1912,11 @@ Request (decoded envelope only for Stripe):
 
 ```json
 {
+  "radiusKm": 8,
+  "availableUntil": "2026-08-05T09:00:00Z",
   "lat": -37.8136,
   "lng": 144.9631,
-  "locationSource": "gps",
-  "radiusKm": 8,
-  "availableUntil": "2026-08-05T09:00:00Z"
+  "locationSource": "gps"
 }
 ```
 
@@ -2030,7 +2030,7 @@ Owner ticket: P2-T01. Caller: **user**. Roles: barber.
 
 Rules: `RULE-AVAIL-02`, `RULE-AVAIL-08`, `RULE-RELY-06`.
 
-Own active session only; validate future available-until and current eligibility server-side, never infer eligibility from body state.
+Own active session only; validate future available-until and current eligibility server-side, never infer eligibility from body state. A manual directoryId resolves server-side; keepLocation=true preserves the own stored point. Location variants are mutually exclusive.
 
 Shared request schema: `updateAvailableNowSessionRequestSchema`.
 Shared response schema: `startAvailableNowSessionResponseSchema`, `updateAvailableNowSessionResponseSchema`.
@@ -2040,12 +2040,12 @@ Request (decoded envelope only for Stripe):
 
 ```json
 {
-  "sessionId": "11111111-1111-4111-8111-111111111111",
+  "radiusKm": 10,
+  "availableUntil": "2026-08-05T09:00:00Z",
   "lat": -37.8136,
   "lng": 144.9631,
   "locationSource": "manual",
-  "radiusKm": 10,
-  "availableUntil": "2026-08-05T09:00:00Z"
+  "sessionId": "11111111-1111-4111-8111-111111111111"
 }
 ```
 

@@ -12,6 +12,7 @@ test('signed-out sessions can access only the auth group', () => {
     modals: false,
     connect: false,
     services: false,
+    availability: false,
   });
 });
 
@@ -27,6 +28,7 @@ test('incomplete sessions reach onboarding and only barbers reach the Connect ca
         modals: false,
         connect: role === 'barber',
         services: role === 'barber',
+        availability: role === 'barber',
       },
     );
   }
@@ -47,6 +49,7 @@ test('complete client sessions reach the client journey and shared modals', () =
       modals: true,
       connect: false,
       services: false,
+      availability: false,
     },
   );
 });
@@ -66,6 +69,7 @@ test('complete barber sessions reach the barber journey and shared modals', () =
       modals: true,
       connect: true,
       services: true,
+      availability: true,
     },
   );
 });

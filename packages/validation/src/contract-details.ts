@@ -269,7 +269,7 @@ export const CONTRACT_DETAILS = {
     'P2-T01',
     [b],
     ['RULE-AVAIL-01', 'RULE-AVAIL-02', 'RULE-AVAIL-08', 'RULE-RELY-06'],
-    'Own session only. Recheck onboarding and current reliability under a parent-row lock. Atomically replace any prior active session. Session bounds come from CFG-AVAIL-SESSION-RADIUS-KM and CFG-AVAIL-SESSION-MAX-HOURS. RULE-AVAIL-05 is enforced at acceptance by P2-T12.',
+    'Own session only. Recheck onboarding and current reliability under a parent-row lock. Atomically replace any prior active session. Session bounds come from CFG-AVAIL-SESSION-RADIUS-KM and CFG-AVAIL-SESSION-MAX-HOURS. RULE-AVAIL-05 is enforced at acceptance by P2-T12. GET on the same route is the P2-T02 owner-only state/config read (no query parameters), validated by ownAvailableNowStateSchema. Manual directoryId input resolves on the server.',
     [
       error(
         403,
@@ -283,7 +283,7 @@ export const CONTRACT_DETAILS = {
     'P2-T01',
     [b],
     ['RULE-AVAIL-02', 'RULE-AVAIL-08', 'RULE-RELY-06'],
-    'Own active session only; validate future available-until and current eligibility server-side, never infer eligibility from body state.',
+    'Own active session only; validate future available-until and current eligibility server-side, never infer eligibility from body state. A manual directoryId resolves server-side; keepLocation=true preserves the own stored point. Location variants are mutually exclusive.',
     [
       notFound,
       transition,
