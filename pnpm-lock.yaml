@@ -500,6 +500,32 @@ importers:
         specifier: 2.7.0
         version: 2.7.0
 
+  supabase/functions/start-available-now-session:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
+  supabase/functions/stop-available-now-session:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
   supabase/functions/stripe-webhook:
     dependencies:
       '@quicktrimr/domain':
@@ -517,6 +543,19 @@ importers:
       zod:
         specifier: 4.6.5
         version: 4.6.5
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
+  supabase/functions/update-available-now-session:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
     devDependencies:
       '@types/deno':
         specifier: 2.7.0

@@ -1900,9 +1900,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P2-T01. Caller: **user**. Roles: barber.
 
-Rules: `RULE-AVAIL-01`, `RULE-AVAIL-02`, `RULE-AVAIL-05`, `RULE-RELY-06`.
+Rules: `RULE-AVAIL-01`, `RULE-AVAIL-02`, `RULE-AVAIL-08`, `RULE-RELY-06`.
 
-Own session only. Recheck onboarding, current reliability and one-active-job/session invariants server-side under concurrency.
+Own session only. Recheck onboarding and current reliability under a parent-row lock. Atomically replace any prior active session. Session bounds come from CFG-AVAIL-SESSION-RADIUS-KM and CFG-AVAIL-SESSION-MAX-HOURS. RULE-AVAIL-05 is enforced at acceptance by P2-T12.
 
 Shared request schema: `startAvailableNowSessionRequestSchema`.
 Shared response schema: `startAvailableNowSessionResponseSchema`, `updateAvailableNowSessionResponseSchema`.
@@ -1942,7 +1942,6 @@ Request (decoded envelope only for Stripe):
 | 403 | `{"error":"forbidden"}` | Caller lacks the required role, ownership or internal-service permission. |
 | 422 | `{"error":"validation_failed","fields":{"_request":"Invalid request or server-side business validation"}}` | Malformed input or server-side business validation failed; fields identifies invalid inputs. |
 | 500 | `{"error":"internal_error"}` | Unexpected failure; safe error only, no internals or provider payload. |
-| 409 | `{"error":"session_already_active"}` | Barber already has an active session. |
 | 403 | `{"error":"onboarding_incomplete"}` | Barber is not yet eligible to publish availability. |
 | 409 | `{"error":"barber_unavailable"}` | Current onboarding, reliability, cooldown or availability state prevents this action. |
 
@@ -2029,7 +2028,7 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P2-T01. Caller: **user**. Roles: barber.
 
-Rules: `RULE-AVAIL-02`, `RULE-AVAIL-05`.
+Rules: `RULE-AVAIL-02`, `RULE-AVAIL-08`, `RULE-RELY-06`.
 
 Own active session only; validate future available-until and current eligibility server-side, never infer eligibility from body state.
 
@@ -2075,6 +2074,7 @@ Request (decoded envelope only for Stripe):
 | 404 | `{"error":"not_found"}` | Requested entity is missing or not accessible; never expose another user’s record. |
 | 409 | `{"error":"invalid_status_transition"}` | Current server-owned state does not permit the requested action. |
 | 409 | `{"error":"barber_unavailable"}` | Current onboarding, reliability, cooldown or availability state prevents this action. |
+| 403 | `{"error":"onboarding_incomplete"}` | Barber is not yet eligible to publish availability. |
 
 ### update-eta
 

@@ -268,14 +268,9 @@ export const CONTRACT_DETAILS = {
   'start-available-now-session': user(
     'P2-T01',
     [b],
-    ['RULE-AVAIL-01', 'RULE-AVAIL-02', 'RULE-AVAIL-05', 'RULE-RELY-06'],
-    'Own session only. Recheck onboarding, current reliability and one-active-job/session invariants server-side under concurrency.',
+    ['RULE-AVAIL-01', 'RULE-AVAIL-02', 'RULE-AVAIL-08', 'RULE-RELY-06'],
+    'Own session only. Recheck onboarding and current reliability under a parent-row lock. Atomically replace any prior active session. Session bounds come from CFG-AVAIL-SESSION-RADIUS-KM and CFG-AVAIL-SESSION-MAX-HOURS. RULE-AVAIL-05 is enforced at acceptance by P2-T12.',
     [
-      error(
-        409,
-        'session_already_active',
-        'Barber already has an active session.',
-      ),
       error(
         403,
         'onboarding_incomplete',
@@ -287,9 +282,18 @@ export const CONTRACT_DETAILS = {
   'update-available-now-session': user(
     'P2-T01',
     [b],
-    ['RULE-AVAIL-02', 'RULE-AVAIL-05'],
+    ['RULE-AVAIL-02', 'RULE-AVAIL-08', 'RULE-RELY-06'],
     'Own active session only; validate future available-until and current eligibility server-side, never infer eligibility from body state.',
-    [notFound, transition, barberUnavailable],
+    [
+      notFound,
+      transition,
+      barberUnavailable,
+      error(
+        403,
+        'onboarding_incomplete',
+        'Barber is not yet eligible to publish availability.',
+      ),
+    ],
   ),
   'stop-available-now-session': user(
     'P2-T01',

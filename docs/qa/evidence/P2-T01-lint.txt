@@ -1,0 +1,50 @@
+$ pnpm --recursive --if-present lint && eslint scripts *.mjs --max-warnings 0
+Scope: 24 of 25 workspace projects
+packages/shared lint$ eslint . --max-warnings 0
+packages/shared lint: Done
+packages/domain lint$ eslint . --max-warnings 0
+packages/validation lint$ eslint . --max-warnings 0
+packages/ui lint$ eslint . --max-warnings 0
+supabase/functions/workspace-contract lint$ eslint . --max-warnings 0
+packages/domain lint: Done
+supabase/functions/workspace-contract lint: Done
+packages/validation lint: Done
+packages/ui lint: Done
+apps/mobile lint$ eslint . --max-warnings 0
+apps/admin lint$ eslint . --max-warnings 0
+supabase/functions/_shared lint$ eslint . --max-warnings 0
+.../functions/archive-barber-service lint$ eslint . --max-warnings 0
+.../functions/archive-barber-service lint: Done
+.../functions/archive-service-category lint$ eslint . --max-warnings 0
+supabase/functions/_shared lint: Done
+.../functions/complete-barber-profile lint$ eslint . --max-warnings 0
+.../functions/archive-service-category lint: Done
+.../functions/complete-client-profile lint$ eslint . --max-warnings 0
+apps/mobile lint: Done
+.../functions/create-or-sync-profile lint$ eslint . --max-warnings 0
+apps/admin lint: Done
+.../functions/create-service-category lint$ eslint . --max-warnings 0
+.../functions/complete-barber-profile lint: Done
+...create-stripe-connect-onboarding-link lint$ eslint . --max-warnings 0
+.../functions/complete-client-profile lint: Done
+.../functions/get-public-barber-profile lint$ eslint . --max-warnings 0
+.../functions/create-or-sync-profile lint: Done
+.../functions/manage-client-addresses lint$ eslint . --max-warnings 0
+.../functions/create-service-category lint: Done
+.../refresh-stripe-connect-status lint$ eslint . --max-warnings 0
+.../functions/get-public-barber-profile lint: Done
+.../start-available-now-session lint$ eslint . --max-warnings 0
+...create-stripe-connect-onboarding-link lint: Done
+.../functions/stop-available-now-session lint$ eslint . --max-warnings 0
+.../functions/manage-client-addresses lint: Done
+supabase/functions/stripe-webhook lint$ eslint . --max-warnings 0
+.../refresh-stripe-connect-status lint: Done
+.../update-available-now-session lint$ eslint . --max-warnings 0
+.../start-available-now-session lint: Done
+.../functions/update-service-category lint$ eslint . --max-warnings 0
+.../functions/stop-available-now-session lint: Done
+supabase/functions/upsert-barber-service lint$ eslint . --max-warnings 0
+supabase/functions/stripe-webhook lint: Done
+.../update-available-now-session lint: Done
+.../functions/update-service-category lint: Done
+supabase/functions/upsert-barber-service lint: Done

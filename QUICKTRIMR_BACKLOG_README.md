@@ -2850,7 +2850,7 @@ priority: Highest
 jiraKey: TRIMR-44
 dependsOn: [P0-D04, P0-D06, P0-T06, P0-T10, P1-T06]
 affects: [P2-T02, P2-T03, P2-T04, P2-T08, P2-T12, P3-T12]
-knowledgeBase: [ADR-008, RULE-AVAIL-01, RULE-AVAIL-02, RULE-DISCOVERY-05, RULE-RELY-06, ENUM-AVAIL-STATUS]
+knowledgeBase: [ADR-008, RULE-AVAIL-01, RULE-AVAIL-02, RULE-AVAIL-08, CFG-AVAIL-SESSION-RADIUS-KM, CFG-AVAIL-SESSION-MAX-HOURS, RULE-DISCOVERY-05, RULE-RELY-06, ENUM-AVAIL-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, database, maps]
 ```
@@ -2869,11 +2869,11 @@ A shared server-side read-side eligibility helper for `RULE-RELY-06`, reused by 
 
 Session row: barber id, private `geography(Point, 4326)` location, server-resolved public-area reference from `P1-T06`, location source (`gps` or `manual`), radius, available-until timestamp, status (`ENUM-AVAIL-STATUS`), and timestamps. Starting or updating a session resolves the private point against the versioned SAL polygons server-side; the client cannot choose or override the public area.
 
-The partial unique index from `P0-T10` enforces one `active` session per barber. Starting a session while one is active either replaces it or is rejected — decide, document, and make it the same answer every time.
+The partial unique index from `P0-T10` enforces one `active` session per barber. Per `RULE-AVAIL-01`, starting a session closes any previous active session atomically; it does not reject merely because a session is already active. Preserve the index as the final concurrency guard.
 
 A discovery query helper that returns sessions which are `active`, not past their available-until, and within radius of a client point — using a PostGIS distance operator against the GiST index, never a full scan.
 
-Radius and available-until bounds, so a session cannot be set to 500 km or 30 days.
+Apply Andrew's approved `RULE-AVAIL-08`: radius 1–50 km inclusive with fractions allowed, and `serverNow < availableUntil <= serverNow + 12 hours` on every start/update. Read the bounds from `CFG-AVAIL-SESSION-RADIUS-KM` and `CFG-AVAIL-SESSION-MAX-HOURS`. `TBC-AVAIL-SESSION-BOUNDS` is resolved in place. The Scheduled service-radius bounds and Available Now request-expiry value do not define session bounds.
 
 RLS: a barber reads and writes only their own sessions; the discovery path reads through the search function, not directly.
 
@@ -2889,8 +2889,8 @@ RLS: a barber reads and writes only their own sessions; the discovery path reads
   "availableUntil": "2026-08-05T09:00:00Z", "locationSource": "gps",
   "approximateArea": { "id": "sal:2021:example", "label": "Melbourne" } }
 
-// 409 — a session is already active
-{ "error": "session_already_active" }
+// A new start closes the previous active session atomically (RULE-AVAIL-01).
+// The successful response describes the newly current session.
 
 // 422 — available-until in the past
 { "error": "validation_failed",
@@ -2914,14 +2914,14 @@ RLS: a barber reads and writes only their own sessions; the discovery path reads
 - [ ] Radius and available-until are bounded; out-of-bounds values are rejected with field-level errors.
 - [ ] A barber not satisfying `RULE-ONBOARD-04` cannot start a session.
 - [ ] Direct start/update activation calls reject a suspended barber or active cooldown with `409 barber_unavailable`; a stop is still permitted. Evaluate server-owned deadlines, never client state, without restarting cooldowns.
-- [ ] The shared eligibility helper is reused at the other Phase 2 entry points; seeded tests cover every reliability level and just before/at/after a cooldown deadline.
+- [ ] Session activation uses the shared server-side eligibility helper; seeded tests cover every reliability level and just before/at/after a cooldown deadline. `P2-T04`, `P2-T08` and `P2-T12` must reuse this same helper when their entry points are delivered; this ticket does not implement those later slices.
 - [ ] Barber A cannot read or write barber B's session.
 
 **Tests** — parallel start calls producing one active session; server-side public-area resolution including a boundary case; crafted public-area input ignored or rejected; `EXPLAIN` asserting index usage; each excluded status absent from discovery; bounds at and either side of the limits; onboarding-incomplete rejection.
 
 **Out of scope** — the toggle UI (`P2-T02`); auto-disable (`P2-T03`); the search function (`P2-T04`).
 
-**Sync notes** — `P2-T04` queries these sessions and `P2-T12` transitions one to `busy`. Changing the status semantics changes who is discoverable.
+**Sync notes** — `P2-T04` queries these sessions and `P2-T12` transitions one to `busy`. Changing the status semantics changes who is discoverable. `P2-T04`, `P2-T08` and `P2-T12` consume the shared eligibility helper defined here; their own tests prove that integration. `P2-T02` consumes the approved `RULE-AVAIL-08` session bounds (`TBC-AVAIL-SESSION-BOUNDS` is resolved). Starting-session replacement is already decided by `RULE-AVAIL-01`; the shared contract metadata reflects atomic replacement. The private query helper is a bounded candidate stream, not the final client ranking or pagination contract. Future restriction writers and activation/request/acceptance transactions lock the profile parent before reliability/session children; do not introduce a child-first writer. A start closes an old active session as `cancelled`; stop is idempotent for `manually_disabled`, rejects other non-active states, and never cancels a booking. Updating an ended session cannot reactivate it. `RULE-AVAIL-05` remains an acceptance invariant in `P2-T12`, not a guessed active-booking status set in this slice.
 
 ---
 

@@ -111,3 +111,12 @@ verify_jwt = true
 
 [functions.get-public-barber-profile]
 verify_jwt = true
+
+[functions.start-available-now-session]
+verify_jwt = true
+
+[functions.update-available-now-session]
+verify_jwt = true
+
+[functions.stop-available-now-session]
+verify_jwt = true
