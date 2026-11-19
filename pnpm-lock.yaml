@@ -352,6 +352,19 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
 
+  supabase/functions/archive-service-category:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
   supabase/functions/complete-barber-profile:
     dependencies:
       '@quicktrimr/shared':
@@ -379,6 +392,19 @@ importers:
         version: 2.7.0
 
   supabase/functions/create-or-sync-profile:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
+  supabase/functions/create-service-category:
     dependencies:
       '@quicktrimr/shared':
         specifier: workspace:*
@@ -459,6 +485,19 @@ importers:
       zod:
         specifier: 4.6.5
         version: 4.6.5
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
+  supabase/functions/update-service-category:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
     devDependencies:
       '@types/deno':
         specifier: 2.7.0

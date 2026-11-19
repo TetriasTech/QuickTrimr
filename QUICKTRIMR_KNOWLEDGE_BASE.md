@@ -496,6 +496,8 @@ Every admin action is server-side authorised and audit logged (`ADR-013`). Hidin
 | 4 | `haircut_beard` | Haircut + Beard | 3,000 | 20,000 |
 | 5 | `skin_fade_beard` | Skin Fade + Beard | 3,500 | 22,500 |
 
+- `RULE-SERVICE-06` — Andrew approved Option A on 2026-11-19: reject a category price-bound update if any active (not archived) barber service would have a price below the new minimum or above the new maximum. Exact boundary prices remain valid. Archived barber services do not block the update. The category change never reprices or archives a barber service and never changes existing booking snapshots. Enforce the check atomically with concurrent service-price, category and archive changes, so a conflicting active price cannot slip through. An admin must resolve the affected active prices before narrowing the category range.
+
 ### Discovery
 
 - `RULE-DISCOVERY-01` — Discovery filters server-side by service category, booking type, geography and barber eligibility, using PostGIS (`ADR-008`). Results are paginated or bounded.
@@ -1051,6 +1053,7 @@ Config stored in the database lives in a platform config table, is updatable onl
 
 | ID | Question | Blocks | Decided by |
 |---|---|---|---|
+| `TBC-SERVICE-PRICE-BOUND-CHANGES` | **RESOLVED → `RULE-SERVICE-06`** — Andrew approved Option A on 2026-11-19: reject narrowing until active prices fit, ignore archived services and preserve booking snapshots. | `P1-T10` category updates; downstream pricing, discovery/request validation and `P5-T11` impact confirmation | Andrew |
 | `TBC-SERVICE-CATEGORIES` | **RESOLVED → `RULE-SERVICE-05`** | Catalogue, barber pricing, discovery, seed data | `P0-D01` |
 | `TBC-COMMISSION-PCT` | **RESOLVED → `RULE-PAY-11`** — 20% of booked service price, confirmed by Andrew on 2026-09-30. | Every payment, earning and payout row | `P0-D02` |
 | `TBC-STRIPE-FEES` | **RESOLVED → `RULE-PAY-11`** — QuickTrimr absorbs payment-processing fees, including retained fees after refunds; no client card surcharge. | Commission maths, refunds, barber net | `P0-D02` |

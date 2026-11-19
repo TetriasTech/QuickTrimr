@@ -202,18 +202,24 @@ export const CONTRACT_DETAILS = {
     [a],
     ['RULE-SERVICE-01', 'RULE-SERVICE-03'],
     'Audited admin mutation. Slug is stable; max price must exceed min. Values are integer cents, not a new launch catalogue or default pricing decision.',
+    [error(409, 'slug_exists', 'The slug is already assigned to a category.')],
   ),
   'update-service-category': user(
     'P1-T10',
     [a],
-    ['RULE-SERVICE-03', 'RULE-SERVICE-04'],
-    'Update a category without changing booking snapshots. Slug is not an update input; the server must reject attempted slug mutation.',
+    ['RULE-SERVICE-03', 'RULE-SERVICE-04', 'RULE-SERVICE-06'],
+    'Update a category without changing booking snapshots. Slug is not an update input. Reject bounds excluding active barber prices; archived services do not block. Omitted description is preserved.',
     [
       notFound,
       error(
         409,
         'slug_immutable',
         'An attempt was made to change the category’s stable slug.',
+      ),
+      error(
+        409,
+        'category_price_conflict',
+        'The proposed range would exclude an active barber price; correct the affected active prices first.',
       ),
     ],
   ),

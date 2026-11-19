@@ -63,7 +63,7 @@ function checkPolicies() {
       `select json_agg(json_build_object('table', tablename, 'cmd', cmd, 'roles', roles, 'qual', qual, 'check', with_check)) from pg_policies where schemaname = 'public';`,
     ),
   );
-  assert.equal(policies.length, 32);
+  assert.equal(policies.length, 33);
   assert.ok(
     policies.every(
       (policy) =>
@@ -136,7 +136,7 @@ function checkPolicies() {
       );
   }
   console.log(
-    'Policies: PASS (21 RLS tables, 32 SELECT-only database-role policies, private no-argument definer with empty search path, explicit column grants, 2 guarded read-only views).',
+    'Policies: PASS (21 RLS tables, 33 SELECT-only database-role policies including the active catalogue, private no-argument definer with empty search path, explicit column grants, 2 guarded read-only views).',
   );
 }
 
@@ -148,6 +148,7 @@ async function expectRead(status, table, id, token, expected) {
 
 function owns(identity, table, row, users) {
   const role = roleOf(identity);
+  if (table === 'service_categories' && row.archived_at === null) return true; // Active catalogue is public to every authenticated identity.
   if (!ownReadTables[role]?.includes(table)) return false;
   if (['profiles', 'client_profiles', 'barber_profiles'].includes(table))
     return row.id === users[identity];
@@ -481,6 +482,9 @@ export async function verifyBaselineApi({
             token,
             {
               method,
+              ...(table === 'service_categories'
+                ? { httpStatus: 403, code: '42501' }
+                : {}),
               ...(method === 'POST'
                 ? {
                     httpStatus: 403,

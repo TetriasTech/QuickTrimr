@@ -1,0 +1,41 @@
+{
+  "ticket": "P1-T10 / TRIMR-40",
+  "result": "PASS",
+  "transport": "local Auth + Edge + PostgREST",
+  "checks": [
+    "JWT/role denial for all mutations, signed hostile metadata, direct RPC denial, immediate role revocation",
+    "CRUD validation, immutable/unique slugs, missing rows, exact previous/new audit, no-op preservation",
+    "Active-price min/max conflicts, exact inclusive boundaries, ignored archived prices, reactivation integrity",
+    "Six real parallel range/price races preserve invariant; original booking and line-item snapshots unchanged",
+    "Injected audit failure rolls back mutation and audit atomically",
+    "Four parallel duplicate creates: one row/audit; four parallel archives: one timestamp/audit",
+    "Sorted active catalogue excludes archives; archived history readable only by related owners/admin; new archived selections rejected",
+    "Anonymous catalogue denial; admin/client/barber/service-key POST/PATCH/DELETE/PUT/upsert denied; privileged DELETE/TRUNCATE/slug guards; no delete policy"
+  ],
+  "raceOutcomes": [
+    {
+      "boundsStatus": 409,
+      "priceStatus": 200
+    },
+    {
+      "boundsStatus": 409,
+      "priceStatus": 200
+    },
+    {
+      "boundsStatus": 409,
+      "priceStatus": 200
+    },
+    {
+      "boundsStatus": 200,
+      "priceStatus": 400
+    },
+    {
+      "boundsStatus": 200,
+      "priceStatus": 400
+    },
+    {
+      "boundsStatus": 200,
+      "priceStatus": 400
+    }
+  ]
+}

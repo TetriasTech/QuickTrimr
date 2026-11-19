@@ -24,6 +24,20 @@ export const bookingSnapshotExample = Object.freeze({
   barber_net_cents: 3600,
 });
 
+// Synthetic category within RULE-SERVICE-05's Haircut range, never runtime data.
+export function categoryFixture(id = randomUUID()) {
+  return {
+    id,
+    slug: `fixture-${id}`,
+    display_name: 'Disposable catalogue fixture',
+    description: '',
+    display_order: 0,
+    min_price_cents: 2000,
+    max_price_cents: 15000,
+    archived_at: null,
+  };
+}
+
 export function coreFixtures(users) {
   const ids = Object.fromEntries(
     [
@@ -64,7 +78,7 @@ export function coreFixtures(users) {
     client_profiles: { id: users.clientB },
     barber_profiles: { id: users.barberB, service_area: location },
     client_addresses: { id: ids.address, client_id: users.clientB, location },
-    service_categories: { id: ids.category },
+    service_categories: categoryFixture(ids.category),
     barber_services: {
       id: ids.service,
       barber_id: users.barberB,
@@ -169,6 +183,9 @@ export function coreFixtures(users) {
     ]),
   );
   candidates.profiles = profile(users.candidateProfile, USER_ROLE_VALUE.CLIENT);
+  candidates.service_categories = categoryFixture(
+    candidates.service_categories.id,
+  );
   candidates.client_profiles.id = users.candidateClient;
   candidates.barber_profiles.id = users.candidateBarber;
   candidates.available_now_sessions.barber_id = users.barberA;

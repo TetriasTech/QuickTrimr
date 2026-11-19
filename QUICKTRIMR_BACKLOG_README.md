@@ -2582,8 +2582,8 @@ priority: High
 jiraKey: TRIMR-40
 dependsOn: [P0-D01, P0-T10, P0-T11]
 affects: [P1-T11, P1-T12, P2-T04, P5-T11]
-knowledgeBase: [ADR-013, RULE-SERVICE-01, RULE-SERVICE-03, RULE-SERVICE-05, RULE-ADMIN-01]
-blockedByTbc: []
+knowledgeBase: [ADR-013, RULE-SERVICE-01, RULE-SERVICE-03, RULE-SERVICE-05, RULE-ADMIN-01, RULE-SERVICE-06]
+blockedByTbc: [TBC-SERVICE-PRICE-BOUND-CHANGES]
 labels: [quicktrimr, phase-1, backend, admin]
 ```
 
@@ -2609,6 +2609,10 @@ RLS: active categories readable by any authenticated user; writes restricted to 
 
 Audit log for every admin mutation (`ADR-013`).
 
+`RULE-SERVICE-06`: reject a bounds update with `409 category_price_conflict` if an active barber service would fall outside the new inclusive range. Ignore archived services and preserve all booking snapshots. Add the `barber_services.archived_at` marker needed by this check; P1-T11 reuses it for its own archive operation. Serialize category changes with linked service writes through database integrity guards. This adds no barber-pricing mutation or UI.
+
+Active list contract: an authenticated PostgREST query to `service_categories` with `archived_at=is.null`, ordered by display order and slug. Archived categories remain readable through existing owner-linked services/bookings; they do not appear in new selections.
+
 **Contract example** — `update-service-category`
 
 ```jsonc
@@ -2630,6 +2634,10 @@ Audit log for every admin mutation (`ADR-013`).
 
 // 409 — attempting to change an immutable slug
 { "error": "slug_immutable" }
+
+// 409 — would exclude an existing active barber price
+{ "error": "category_price_conflict",
+  "fields": { "maxPriceCents": "Would exclude an active barber price" } }
 ```
 
 **Acceptance criteria**
@@ -2644,12 +2652,15 @@ Audit log for every admin mutation (`ADR-013`).
 - [ ] A slug cannot be changed after creation.
 - [ ] `maxPriceCents` must exceed `minPriceCents`; inverted bounds are rejected.
 - [ ] Every admin mutation writes an audit log with the previous and new values.
+- [ ] A narrowed range that excludes an active barber price is rejected atomically; exact boundary prices are accepted.
+- [ ] Archived barber services do not block a bounds change, and existing booking amounts remain unchanged.
+- [ ] Concurrent category and service-price changes cannot leave an active price outside its category bounds.
 
-**Tests** — role denial at the API for barber and client on all three mutations; archive idempotency; archived category absent from selection but resolvable historically; slug immutability; inverted price bounds rejected.
+**Tests** — role denial at the API for barber and client on all three mutations; archive idempotency; archived category absent from selection but resolvable historically; slug immutability; inverted price bounds rejected; active-price conflicts at either boundary; archived-service exclusion; unchanged booking snapshots; real parallel category/service-price writes.
 
 **Out of scope** — the admin UI (`P5-T11`); barber pricing (`P1-T11`).
 
-**Sync notes** — `P1-T11` prices against these bounds, `P1-T12` and `P2-T04` display and filter on them. Narrowing a price bound after barbers have set prices leaves existing rows outside the new range — decide what happens to them before changing a bound.
+**Sync notes** — `P1-T11` prices against these bounds, `P1-T12` and `P2-T04` display and filter on them. `RULE-SERVICE-06` resolves `TBC-SERVICE-PRICE-BOUND-CHANGES`: narrowing is rejected until active prices fit. `P1-T11` reuses the archival marker and category integrity guard. `P5-T11` counts affected active services and explains the rejection; archived services are excluded. `P1-T12`, `P2-T04` and `P2-T08` continue to use active catalogue data and unchanged booking snapshots.
 
 ---
 
@@ -2665,7 +2676,7 @@ priority: High
 jiraKey: TRIMR-41
 dependsOn: [P0-D01, P1-T06, P1-T10]
 affects: [P1-T12, P2-T04, P2-T08, P5-T03]
-knowledgeBase: [ADR-009, RULE-SERVICE-02, RULE-SERVICE-04, RULE-SERVICE-05, RULE-ONBOARD-04]
+knowledgeBase: [ADR-009, RULE-SERVICE-02, RULE-SERVICE-04, RULE-SERVICE-05, RULE-ONBOARD-04, RULE-SERVICE-06]
 blockedByTbc: []
 labels: [quicktrimr, phase-1, mobile, database]
 ```
@@ -2686,7 +2697,7 @@ Prices validated against the category's `minPriceCents` and `maxPriceCents` (`RU
 
 Price entry in dollars and cents, converted to integer cents at the boundary and never held as a float.
 
-Disabling a service archives the row rather than deleting it, so historical bookings still resolve.
+Disabling a service sets the `archived_at` marker delivered by P1-T10 rather than deleting it, so historical bookings still resolve. Preserve P1-T10's category-row locking and integrity guard when upserting or reactivating services (`RULE-SERVICE-06`).
 
 The screen states that a price change does not affect existing bookings (`RULE-SERVICE-04`) — a barber who raises prices and expects tomorrow's confirmed booking to follow will otherwise raise it as a bug.
 
@@ -3018,7 +3029,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P0-D01, P0-D04, P0-D06, P1-T09, P1-T11, P2-T01]
 affects: [P2-T05, P2-T06, P2-T07, P2-T09]
-knowledgeBase: [ADR-008, RULE-DISCOVERY-01, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-04, RULE-SERVICE-05, RULE-RELY-06, CFG-RELIABILITY-SEARCH-PENALTY]
+knowledgeBase: [ADR-008, RULE-DISCOVERY-01, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-04, RULE-SERVICE-05, RULE-RELY-06, CFG-RELIABILITY-SEARCH-PENALTY, RULE-SERVICE-06]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, maps, security]
 ```
@@ -3270,7 +3281,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P0-D01, P0-D02, P0-D03, P0-D04, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11, P2-T01]
 affects: [P2-T09, P2-T10, P2-T12, P2-T13, P2-T15, P3-T01, P3-T06, P4-T01]
-knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS]
+knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS, RULE-SERVICE-06]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, database]
 ```
@@ -6268,7 +6279,7 @@ priority: Medium
 jiraKey: null
 dependsOn: [P0-T17, P1-T02, P1-T10]
 affects: []
-knowledgeBase: [ADR-013, RULE-SERVICE-01, RULE-SERVICE-03, RULE-SERVICE-05, RULE-ADMIN-01]
+knowledgeBase: [ADR-013, RULE-SERVICE-01, RULE-SERVICE-03, RULE-SERVICE-05, RULE-ADMIN-01, RULE-SERVICE-06]
 blockedByTbc: []
 labels: [quicktrimr, phase-5, admin]
 ```
@@ -6287,7 +6298,7 @@ Create and edit forms for display name, description, order, and min and max pric
 
 **Before archiving**, show how many barbers currently offer the category and confirm.
 
-**Before narrowing a price bound**, show how many existing barber prices would fall outside the new range and state what happens to them.
+**Before narrowing a price bound**, show how many active barber prices would fall outside the new range and explain that the backend rejects the change until those prices fit (`RULE-SERVICE-06`). Exclude archived services; existing bookings remain unchanged.
 
 Drag or numeric reordering.
 

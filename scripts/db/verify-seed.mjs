@@ -13,7 +13,7 @@ import {
   assertRawBody,
   makeUsers,
 } from './api-test-helpers.mjs';
-import { insertSql, sqlValue } from './core-fixtures.mjs';
+import { categoryFixture, insertSql, sqlValue } from './core-fixtures.mjs';
 import { appendOnlyTables, coreTables } from './core-schema.mjs';
 import { localStatus } from './local-api.mjs';
 import { assertLocalProject, runLocal } from './local.mjs';
@@ -65,7 +65,13 @@ function checkDataset() {
   );
   assert.deepEqual(
     counts,
-    Object.fromEntries(coreTables.map((t) => [t, fixture.rows[t].length])),
+    Object.fromEntries(
+      coreTables.map((t) => [
+        t,
+        fixture.rows[t].length +
+          (t === 'audit_logs' ? fixture.rows.service_categories.length : 0),
+      ]),
+    ),
   );
   assert.equal(
     queryLocal('select count(*) from auth.users;'),
@@ -120,7 +126,7 @@ function checkDataset() {
 
 function checkNonDestructive() {
   const service = fixture.rows.barber_services[0];
-  const unrelated = { id: randomUUID() };
+  const unrelated = categoryFixture();
   const correction = {
     ...fixture.rows.audit_logs[0],
     id: randomUUID(),
@@ -145,7 +151,7 @@ function checkNonDestructive() {
   const failed = renderSeed()
     .replace(
       'begin;',
-      `begin; ${insertSql('service_categories', { id: randomUUID() })}`,
+      `begin; ${insertSql('service_categories', categoryFixture())}`,
     )
     .replace('commit;', 'select 1 / 0; commit;');
   assert.throws(() => queryLocal(failed), /Local database query failed/);
@@ -248,6 +254,7 @@ async function seedSessions(status) {
 
 function expectedRead(identity, table, row) {
   if (identity.role === USER_ROLE_VALUE.ADMIN) return true;
+  if (table === 'service_categories' && row.archived_at === null) return true;
   if (!ownReadTables[identity.role]?.includes(table)) return false;
   if (['profiles', 'client_profiles', 'barber_profiles'].includes(table))
     return row.id === identity.id;
@@ -286,6 +293,7 @@ async function candidates(status) {
     ]),
   );
   rows.profiles.id = users.candidateProfile;
+  rows.service_categories = categoryFixture(rows.service_categories.id);
   rows.client_profiles.id = users.candidateClient;
   rows.barber_profiles.id = users.candidateBarber;
   rows.available_now_sessions.status = SHARED_ENUMS['ENUM-AVAIL-STATUS'].find(
@@ -359,6 +367,9 @@ async function checkApi(status) {
             session.token,
             {
               method,
+              ...(table === 'service_categories'
+                ? { httpStatus: 403, code: '42501' }
+                : {}),
               ...(method === 'POST'
                 ? { body: postRows[table], httpStatus: 403, code: '42501' }
                 : {}),
