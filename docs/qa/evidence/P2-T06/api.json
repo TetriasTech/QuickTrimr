@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "environment": "disposable synthetic local facts; no hosted deployment or Stripe calls",
+  "checks": [
+    "45 real PostGIS results traverse default 20/20/5 opaque pages in stable UUID tie order, without duplicates or gaps",
+    "Card and immediate profile selected-service prices match, including category 25 outside the first 20 services",
+    "Strict raw public allowlists expose no private address/contact, exact distance or barber point; cross-user GET/POST/PATCH/DELETE remain denied",
+    "Selected lookup checks verified caller/stored client role and UUID; four-argument RPC is denied to anon and all authenticated roles",
+    "Live price updates read current integer cents on both screens; a changed filter rejects old cursors and succeeds from a fresh traversal",
+    "Archived selection returns null and disappears from search; loss of Connect eligibility removes the profile"
+  ],
+  "pages": [20, 20, 5]
+}

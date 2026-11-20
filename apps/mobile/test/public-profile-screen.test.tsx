@@ -181,3 +181,26 @@ test('eligibility lost between service pages removes the previously loaded profi
   );
   expect(screen.queryByText('A$45.50')).not.toBeOnTheScreen();
 });
+
+test('selected service beyond the first page appears immediately with current server cents, then explicitly becomes unavailable', async () => {
+  page.mockResolvedValue({
+    profile: {
+      ...profile,
+      services: [],
+      selectedService: {
+        ...profile.services[0]!,
+        priceCents: integerCentsSchema.parse(4625),
+      },
+    },
+  });
+  const cache = await mount();
+  await screen.findByText('A$46.25');
+  expect(page).toHaveBeenCalledTimes(1);
+  expect(screen.getByText(/Current price/)).toBeTruthy();
+  page.mockResolvedValue({
+    profile: { ...profile, services: [], selectedService: null },
+  });
+  await cache.invalidateQueries();
+  await screen.findByText(/This selected service is no longer available/);
+  expect(screen.queryByText('A$46.25')).toBeNull();
+});

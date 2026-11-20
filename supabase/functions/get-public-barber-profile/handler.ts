@@ -61,6 +61,7 @@ export function createPublicBarberProfileHandler({
             p_client_id: caller.userId,
             p_barber_id: parsed.data.barberId,
             p_after: parsed.data.servicesAfter ?? null,
+            p_service_category_id: parsed.data.serviceCategoryId ?? null,
           }),
           redirect: 'error',
           signal: AbortSignal.timeout(10_000),
@@ -94,6 +95,14 @@ export function createPublicBarberProfileHandler({
           }),
         },
       });
+      if (
+        parsed.data.serviceCategoryId &&
+        (profile.profile?.selectedService === undefined ||
+          (profile.profile.selectedService &&
+            profile.profile.selectedService.serviceCategoryId !==
+              parsed.data.serviceCategoryId))
+      )
+        throw new Error('Unexpected selected service.');
       if (profile.profile?.barberId !== parsed.data.barberId)
         throw new Error('Unexpected profile.');
       return json(profile, 200);

@@ -81,6 +81,7 @@ test('verified JWT supplies caller; strict public response and one bounded RPC',
     p_client_id: clientId,
     p_barber_id: profile.barberId,
     p_after: null,
+    p_service_category_id: null,
   });
   assert.equal(f.calls.length, 3);
 });
@@ -164,4 +165,27 @@ test('photo signing uses configured expiration and returns only the signed link'
   assert.equal('photoId' in body.profile, false);
   const unavailable = fixture({ result, photoStatus: 500 });
   assert.equal((await unavailable.invoke()).status, 500);
+});
+
+test('selected category is bounded inside the same role-verified RPC, never a route price', async () => {
+  const f = fixture({
+    result: {
+      photoId: null,
+      profile: { ...profile, selectedService: profile.services[0] },
+    },
+  });
+  const response = await f.invoke({
+    barberId: profile.barberId,
+    serviceCategoryId: profile.services[0].serviceCategoryId,
+  });
+  assert.equal(response.status, 200);
+  assert.equal(
+    (await response.json()).profile.selectedService.priceCents,
+    profile.services[0].priceCents,
+  );
+  assert.equal(
+    JSON.parse(f.calls.at(-1).options.body).p_service_category_id,
+    profile.services[0].serviceCategoryId,
+  );
+  assert.equal(f.calls.length, 3);
 });

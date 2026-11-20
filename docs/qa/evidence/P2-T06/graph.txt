@@ -1,0 +1,7 @@
+tickets:   108
+owners:    Andrew 58, Tony 50
+phases:    P0:28 P1:12 P2:15 P3:12 P4:15 P5:13 P6:11 P7:2
+kb ids:    214 defined, 0 TBC open
+jira:      53/108 not yet created
+
+OK

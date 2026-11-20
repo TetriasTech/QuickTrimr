@@ -1,0 +1,1 @@
+Full replay, seeded upgrade preserves services/bookings/audits, both RPC signatures service-only and underlying RLS unchanged: PASS

@@ -2823,7 +2823,7 @@ Works against mock fixtures from `P0-T08` so it can be built before search exist
 
 **Out of scope** — search and discovery (`P2-T04`, `P2-T06`); sending a request (`P2-T09`); review listing (`P4-T15`).
 
-**Sync notes** — `P2-T06` renders a summary card from the same projection. Share its public identity/area/photo/rating schema with the profile contract. Preserve its selected service ID when opening the profile; read the current service price from the server, never a route amount. `P2-T04` must reuse the server-only `P1-T06` projection and apply its own geography/availability/active-service gates. `P2-T09` still creates snapshots and rechecks request eligibility. `P4-T15` replaces the honest empty rating with the server aggregate and review listing. Generated traceability updates are left to the post-merge automation (`RULE-DEV-CI`).
+**Sync notes** — `P2-T06` renders a summary card from the same projection. Share its public identity/area/photo/rating schema with the profile contract. Preserve its selected service ID when opening the profile; read the current service price from the server, never a route amount. P2-T06 adds optional `serviceCategoryId` to this read: return an optional nullable `selectedService` using the same active public-service projection independently of the bounded service page. Omission preserves the existing response; null means the selected service is no longer active. `P2-T04` must reuse the server-only `P1-T06` projection and apply its own geography/availability/active-service gates. `P2-T09` still creates snapshots and rechecks request eligibility. `P4-T15` replaces the honest empty rating with the server aggregate and review listing. Generated traceability updates are left to the post-merge automation (`RULE-DEV-CI`).
 
 ---
 ## Phase 2 — Available Now, Discovery & Booking Requests
@@ -3290,7 +3290,7 @@ A list of result cards: photo, name, price for the selected service, approximate
 
 Pagination via the cursor from `P2-T04`, loading further pages on scroll.
 
-Tapping a card opens the `P1-T12` profile, carrying the selected service so the price shown does not change between screens.
+Tapping a card opens the `P1-T12` profile, carrying only the selected service category ID. Both screens read the current server price for that category; prices match while data is unchanged. A live price change appears on profile fetch or refresh, never from a route amount. An optional selected-category lookup returns that public service independently of the profile service page, so a selection beyond the first page is immediately visible. An archived selection is explicitly unavailable.
 
 An empty state offering concrete next actions. Distinguish "no barbers matched" from "search failed" — they need different responses from the client.
 
@@ -3301,13 +3301,13 @@ Refetch on filter change, and pull-to-refresh for the Available Now case, where 
 - [ ] Results render with photo, name, price for the selected service, approximate area, distance band and rating.
 - [ ] Distance and area are shown at the `RULE-DISCOVERY-05` precision; no exact distance or barber location is rendered.
 - [ ] Pagination loads further pages without duplicating or skipping a barber.
-- [ ] Tapping a card opens the profile with the selected service preserved and the same price.
+- [ ] Tapping a card opens the profile with the selected service preserved (including beyond its first service page) and the same price while data is unchanged; live price changes use the current server value and archived selections show unavailable.
 - [ ] **The empty state offers next actions** and is distinct from the error state.
 - [ ] Pull-to-refresh works; changing a filter refetches.
 - [ ] No unnecessary re-render on scroll — the list is virtualised.
 - [ ] Loading, error and empty states exist.
 
-**Tests** — pagination stability across pages; empty and error states rendering distinctly; price consistency between card and profile.
+**Tests** — pagination stability across unchanged-data pages and a fresh traversal after refresh/filter changes; empty and error states rendering distinctly; card/profile price consistency, selection beyond the first service page, live price changes and archived selections.
 
 **Out of scope** — map view (`P2-T07`); submission (`P2-T09`).
 

@@ -1,0 +1,568 @@
+Scope: 27 of 28 workspace projects
+packages/shared test$ node --test test/*.test.mjs
+packages/shared test: ✔ ENUM-USER-ROLE matches the knowledge base character for character (0.646792ms)
+packages/shared test: ✔ ENUM-USER-ROLE can assert exact Postgres enum parity (0.181583ms)
+packages/shared test: ✔ ENUM-VERIFICATION-STATUS matches the knowledge base character for character (0.043125ms)
+packages/shared test: ✔ ENUM-VERIFICATION-STATUS can assert exact Postgres enum parity (0.030667ms)
+packages/shared test: ✔ ENUM-BOOKING-TYPE matches the knowledge base character for character (0.053416ms)
+packages/shared test: ✔ ENUM-BOOKING-TYPE can assert exact Postgres enum parity (0.033208ms)
+packages/shared test: ✔ ENUM-BOOKING-STATUS matches the knowledge base character for character (0.042666ms)
+packages/shared test: ✔ ENUM-BOOKING-STATUS can assert exact Postgres enum parity (0.0245ms)
+packages/shared test: ✔ ENUM-REQUEST-STATUS matches the knowledge base character for character (0.043708ms)
+packages/shared test: ✔ ENUM-REQUEST-STATUS can assert exact Postgres enum parity (0.057291ms)
+packages/shared test: ✔ ENUM-PAYMENT-STATUS matches the knowledge base character for character (0.047625ms)
+packages/shared test: ✔ ENUM-PAYMENT-STATUS can assert exact Postgres enum parity (0.027125ms)
+packages/shared test: ✔ ENUM-EARNING-STATUS matches the knowledge base character for character (0.028958ms)
+packages/shared test: ✔ ENUM-EARNING-STATUS can assert exact Postgres enum parity (0.024584ms)
+packages/shared test: ✔ ENUM-PAYOUT-STATUS matches the knowledge base character for character (0.027666ms)
+packages/shared test: ✔ ENUM-PAYOUT-STATUS can assert exact Postgres enum parity (0.022125ms)
+packages/shared test: ✔ ENUM-AVAIL-STATUS matches the knowledge base character for character (0.028917ms)
+packages/shared test: ✔ ENUM-AVAIL-STATUS can assert exact Postgres enum parity (0.024791ms)
+packages/shared test: ✔ ENUM-DISPUTE-STATUS matches the knowledge base character for character (0.048166ms)
+packages/shared test: ✔ ENUM-DISPUTE-STATUS can assert exact Postgres enum parity (0.041833ms)
+packages/shared test: ✔ ENUM-RELIABILITY-LEVEL matches the knowledge base character for character (0.026083ms)
+packages/shared test: ✔ ENUM-RELIABILITY-LEVEL can assert exact Postgres enum parity (0.019208ms)
+packages/shared test: ✔ toIntegerCents explicitly converts safe integer values (0.261167ms)
+packages/shared test: ✔ toIntegerCents rejects values that are not safe integers (0.239791ms)
+packages/shared test: ℹ tests 24
+packages/shared test: ℹ suites 0
+packages/shared test: ℹ pass 24
+packages/shared test: ℹ fail 0
+packages/shared test: ℹ cancelled 0
+packages/shared test: ℹ skipped 0
+packages/shared test: ℹ todo 0
+packages/shared test: ℹ duration_ms 62.629834
+packages/shared test: Done
+packages/ui test$ jest --runInBand
+packages/validation test$ node --test test/*.test.mjs
+packages/domain test$ node --test test/*.test.mjs
+supabase/functions/workspace-contract test$ node --test test/*.test.mjs
+packages/domain test: ✔ RULE-AVAIL-03: exact expiry boundary, never early; all terminal states resist stale events (0.973541ms)
+packages/domain test: ✔ consecutive misses reset on response; config changes behavior without code changes (0.109791ms)
+packages/domain test: ✔ acceptance resets misses and makes busy; manual stop is distinct and terminal (0.080042ms)
+packages/domain test: ✔ invalid config, server clock and miss count fail closed (0.169292ms)
+packages/domain test: ✔ approved worker health boundaries: strictly older/overdue, first failure and empty market (0.101583ms)
+packages/domain test: ✔ RULE-RELY-06: every level, no cooldown and before/at/after deadline; Scheduled never blocked by cooldown (0.836917ms)
+packages/domain test: ✔ RULE-AVAIL-08: inclusive fractional radii, strict future and inclusive 12-hour boundary, configurable values (0.148209ms)
+packages/domain test: ✔ RULE-CONNECT-STATUS-01: ordered mapping covers all approved states (0.491708ms)
+packages/domain test: ✔ every required capability must be active and both eligibility gates must pass (0.181958ms)
+packages/domain test: ✔ missing or unsupported capabilities cannot become pending initial onboarding or verified (0.090708ms)
+packages/domain test: ✔ approved search bounds include fractional/end boundaries and runtime config changes (0.731791ms)
+packages/domain test: ✔ four distance bands have exact half-open boundaries (0.205167ms)
+packages/domain test: ✔ restricted-last precedes distance, price, score, score count and deterministic ID (0.089291ms)
+packages/domain test: ✔ inclusive server-derived scheduling boundaries {"minimumLeadMinutes":240,"maximumHorizonDays":30} (0.521ms)
+packages/domain test: ✔ inclusive server-derived scheduling boundaries {"minimumLeadMinutes":90,"maximumHorizonDays":2} (0.057875ms)
+packages/domain test: ✔ guidance uses live configuration and requested time, without a calendar promise (0.075834ms)
+packages/domain test: ✔ AUD text converts to exact integer cents, including cent precision and safe-number boundaries (0.663584ms)
+packages/domain test: ✔ RULE-SERVICE-05 Haircut bounds accept both exact boundaries and reject either adjacent cent (0.086667ms)
+packages/domain test: ℹ tests 18
+packages/domain test: ℹ suites 0
+packages/domain test: ℹ pass 18
+packages/domain test: ℹ fail 0
+packages/domain test: ℹ cancelled 0
+packages/domain test: ℹ skipped 0
+packages/domain test: ℹ todo 0
+packages/domain test: ℹ duration_ms 120.079541
+supabase/functions/workspace-contract test: ✔ foundation probe returns only its shared constant identity (12.018625ms)
+supabase/functions/workspace-contract test: ✔ foundation probe rejects non-GET requests without processing their body (0.723708ms)
+packages/domain test: Done
+supabase/functions/workspace-contract test: ℹ tests 2
+supabase/functions/workspace-contract test: ℹ suites 0
+supabase/functions/workspace-contract test: ℹ pass 2
+supabase/functions/workspace-contract test: ℹ fail 0
+supabase/functions/workspace-contract test: ℹ cancelled 0
+supabase/functions/workspace-contract test: ℹ skipped 0
+supabase/functions/workspace-contract test: ℹ todo 0
+supabase/functions/workspace-contract test: ℹ duration_ms 128.891667
+supabase/functions/workspace-contract test: Done
+packages/validation test: ✔ domestic and international Australian mobiles normalize identically (1.508667ms)
+packages/validation test: ✔ invalid length, landline, unsupported prefix and missing fields fail validation (0.42675ms)
+packages/validation test: ✔ every contract has matching valid and invalid examples (19.042084ms)
+packages/validation test: ✔ every contract uses the shared error response schema (0.210541ms)
+packages/validation test: ✔ cancellation fixture matches the approved Available Now backlog example (1.867875ms)
+packages/validation test: ✔ request schemas ignore client-supplied identity, status and server-derived money fields (1.198541ms)
+packages/validation test: ✔ reliability-denial backlog examples reuse the shared error contract (1.155875ms)
+packages/validation test: ✔ request schemas still reject unknown non-server fields (0.368542ms)
+packages/validation test: ✔ booking type controls whether a requested scheduled time is present (0.061291ms)
+packages/validation test: ✔ ETA responses reject private routing data (0.082084ms)
+packages/validation test: ✔ ETA and its timestamp are returned together (0.06575ms)
+packages/validation test: ✔ success responses reject other valid statuses from the same shared enum (0.223125ms)
+packages/validation test: ✔ KB inventory, contract registry, details and fixtures have exactly the same 52 names (8.084667ms)
+packages/validation test: ✔ all 52 success and every documented error fixture parse, and JSON round trips (1.838959ms)
+packages/validation test: ✔ caller classification separates all workers, provider ingress and admin-only actions (0.123792ms)
+packages/validation test: ✔ ordinary requests cannot yield trusted server-owned fields; admin refund intent is narrowly explicit (6.658958ms)
+packages/validation test: ✔ strict success projections reject private fields at root and public nested boundaries (2.436041ms)
+packages/validation test: ✔ admin status alias is exactly the approved reliability schema and metadata, not new privileges (0.081583ms)
+packages/validation test: ✔ structural boundaries cover profile, category, discovery, dates and permission denial (0.395708ms)
+packages/validation test: ✔ decoded webhook envelope is compatible with provider additions but is not an authentication mechanism (0.07425ms)
+packages/validation test: ✔ worker no-op and empty branches parse without claiming a stale state transition (0.167458ms)
+packages/validation test: ✔ refund outcomes and monetary responses reject invalid cents/statuses (0.535458ms)
+packages/validation test: ✔ owning backlog error examples use the shared envelope and are covered by contract details (8.2495ms)
+packages/validation test: ✔ Postgres UUIDs accept canonical values and reject malformed values (0.706958ms)
+packages/validation test: ✔ timestamps require an ISO datetime with an explicit offset (0.445083ms)
+packages/validation test: ✔ geographic points enforce latitude and longitude boundaries (0.800167ms)
+packages/validation test: ✔ integer cents reject decimals and negatives (0.2385ms)
+packages/validation test: ✔ every status enum schema is driven by packages/shared (0.491958ms)
+packages/validation test: ✔ location source uses the shared RULE-AVAIL-02 values (0.0585ms)
+packages/validation test: ✔ all named contract payload types are inferred with z.infer (3.016292ms)
+packages/validation test: ✔ validation source does not redeclare shared status literals (5.307292ms)
+packages/validation test: ℹ tests 31
+packages/validation test: ℹ suites 0
+packages/validation test: ℹ pass 31
+packages/validation test: ℹ fail 0
+packages/validation test: ℹ cancelled 0
+packages/validation test: ℹ skipped 0
+packages/validation test: ℹ todo 0
+packages/validation test: ℹ duration_ms 212.339875
+packages/validation test: Done
+packages/ui test: PASS test/primitives.test.tsx
+packages/ui test: PASS test/source-contracts.test.ts
+packages/ui test: PASS test/money.test.ts
+packages/ui test: Test Suites: 3 passed, 3 total
+packages/ui test: Tests:       26 passed, 26 total
+packages/ui test: Snapshots:   0 total
+packages/ui test: Time:        0.916 s, estimated 1 s
+packages/ui test: Ran all test suites.
+packages/ui test: Done
+apps/mobile test$ node --test test/*.test.mjs && jest --runInBand
+apps/admin test$ vitest run
+.../functions/create-or-sync-profile test$ node --test test/*.test.mjs
+supabase/functions/_shared test$ node --test catalogue/test/*.test.mjs services/test/*.test.mjs availability/test/*.test.mjs discovery/test/*.test.mjs
+apps/mobile test: ✔ wrong password and unknown email have the same public error (0.465958ms)
+apps/mobile test: ✔ provider 429 and rate codes produce a generic rate-limit message (0.096542ms)
+apps/mobile test: ✔ every approved status has distinct copy and every unverified status has a persistent warning/action (0.632042ms)
+apps/mobile test: ✔ return without completion refetches pending and ignores a forged verified callback (0.202167ms)
+apps/mobile test: ✔ onboarding runs with the React Native abort signal surface without throwIfAborted (0.214667ms)
+apps/mobile test: ✔ abandonment rechecks status and the next user action requests a fresh link (0.066666ms)
+apps/mobile test: ✔ an expired-link redirect automatically obtains a different link and refreshes after each browser return (0.079583ms)
+apps/mobile test: ✔ redirect loops stop safely and already-expired responses never open a browser (0.096375ms)
+apps/mobile test: ✔ provider outages propagate for safe retry and browser failures still refresh status (0.150041ms)
+apps/mobile test: ✔ signing out during link creation never opens the old account URL (0.0675ms)
+apps/mobile test: ✔ callbacks require the exact configured destination and never supply an account or status (0.091667ms)
+apps/mobile test: ✔ API calls use current bearer credentials, empty validated bodies, cancellation and user-scoped identity (1.792667ms)
+apps/admin test:  RUN  v4.0.18 /Users/andrewgindi/Documents/GitHub/TRIMR/apps/admin
+.../functions/create-or-sync-profile test: ✔ sync uses only the verified Auth user and the selected signup role (13.397166ms)
+.../functions/create-or-sync-profile test: ✔ missing or malformed auth and unsupported methods do no upstream work (0.774834ms)
+.../functions/create-or-sync-profile test: ✔ rejects users without an authenticated non-anonymous Auth identity (0.807166ms)
+.../functions/create-or-sync-profile test: ✔ admin and invalid signup roles never call the profile RPC (2.229208ms)
+.../functions/create-or-sync-profile test: ✔ returns a generic denial when the stored role differs (0.390375ms)
+.../functions/create-or-sync-profile test: ✔ suppresses unexpected upstream details and records only a generic error (3.373917ms)
+.../functions/create-or-sync-profile test: ℹ tests 6
+.../functions/create-or-sync-profile test: ℹ suites 0
+.../functions/create-or-sync-profile test: ℹ pass 6
+.../functions/create-or-sync-profile test: ℹ fail 0
+.../functions/create-or-sync-profile test: ℹ cancelled 0
+.../functions/create-or-sync-profile test: ℹ skipped 0
+.../functions/create-or-sync-profile test: ℹ todo 0
+.../functions/create-or-sync-profile test: ℹ duration_ms 238.02675
+apps/mobile test: ✔ profile sync uses the current token and stored role after the initial role lookup (2.313625ms)
+apps/mobile test: ✔ profile sync stops if the session changes during the role lookup (0.255208ms)
+apps/mobile test: ✔ signed-out sessions can access only the auth group (0.811916ms)
+apps/mobile test: ✔ incomplete sessions reach onboarding and only barbers reach the Connect callback (0.07875ms)
+apps/mobile test: ✔ complete client sessions reach the client journey and shared modals (0.046041ms)
+apps/mobile test: ✔ complete barber sessions reach the barber journey and shared modals (0.099958ms)
+apps/mobile test: ✔ every required Expo Router shell route exists and has a default export (4.071292ms)
+apps/mobile test: ✔ the root navigator protects every journey with typed route access (1.835542ms)
+apps/mobile test: ✔ the Metro resolution probe imports all four shared workspace packages (0.618459ms)
+apps/mobile test: ✔ the mobile shell uses the ADR-003 state libraries and no out-of-scope alternatives (7.541375ms)
+.../functions/create-or-sync-profile test: Done
+...create-stripe-connect-onboarding-link test$ node --test test/*.test.mjs
+supabase/functions/_shared test: ✔ start: verified caller, fixed operation, safe exact response and forged fields stripped (16.887667ms)
+supabase/functions/_shared test: ✔ start: auth and stored roles deny before parsing or privileged calls (1.624667ms)
+supabase/functions/_shared test: ✔ start: typed RPC failures and unexpected data fail closed without leaking values (2.672167ms)
+supabase/functions/_shared test: ✔ update: verified caller, fixed operation, safe exact response and forged fields stripped (0.954958ms)
+supabase/functions/_shared test: ✔ update: auth and stored roles deny before parsing or privileged calls (0.801959ms)
+supabase/functions/_shared test: ✔ update: typed RPC failures and unexpected data fail closed without leaking values (4.161292ms)
+supabase/functions/_shared test: ✔ stop: verified caller, fixed operation, safe exact response and forged fields stripped (0.504916ms)
+supabase/functions/_shared test: ✔ stop: auth and stored roles deny before parsing or privileged calls (0.306708ms)
+supabase/functions/_shared test: ✔ stop: typed RPC failures and unexpected data fail closed without leaking values (1.0735ms)
+supabase/functions/_shared test: ✔ structural field errors, malformed JSON and crafted area are rejected before RPC (0.931792ms)
+supabase/functions/_shared test: ✔ database-configured bounds return field errors, never SQL details (0.215375ms)
+supabase/functions/_shared test: ✔ owner GET uses verified identity only, rejects query selection and strict private projection additions (1.155959ms)
+apps/mobile test: ✔ the Edge Function helper surfaces the typed shared error envelope on 422 (1.846375ms)
+apps/mobile test: ✔ the Edge Function helper validates successful responses with the named contract (0.8185ms)
+apps/mobile test: ✔ the query-key factory produces stable, hierarchical keys (5.528666ms)
+apps/mobile test: ✔ the Query client defaults refresh server truth without retrying client errors (0.155209ms)
+apps/mobile test: ✔ the booking draft store contains only local selections, radius and requested time (0.132625ms)
+apps/mobile test: ✔ query keys are constructed only in the query-key factory (13.143208ms)
+apps/mobile test: ✔ the real form uses React Hook Form with the shared Zod schema (0.330417ms)
+supabase/functions/_shared test: ✔ worker delegates JWT verification to the service-only RPC, denies mobile/admin, validates references and shapes safe errors (17.623208ms)
+supabase/functions/_shared test: ✔ create: current bearer identity reaches only the fixed audited operation (14.853917ms)
+supabase/functions/_shared test: ✔ create: unauthenticated, invalid JWT and every non-admin role fail before a category read (2.011125ms)
+supabase/functions/_shared test: ✔ create: the database can revoke an admin after the initial role lookup (0.555833ms)
+supabase/functions/_shared test: ✔ update: current bearer identity reaches only the fixed audited operation (0.933417ms)
+supabase/functions/_shared test: ✔ update: unauthenticated, invalid JWT and every non-admin role fail before a category read (0.667625ms)
+supabase/functions/_shared test: ✔ update: the database can revoke an admin after the initial role lookup (0.238542ms)
+supabase/functions/_shared test: ✔ archive: current bearer identity reaches only the fixed audited operation (0.505458ms)
+supabase/functions/_shared test: ✔ archive: unauthenticated, invalid JWT and every non-admin role fail before a category read (0.756833ms)
+supabase/functions/_shared test: ✔ archive: the database can revoke an admin after the initial role lookup (0.357125ms)
+supabase/functions/_shared test: ✔ malformed input and invalid fields never call the mutation RPC (1.748125ms)
+supabase/functions/_shared test: ✔ slug changes are rejected, duplicate slugs and active-price conflicts are safe typed errors (4.29125ms)
+supabase/functions/_shared test: ✔ unexpected provider/storage shapes fail closed without logging the payload or credential (0.72775ms)
+supabase/functions/_shared test: ✔ opaque AES-GCM cursor authenticates sort keys, query/client binding and server key (9.505167ms)
+supabase/functions/_shared test: ✔ filter read verifies stored role before RPC, scopes identity and never forwards unexpected data/errors (17.826125ms)
+supabase/functions/_shared test: ✔ auth/role/validation/config guards precede search; encrypted cursors bind caller and filters; errors are safe (32.37825ms)
+supabase/functions/_shared test: ✔ discovery signs one bounded deduplicated batch and validates response paths (11.882125ms)
+supabase/functions/_shared test: ✔ upsert: verified identity and fixed operation; forged server fields cannot change the owner (16.753292ms)
+supabase/functions/_shared test: ✔ upsert: missing/invalid auth and every non-barber role fail before RPC or input parsing (1.536375ms)
+supabase/functions/_shared test: ✔ upsert: missing or foreign entity and concurrent role revocation are safe typed denials (1.092083ms)
+supabase/functions/_shared test: ✔ archive: verified identity and fixed operation; forged server fields cannot change the owner (0.841708ms)
+supabase/functions/_shared test: ✔ archive: missing/invalid auth and every non-barber role fail before RPC or input parsing (0.619125ms)
+supabase/functions/_shared test: ✔ archive: missing or foreign entity and concurrent role revocation are safe typed denials (0.450292ms)
+supabase/functions/_shared test: ✔ malformed and crafted fractional/negative/overflow prices reject with field errors before a write (1.809625ms)
+supabase/functions/_shared test: ✔ current database price bounds become a safe AUD field error; unexpected bodies fail closed (1.765042ms)
+supabase/functions/_shared test: ℹ tests 37
+supabase/functions/_shared test: ℹ suites 0
+supabase/functions/_shared test: ℹ pass 37
+supabase/functions/_shared test: ℹ fail 0
+supabase/functions/_shared test: ℹ cancelled 0
+supabase/functions/_shared test: ℹ skipped 0
+supabase/functions/_shared test: ℹ todo 0
+supabase/functions/_shared test: ℹ duration_ms 250.666208
+apps/mobile test: ℹ tests 29
+apps/mobile test: ℹ suites 0
+apps/mobile test: ℹ pass 29
+apps/mobile test: ℹ fail 0
+apps/mobile test: ℹ cancelled 0
+apps/mobile test: ℹ skipped 0
+apps/mobile test: ℹ todo 0
+apps/mobile test: ℹ duration_ms 250.973667
+supabase/functions/_shared test: Done
+.../functions/get-public-barber-profile test$ node --test test/*.test.mjs
+apps/admin test:  ✓ test/config.test.ts (2 tests) 10ms
+.../functions/get-public-barber-profile test: ✔ verified JWT supplies caller; strict public response and one bounded RPC (14.888041ms)
+.../functions/get-public-barber-profile test: ✔ no token, invalid token, wrong stored roles and unprofiled callers fail before data (1.676833ms)
+.../functions/get-public-barber-profile test: ✔ malformed UUID, cursor, extra private input and broken JSON give field-level rejection (1.942125ms)
+.../functions/get-public-barber-profile test: ✔ unknown/ineligible target is null; DB role recheck maps to forbidden (0.554042ms)
+.../functions/get-public-barber-profile test: ✔ each extra private field fails closed rather than reaching the response or logs (4.939625ms)
+.../functions/get-public-barber-profile test: ✔ photo signing uses configured expiration and returns only the signed link (1.156084ms)
+.../functions/get-public-barber-profile test: ✔ selected category is bounded inside the same role-verified RPC, never a route price (0.380333ms)
+.../functions/get-public-barber-profile test: ℹ tests 7
+.../functions/get-public-barber-profile test: ℹ suites 0
+.../functions/get-public-barber-profile test: ℹ pass 7
+.../functions/get-public-barber-profile test: ℹ fail 0
+.../functions/get-public-barber-profile test: ℹ cancelled 0
+.../functions/get-public-barber-profile test: ℹ skipped 0
+.../functions/get-public-barber-profile test: ℹ todo 0
+.../functions/get-public-barber-profile test: ℹ duration_ms 183.05325
+.../functions/get-public-barber-profile test: Done
+.../refresh-stripe-connect-status test$ node --test test/*.test.mjs
+...create-stripe-connect-onboarding-link test: ✔ uses verified identity, reserves a provider key, persists account before success and audits each link (7.042333ms)
+...create-stripe-connect-onboarding-link test: ✔ rejects missing Auth, callback overrides, and server-denied roles before calling Stripe (1.249334ms)
+...create-stripe-connect-onboarding-link test: ✔ Stripe outage returns a safe 502 and keeps only the durable creation intent (0.379833ms)
+...create-stripe-connect-onboarding-link test: ✔ lost database write after Stripe creates an account is recovered with the same idempotent operation (0.601958ms)
+...create-stripe-connect-onboarding-link test: ✔ link outage preserves the account association and a retry skips creation (0.5545ms)
+...create-stripe-connect-onboarding-link test: ✔ expired intent requires reconciliation and stays unchanged without a new create (0.268375ms)
+...create-stripe-connect-onboarding-link test: ✔ existing completed or payout-incompatible account never gets an onboarding link (0.400292ms)
+...create-stripe-connect-onboarding-link test: ✔ rejects live keys, arbitrary insecure callback origins, and reused callback paths (0.317666ms)
+apps/admin test:  ✓ test/auth.test.tsx (6 tests) 10ms
+...create-stripe-connect-onboarding-link test: ℹ tests 8
+...create-stripe-connect-onboarding-link test: ℹ suites 0
+...create-stripe-connect-onboarding-link test: ℹ pass 8
+...create-stripe-connect-onboarding-link test: ℹ fail 0
+...create-stripe-connect-onboarding-link test: ℹ cancelled 0
+...create-stripe-connect-onboarding-link test: ℹ skipped 0
+...create-stripe-connect-onboarding-link test: ℹ todo 0
+...create-stripe-connect-onboarding-link test: ℹ duration_ms 219.004834
+...create-stripe-connect-onboarding-link test: Done
+supabase/functions/stripe-webhook test$ node --test test/*.test.mjs
+apps/admin test:  ✓ test/session.test.ts (1 test) 1ms
+.../refresh-stripe-connect-status test: ✔ verified Auth identity controls refresh and only the shared safe status envelope is returned (11.598208ms)
+.../refresh-stripe-connect-status test: ✔ missing Auth, role denials and unexpected fields are safe and cause no provider write (0.918708ms)
+.../refresh-stripe-connect-status test: ✔ busy refresh, provider and persistence failures have typed responses and safe logs (1.405709ms)
+.../refresh-stripe-connect-status test: ✔ provider failure releases the DB lease and never persists a partial status (1.594709ms)
+.../refresh-stripe-connect-status test: ✔ unlinked, duplicate and busy claims avoid all provider requests (0.692ms)
+apps/admin test:  ✓ test/components.test.tsx (12 tests) 173ms
+.../refresh-stripe-connect-status test: ℹ tests 5
+.../refresh-stripe-connect-status test: ℹ suites 0
+.../refresh-stripe-connect-status test: ℹ pass 5
+.../refresh-stripe-connect-status test: ℹ fail 0
+.../refresh-stripe-connect-status test: ℹ cancelled 0
+.../refresh-stripe-connect-status test: ℹ skipped 0
+.../refresh-stripe-connect-status test: ℹ todo 0
+.../refresh-stripe-connect-status test: ℹ duration_ms 139.481041
+.../refresh-stripe-connect-status test: Done
+supabase/functions/stripe-webhook test: ✔ signed thin events project only ID/type/account into refresh and acknowledge after commit (5.140459ms)
+supabase/functions/stripe-webhook test: ✔ missing, stale and tampered signatures write nothing before JSON parsing (1.236291ms)
+supabase/functions/stripe-webhook test: ✔ authenticated invalid bodies, foreign legacy account IDs and live-mode data fail closed (1.923833ms)
+supabase/functions/stripe-webhook test: ✔ legacy snapshot is a refresh hint and irrelevant payment events are safely acknowledged (0.783291ms)
+supabase/functions/stripe-webhook test: ✔ duplicate acknowledgement and failure response preserve the durable handler contract (0.825709ms)
+supabase/functions/stripe-webhook test: ℹ tests 5
+supabase/functions/stripe-webhook test: ℹ suites 0
+supabase/functions/stripe-webhook test: ℹ pass 5
+supabase/functions/stripe-webhook test: ℹ fail 0
+supabase/functions/stripe-webhook test: ℹ cancelled 0
+supabase/functions/stripe-webhook test: ℹ skipped 0
+supabase/functions/stripe-webhook test: ℹ todo 0
+supabase/functions/stripe-webhook test: ℹ duration_ms 160.891917
+supabase/functions/stripe-webhook test: Done
+apps/admin test:  ✓ test/surfaces.test.tsx (5 tests) 61ms
+apps/admin test:  Test Files  5 passed (5)
+apps/admin test:       Tests  26 passed (26)
+apps/admin test:    Start at  08:37:17
+apps/admin test:    Duration  837ms (transform 423ms, setup 0ms, import 743ms, tests 255ms, environment 669ms)
+apps/admin test: Done
+apps/mobile test: PASS test/working-location-picker.test.tsx
+apps/mobile test: PASS test/availability-screen.test.tsx
+apps/mobile test: PASS test/public-profile-screen.test.tsx
+apps/mobile test:   ● Console
+apps/mobile test:     console.error
+apps/mobile test:       An update to VirtualizedList inside a test was not wrapped in act(...).
+apps/mobile test:       
+apps/mobile test:       When testing, code that causes React state updates should be wrapped into act(...):
+apps/mobile test:       
+apps/mobile test:       act(() => {
+apps/mobile test:         /* fire events that update state */
+apps/mobile test:       });
+apps/mobile test:       /* assert on the output */
+apps/mobile test:       
+apps/mobile test:       This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+apps/mobile test:       at ../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.3/node_modules/react-reconciler/cjs/react-reconciler.development.js:16307:19
+apps/mobile test:       at runWithFiberInDEV (../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.3/node_modules/react-reconciler/cjs/react-reconciler.development.js:2508:13)
+apps/mobile test:       at warnIfUpdatesNotWrappedWithActDEV (../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.3/node_modules/react-reconciler/cjs/react-reconciler.development.js:16306:9)
+apps/mobile test:       at scheduleUpdateOnFiber (../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.3/node_modules/react-reconciler/cjs/react-reconciler.development.js:14070:11)
+apps/mobile test:       at Object.enqueueSetState (../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.3/node_modules/react-reconciler/cjs/react-reconciler.development.js:18909:13)
+apps/mobile test:       at VirtualizedList.Object.<anonymous>.process.env.NODE_ENV.Component.setState (../../node_modules/.pnpm/react@19.2.3/node_modules/react/cjs/react.development.js:655:20)
+apps/mobile test:       at ../../node_modules/.pnpm/@babel+runtime@7.29.7/node_modules/@babel/runtime/helpers/superPropGet.js:6:14
+apps/mobile test:       at VirtualizedList.setState (../../node_modules/.pnpm/@react-native+virtualized-lists@0.86.3_@types+react@19.2.18_react-native@0.86.3_@babel+_b46b707d3fb989ead3e365308abae021/node_modules/@react-native/virtualized-lists/Lists/StateSafePureComponent.js:40:7)
+apps/mobile test:       at VirtualizedList.setState [as _updateCellsToRender] (../../node_modules/.pnpm/@react-native+virtualized-lists@0.86.3_@types+react@19.2.18_react-native@0.86.3_@babel+_b46b707d3fb989ead3e365308abae021/node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:1909:10)
+apps/mobile test:       at Timeout._updateCellsToRender [as _onTimeout] (../../node_modules/.pnpm/@react-native+virtualized-lists@0.86.3_@types+react@19.2.18_react-native@0.86.3_@babel+_b46b707d3fb989ead3e365308abae021/node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:1806:16)
+apps/mobile test: PASS test/connect-card.test.tsx
+apps/mobile test: PASS test/discovery-filters-screen.test.tsx
+apps/mobile test: PASS test/barber-services-screen.test.tsx
+apps/mobile test: PASS test/availability-api.test.ts
+apps/mobile test: PASS test/public-profile-api.test.ts
+apps/mobile test: PASS test/barber-services-api.test.ts
+apps/mobile test: Test Suites: 9 passed, 9 total
+apps/mobile test: Tests:       61 passed, 61 total
+apps/mobile test: Snapshots:   0 total
+apps/mobile test: Time:        6.887 s, estimated 7 s
+apps/mobile test: Ran all test suites.
+apps/mobile test: Done
+✔ CI triggers on all PR changes to main and all pushes to main without path filters (0.84875ms)
+✔ four quality checks run independently and env guard has no dependency install (0.128416ms)
+✔ reusable setup derives pnpm version from packageManager, caches the lockfile and installs frozen (0.075625ms)
+✔ workflow stays read-only, secret-free and immutable-action pinned (0.166833ms)
+✔ stable merge gate always waits for every check and fails on failure, skipped or cancelled results (1184.751875ms)
+✔ public mobile types are explicit and do not depend on an Expo-generated file (2.865084ms)
+✔ README documents checks, stable gate and one-review policy (0.756208ms)
+✔ docs generation only runs after successful main validation and serializes branch updates (0.224583ms)
+✔ docs PR reuses a scoped bot branch with minimum write permissions and no bypass (0.503667ms)
+✔ raw-body privacy assertions compare all fields and suppress mismatch values (1.104833ms)
+✔ API helper rejects hosted targets, cross-origin paths and URL credentials before fetch (0.82875ms)
+✔ denial helper rejects private response fields and wrong HTTP/code without dumping data (11.196208ms)
+✔ monitor credentials are pinned to the approved destination and never disclosed by rejection (1.53275ms)
+✔ worker operator refuses a different linked project, organization, unavailable project or account (0.222459ms)
+✔ worker migration values and monitor identity match the upstream approved configs (1.83325ms)
+✔ the core migration declares exactly the shared PostgreSQL enum set (0.76425ms)
+✔ ENUM-USER-ROLE: committed migration matches the shared tuple, including order (0.076792ms)
+✔ ENUM-VERIFICATION-STATUS: committed migration matches the shared tuple, including order (0.035792ms)
+✔ ENUM-BOOKING-TYPE: committed migration matches the shared tuple, including order (0.033958ms)
+✔ ENUM-BOOKING-STATUS: committed migration matches the shared tuple, including order (0.0405ms)
+✔ ENUM-REQUEST-STATUS: committed migration matches the shared tuple, including order (0.0305ms)
+✔ ENUM-PAYMENT-STATUS: committed migration matches the shared tuple, including order (0.029209ms)
+✔ ENUM-EARNING-STATUS: committed migration matches the shared tuple, including order (0.027792ms)
+✔ ENUM-PAYOUT-STATUS: committed migration matches the shared tuple, including order (0.03875ms)
+✔ ENUM-AVAIL-STATUS: committed migration matches the shared tuple, including order (0.07725ms)
+✔ ENUM-DISPUTE-STATUS: committed migration matches the shared tuple, including order (0.040333ms)
+✔ ENUM-RELIABILITY-LEVEL: committed migration matches the shared tuple, including order (0.030458ms)
+✔ migration apply and reset always select the local database (0.7865ms)
+✔ local runner rejects remote targets, unknown flags and extra arguments before calling a child (0.230417ms)
+✔ migration names cannot inject flags, paths or shell arguments (0.172292ms)
+✔ function serve keeps JWT verification enabled and defaults to the credential-free template (0.112209ms)
+✔ local execution drops hosted credentials and suppresses CLI key output (0.302375ms)
+✔ local execution propagates an actual subprocess failure (35.709084ms)
+✔ committed insert-only seed matches deterministic generation, with fixed timestamps and no credentials/schema mutations (6.019833ms)
+✔ every delivered table is populated with unique IDs, synthetic Auth emails and no login credentials (0.483167ms)
+✔ ENUM-USER-ROLE: seed covers every shared enum value and no invented values (0.07ms)
+✔ ENUM-VERIFICATION-STATUS: seed covers every shared enum value and no invented values (0.041667ms)
+✔ ENUM-BOOKING-TYPE: seed covers every shared enum value and no invented values (0.041833ms)
+✔ ENUM-BOOKING-STATUS: seed covers every shared enum value and no invented values (0.037208ms)
+✔ ENUM-REQUEST-STATUS: seed covers every shared enum value and no invented values (0.040042ms)
+✔ ENUM-PAYMENT-STATUS: seed covers every shared enum value and no invented values (0.032375ms)
+✔ ENUM-EARNING-STATUS: seed covers every shared enum value and no invented values (0.04125ms)
+✔ ENUM-PAYOUT-STATUS: seed covers every shared enum value and no invented values (0.080375ms)
+✔ ENUM-AVAIL-STATUS: seed covers every shared enum value and no invented values (0.044125ms)
+✔ ENUM-DISPUTE-STATUS: seed covers every shared enum value and no invented values (0.042291ms)
+✔ ENUM-RELIABILITY-LEVEL: seed covers every shared enum value and no invented values (0.028833ms)
+✔ category identity map matches the actual KB launch table; example prices are in approved bounds (0.980083ms)
+✔ all FK references resolve, bookings retain integer-cent worked-example snapshots and each has truthful initial history (1.040375ms)
+✔ case IDs are stable name-derived values, independent of input order; invalid names rejected (0.607166ms)
+✔ seed apply rejects arguments and non-local targets before querying; empty reset cannot load seeds (4.133083ms)
+✔ Docs decision checks keep a dependency-free runtime import surface (4.392042ms)
+✔ Google deferral retains a named-owner foundation follow-up independent of Stripe (1.482ms)
+✔ Maps and Routes consumers directly wait on deferred Google verification (3.613875ms)
+✔ Google split does not waive Stripe payout controls or genuine capture failure (0.709208ms)
+✔ capture-failure reassignment keeps RULE-PAY-05 coverage in the build tickets (2.020833ms)
+✔ deferred Google scope preserves approved cost controls and real provider evidence (0.828583ms)
+✔ Google development quota decision preserves approval and project-specific evidence (1.696625ms)
+✔ Independent client address lookup retains its server-only boundary (0.846708ms)
+✔ P0-D02 records the approved config, payer, rounding and dispute policy (0.086542ms)
+✔ P0-D02 resolves both TBCs in place and removes its pending rule (0.466625ms)
+✔ P0-D02 retains all six worked examples (0.055333ms)
+✔ P0-D02 reconciles 1. Full capture, $45 service (0.138625ms)
+✔ P0-D02 reconciles 2. Full service refund (0.026334ms)
+✔ P0-D02 reconciles 3. Illustrative 50% service refund (0.021583ms)
+✔ P0-D02 reconciles 4. Internal dispute resolved barber-paid (0.01925ms)
+✔ P0-D02 reconciles 5. Rounding, $45.03 service (0.018042ms)
+✔ P0-D02 reconciles 6. Uneven service refund, $45.03 service (0.028583ms)
+✔ P0-D02 cumulative rounding uses original commission, not per-refund rounded reversals (0.065334ms)
+✔ P0-D02 does not decide cancellation split or inconvenience payment (0.085125ms)
+✔ P5-T07 partial-service-refund example follows the approved commission reversal (0.195042ms)
+✔ P0-D03 config records complementary booking-type percentages and client-up rounding (0.068166ms)
+✔ P0-D03 resolves both TBCs in place and removes the pending cancellation rule (0.372542ms)
+✔ P0-D03 retains all seven cancellation examples (0.029ms)
+✔ P0-D03 reconciles 1. Client before acceptance, hold released (0.077583ms)
+✔ P0-D03 reconciles 2. Either party, Scheduled more than 12 hours before (0.022458ms)
+✔ P0-D03 reconciles 3. Client, Scheduled at or within 12 hours (0.019792ms)
+✔ P0-D03 reconciles 4. Client, Available Now after acceptance (0.018667ms)
+✔ P0-D03 reconciles 5. Barber cancels accepted captured booking (0.018084ms)
+✔ P0-D03 reconciles 6. Client, late Scheduled, $45.03 service (0.042583ms)
+✔ P0-D03 reconciles 7. Client, accepted Available Now, $45.03 service (0.026458ms)
+✔ P0-D03 exact Scheduled boundary is late; one millisecond outside is free (0.034292ms)
+✔ P0-D03 earning exception preserves refund-success, dispute and no-fake-completion gates (5.773791ms)
+✔ P0-D03 snapshots terms and does not decide payout cadence or legal compliance (0.183958ms)
+✔ P3-T07 contract examples match both approved splits and full barber-cancellation refund (0.239709ms)
+✔ P0-D04 records approved config and an effect for every shared reliability level (0.22025ms)
+✔ P0-D04 resolves its TBC in place and removes both reserved markers (0.244166ms)
+✔ P0-D04 retains the eight-row recovery example with three late cancellations (0.164417ms)
+✔ P0-D04 UTC example 2026-10-01T10:00:00Z: First late cancellation (0.075584ms)
+✔ P0-D04 UTC example 2026-10-05T10:00:00Z: Second late cancellation (0.02625ms)
+✔ P0-D04 UTC example 2026-10-05T11:00:00Z: Cooldown deadline (0.031875ms)
+✔ P0-D04 UTC example 2026-10-10T10:00:00Z: Third late cancellation (0.016917ms)
+✔ P0-D04 UTC example 2026-10-10T11:00:00Z: Cooldown deadline; search demotion remains (0.024792ms)
+✔ P0-D04 UTC example 2026-10-31T10:00:00Z: First offence ages out (0.015875ms)
+✔ P0-D04 UTC example 2026-11-04T10:00:00Z: Second offence ages out (0.017375ms)
+✔ P0-D04 UTC example 2026-11-09T10:00:00Z: Third offence ages out; 30 offence-free days (0.017334ms)
+✔ P0-D04 window expires at exactly 30 elapsed days and excludes future events (0.043292ms)
+✔ P0-D04 cooldown starts on second offence, ends exactly at deadline and restarts on a new offence (0.070667ms)
+✔ P0-D04 fourth and later offences remain automatically restricted, never suspended (0.171833ms)
+✔ P0-D04 aging to watch does not erase or extend an already-triggered cooldown (0.029875ms)
+✔ P0-D04 offence scope excludes missed and declined requests without changing auto-disable (0.234375ms)
+✔ P0-D04 restricted means demotion across both search types, not blanket exclusion (0.091875ms)
+✔ P0-D04 server-side entry points and visible standing are in downstream scope (0.369042ms)
+✔ P0-D04 keeps correction history, existing bookings and earnings intact (0.145041ms)
+✔ P0-D05 records the approved schedule, positive minimum and human approval (0.035042ms)
+✔ P0-D05 resolves the TBC in place and removes both reserved markers (0.191291ms)
+✔ P0-D05 retains all six cut-off examples including daylight saving and one cent (0.017417ms)
+✔ P0-D05 cut-off example 1. Before spring daylight saving (0.161166ms)
+✔ P0-D05 cut-off example 2. After spring daylight saving, just before (0.038917ms)
+✔ P0-D05 cut-off example 3. Exactly at the cut-off (0.511167ms)
+✔ P0-D05 cut-off example 4. Just after the cut-off (0.438ms)
+✔ P0-D05 cut-off example 5. Smallest positive balance (0.025042ms)
+✔ P0-D05 cut-off example 6. After autumn daylight saving ends (0.022917ms)
+✔ P0-D05 strict cut-off excludes equality and delayed workers do not widen it (1.5435ms)
+✔ P0-D05 pays one cent but never zero and does not deduct Connect fees (0.081667ms)
+✔ P0-D05 weekly local-time runs span spring and autumn clock changes (1.773ms)
+✔ P0-D05 failures distinguish next-run retry, verified correction and unknown outcomes (0.056208ms)
+✔ P0-D05 transfer success is not bank payment and late failures preserve history (0.038833ms)
+✔ P0-D05 durable obligations survive retries and provider key retention expiry (0.041917ms)
+✔ P0-D05 downstream setup and webhooks require compatible controls and account mapping (0.263083ms)
+✔ P0-D05 surfaces timing, aged holds and notifications without manual payout controls (0.182167ms)
+✔ P0-D07 records the human-approved Supabase sweep architecture upstream (0.196333ms)
+✔ P0-D07 records the explicit Trigger.dev comparison amendment without claiming a runtime pass (0.039542ms)
+✔ P0-D07 resolves its TBC in place and updates stack and pending-rule projections (0.272458ms)
+✔ P0-D07 makes deadlines authoritative and recovers missing or interrupted work (0.0315ms)
+✔ P0-D07 preserves atomic history and external-call idempotency without network locks (0.02725ms)
+✔ P0-D07 requires operational evidence without turning lab settings into production defaults (0.038291ms)
+✔ P0-D07 names all seven affected workflow families (0.040666ms)
+✔ P0-D07 synchronizes P2-T03 schedule, protection and independent monitoring ownership (0.155375ms)
+✔ P0-D07 synchronizes P2-T15 schedule, protection and independent monitoring ownership (0.058625ms)
+✔ P0-D07 synchronizes P3-T11 schedule, protection and independent monitoring ownership (0.057333ms)
+✔ P0-D07 synchronizes P3-T12 schedule, protection and independent monitoring ownership (0.050875ms)
+✔ P0-D07 synchronizes P4-T05 schedule, protection and independent monitoring ownership (0.066459ms)
+✔ P0-D07 synchronizes P4-T11 schedule, protection and independent monitoring ownership (0.089417ms)
+✔ P0-D07 synchronizes P6-T02 schedule, protection and independent monitoring ownership (0.068875ms)
+✔ P0-D07 expiry synchronization preserves committed acceptance without inventing race priority (0.073167ms)
+✔ P0-D07 delayed recovery preserves warning stages and throttled current ETA work (0.038375ms)
+✔ P0-D07 notification recovery uses durable intent rather than lossy fire-and-forget (0.026708ms)
+✔ validation rejects absent/blank inputs and invalid URLs without reflecting values (1.25975ms)
+✔ mobile accessor is lazy, whitelisted, config-backed and matches its template (4.242542ms)
+✔ mobile types reject all four secret categories and arbitrary string lookup (1669.81525ms)
+✔ admin accessor is lazy, whitelisted, config-backed and matches its template (0.995041ms)
+✔ admin types reject all four secret categories and arbitrary string lookup (1158.965958ms)
+✔ all committed env templates have a reader/meaning comment and no credential values (3.525667ms)
+✔ existing operator and runtime inputs are covered without inventing a root app env (0.9875ms)
+✔ real app tree passes without requiring any credentials (82.682875ms)
+✔ planted service-role reference in apps/mobile fails the actual CLI without printing its value (83.871375ms)
+✔ all server-only names are rejected in both apps, including public-prefixed aliases (4.296833ms)
+✔ hidden env files, docs, templates, native files and bracket/destructured references are scanned (5.313042ms)
+✔ public variables pass; dependencies and generated outputs do not create false failures (4.877333ms)
+✔ source symlinks are denied, not silently skipped or followed outside apps (1.785041ms)
+✔ missing apps and unexpected CLI flags fail closed (99.027ms)
+✔ app code cannot bypass typed accessors with direct, dynamic, aliased or destructured environment access (2600.213916ms)
+✔ accessor files cannot read undeclared, other-tier or computed variables (130.358958ms)
+✔ real public readers and the runner-provided Playwright CI flag pass lint (94.279083ms)
+✔ fixture transport returns one projected, sorted/filtered seed page; rejects unbounded/malformed queries (6.715417ms)
+✔ fixture server stays outside production routes, fixed loopback, without DB/env/target access (3.073833ms)
+✔ mobile fixture imports retain schema-inferred types under the actual app tsconfig (723.705ms)
+✔ admin fixture imports retain schema-inferred types under the actual app tsconfig (535.307ms)
+✔ API docs exactly match executable schemas, fixtures and error status/code metadata (8.331584ms)
+✔ mobile can bundle and execute docs/package fixture imports without env, credentials, Node globals or network (107.302125ms)
+✔ admin can bundle and execute docs/package fixture imports without env, credentials, Node globals or network (70.428459ms)
+✔ ordinary schema imports do not transitively include expanded fixtures or contract metadata (24.191333ms)
+✔ production app source has no fixture import or runtime mock fallback (25.623791ms)
+✔ GitHub discovery locations contain one default PR template with unchecked boxes (5.294417ms)
+✔ PR template links to the review guide and all repository document links resolve (8.293708ms)
+✔ root test command includes the template discovery and link checks (2.02625ms)
+✔ any.ts fails with @typescript-eslint/no-explicit-any as an error in packages/shared/src/index.ts (862.834459ms)
+✔ floating.ts fails with @typescript-eslint/no-floating-promises as an error in apps/mobile/src/workspace-contract.ts (796.676625ms)
+✔ floating.ts fails with @typescript-eslint/no-floating-promises as an error in apps/admin/src/workspace-contract.ts (748.516084ms)
+✔ floating.ts fails with @typescript-eslint/no-floating-promises as an error in supabase/functions/workspace-contract/index.ts (72.674917ms)
+✔ hooks.tsx fails with react-hooks/exhaustive-deps as an error in apps/mobile/src/components/placeholder-screen.tsx (61.563916ms)
+✔ hooks.tsx fails with react-hooks/exhaustive-deps as an error in apps/admin/app/error.tsx (116.272541ms)
+✔ domain.ts fails with no-restricted-imports as an error in packages/domain/src/index.ts (42.01725ms)
+✔ cross-app.ts fails with no-restricted-imports as an error in apps/mobile/src/workspace-contract.ts (34.875916ms)
+✔ import-order.ts fails with import/order as an error in apps/mobile/src/workspace-contract.ts (34.205417ms)
+✔ workspace import boundaries reject static, dynamic, CommonJS and relative escapes (508.246542ms)
+✔ allowed shared imports and handled promises still pass (540.763584ms)
+✔ ESLint CLI exits nonzero for a typed negative fixture (738.889792ms)
+✔ typed promise enforcement rejects void suppression but accepts handled rejection (40.864625ms)
+✔ root and workspace invocations agree on admin import ordering (63.814333ms)
+✔ every workspace inherits the strict base and is included in root checks (8.930542ms)
+✔ strictness flags actually reject unchecked, implicit, optional and override errors (21.4275ms)
+✔ shared package aliases resolve through real workspace exports in all three surfaces (3.584167ms)
+✔ formatter checks fail bad input and pass the formatted result without rewriting it (78.785791ms)
+✔ generated output and intentional negative fixtures are ignored by lint and format (3.74725ms)
+✔ admin-local formatting uses the root ignores rather than scanning generated output (42.686042ms)
+✔ probe binds loopback and callbacks never imply onboarding success or reflect query data (16.289791ms)
+✔ signed sandbox delivery records only event metadata; real parallel duplicates have one winner (30.984625ms)
+✔ unsigned, bad-signature and expired deliveries are rejected before recording (3.860541ms)
+✔ signature covers exact raw bytes, including whitespace (1.346042ms)
+✔ validly signed live events and malformed events cannot enter sandbox evidence (3.203083ms)
+✔ capacity rejects new events without evicting prior deduplication evidence (4.065166ms)
+✔ oversized bodies, unsupported methods and unknown paths fail closed (2.442958ms)
+✔ probe requires a signing secret without echoing a supplied value (0.2445ms)
+✔ verification config reads approved local callbacks and both pending windows from the KB (1.860167ms)
+✔ live/missing keys fail before constructing a Stripe client (0.330083ms)
+✔ wrong account or non-Australian/non-AUD credentials fail before money calls (0.219334ms)
+✔ manual-capture verifier rejects a hold shorter than the configured pending window before capture (1.982333ms)
+✔ capture verifier reuses deterministic keys and emits only selected evidence fields (fake provider) (0.163917ms)
+✔ CLI credential failures do not print key values or provider payloads (130.766667ms)
+✔ onboarding captures containing test phone fields stay excluded from version control (192.620708ms)
+✔ local callbacks discard untrusted query data and only redirect to the configured app (18.906292ms)
+✔ the bridge accepts loopback Expo Go and rejects arbitrary URLs (0.176625ms)
+✔ argument parsing rejects identifiers carrying extra characters (1.394916ms)
+✔ a live or malformed credential is refused before any network call (0.324625ms)
+✔ a credential belonging to another platform is refused (0.172875ms)
+✔ a manual schedule with no connected-account control satisfies RULE-EARN-07 (0.198791ms)
+✔ an automatic schedule or a retained payout control is reported (0.188083ms)
+✔ live mode is reported as a problem (0.108416ms)
+✔ an unreadable feature is reported as unknown, never as disabled (0.076583ms)
+✔ the summary carries no credential, bank or personal field (0.086666ms)
+✔ CLI credential failures do not print key values or provider payloads (152.535083ms)
+✔ repository contains the KB section 7 directory structure (3.398375ms)
+✔ root exposes workspace quality commands and repo-wide formatting (0.939ms)
+✔ workspace dependency graph follows ADR-007 and has no cycles (1.571166ms)
+✔ mobile, admin and a Supabase function resolve the shared package import (71.274792ms)
+✔ packages never import an app and placeholder files are absent (29.848417ms)
+✔ README documents setup and every required developer command (0.603208ms)
+ℹ tests 218
+ℹ suites 0
+ℹ pass 218
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5143.780334
+$ pnpm --recursive --if-present test && node --test scripts/workspace.test.mjs scripts/decisions.test.mjs scripts/quality/quality.test.mjs scripts/environment/*.test.mjs scripts/ci/*.test.mjs scripts/qa/*.test.mjs scripts/db/*.test.mjs scripts/stripe/*.test.mjs

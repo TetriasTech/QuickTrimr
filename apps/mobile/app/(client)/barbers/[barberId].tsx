@@ -16,8 +16,8 @@ export default function BarberProfileRoute() {
   const router = useRouter();
   const active = useIsFocused();
   const api = useMemo(
-    () => publicProfileApi(supabase, userId ?? '', barberId),
-    [supabase, userId, barberId],
+    () => publicProfileApi(supabase, userId ?? '', barberId, serviceCategoryId),
+    [supabase, userId, barberId, serviceCategoryId],
   );
   return (
     <>
