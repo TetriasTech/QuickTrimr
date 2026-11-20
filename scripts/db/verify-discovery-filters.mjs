@@ -43,7 +43,7 @@ try {
       200,
     );
   queryLocal(
-    `insert into public.profiles(id,role,verification_status)values('${users.admin}','admin','not_started');insert into public.client_addresses(id,client_id,location,label)values('${a}','${users.clientA}','SRID=4326;POINT(145.2 -38.2)','Synthetic home'),('${b}','${users.clientB}','SRID=4326;POINT(145.3 -38.3)','Other synthetic home');`,
+    `insert into public.profiles(id,role,verification_status)values('${users.admin}','admin','not_started');insert into public.client_addresses(id,client_id,location,label,directory_id,line1,suburb,state,postcode,unit,access_notes)values('${a}','${users.clientA}','SRID=4326;POINT(145.2 -38.2)','Synthetic home','QA-FILTERS-A','1 Synthetic Test Street','Synthetic','VIC','3000','',''),('${b}','${users.clientB}','SRID=4326;POINT(145.3 -38.3)','Other synthetic home','QA-FILTERS-B','2 Synthetic Test Street','Synthetic','VIC','3000','','');`,
   );
   for (const [token, expected] of [
     [null, 401],
@@ -92,8 +92,17 @@ try {
     'label',
     'point',
   ]);
+  queryLocal(
+    `update public.client_addresses set directory_id=null where id='${a}';`,
+  );
+  const legacy = await read(tokens.clientA, { addressId: a });
+  assert.equal(legacy.status, 422);
+  queryLocal(
+    `update public.client_addresses set directory_id='QA-FILTERS-A' where id='${a}';`,
+  );
   const denied = await read(tokens.clientA, { addressId: b });
   assert.equal(denied.status, 422);
+  assert.deepEqual(legacy.body, denied.body);
   assert.deepEqual(
     (await read(tokens.clientA, { addressId: randomUUID() })).body,
     denied.body,
@@ -161,7 +170,7 @@ const evidence = {
   localOnly: true,
   checks: [
     'Real Auth/invalid JWT and all wrong stored roles rejected before data',
-    'Owner-only selected address point; identical foreign/missing/archived rejection; forged identity ignored',
+    'Owner-only selected address point; identical foreign/missing/archived/unresolved-legacy rejection; forged identity ignored',
     'Strict public scheduling/radius projection, live server timestamp and no unrelated config',
     'Direct RPC denied to mobile roles; service RPC rechecks stored client role',
     'Live config changes immediately apply; invalid/missing config fails closed with generic error',

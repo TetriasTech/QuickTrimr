@@ -3228,7 +3228,7 @@ Filters persist in the draft store across navigation, so a client who opens a ba
 
 Invalid combinations are prevented rather than submitted: no service selected, no address, or a past time.
 
-**Implementation contract clarification (2026-11-21)** — `get-discovery-filters` is a verified-client read. Optional `addressId` resolves only that client's active saved address to a label and point; foreign, unknown and archived addresses return the same field-level error. Configuration and the returned point remain TanStack Query data. The existing P1-T05 address list/form is the picker: current location suggests addresses for confirmation and saving, then discovery keeps the saved ID. The draft adds only the user's radius and requested timestamp alongside its existing IDs/mode, never config, address rows, prices or result records. Search changes clear a previously selected barber and restart the live query with no cursor.
+**Implementation contract clarification (2026-11-21)** — `get-discovery-filters` is a verified-client read. Optional `addressId` resolves only that client's active saved address to a label and point; foreign, unknown, archived and unresolved legacy addresses return the same field-level error. Configuration and the returned point remain TanStack Query data. The existing P1-T05 address list/form is the picker: current location suggests addresses for confirmation and saving, then discovery keeps the saved ID. The draft adds only the user's radius and requested timestamp alongside its existing IDs/mode, never config, address rows, prices or result records. Search changes clear a previously selected barber and restart the live query with no cursor.
 
 ```jsonc
 // POST get-discovery-filters; omit addressId before choosing an address

@@ -15,7 +15,7 @@ begin
  discovery:=public.get_discovery_config();
  if p_address_id is not null then
   select jsonb_build_object('id',a.id,'label',a.label,'point',jsonb_build_object('lat',extensions.st_y(a.location::extensions.geometry),'lng',extensions.st_x(a.location::extensions.geometry))) into address
-  from public.client_addresses a where a.id=p_address_id and a.client_id=p_client_id and a.archived_at is null;
+  from public.client_addresses a where a.id=p_address_id and a.client_id=p_client_id and a.archived_at is null and a.directory_id is not null;
   if address is null then raise sqlstate 'PT422' using message='address_unavailable'; end if;
  end if;
  result:=jsonb_build_object('serverNow',clock_timestamp(),'scheduling',jsonb_build_object('minimumLeadMinutes',lead,'maximumHorizonDays',horizon),'radiusKm',discovery->'radiusKm','address',address);
