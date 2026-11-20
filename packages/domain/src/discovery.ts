@@ -11,12 +11,8 @@ export function discoveryBounds(
 ) {
   const limit = requestedLimit ?? config.pageSize.default;
   const fields: Record<string, string> = {};
-  if (
-    !Number.isFinite(radius) ||
-    radius < config.radiusKm.min ||
-    radius > config.radiusKm.max
-  )
-    fields.radiusKm = `Enter a radius between ${config.radiusKm.min} and ${config.radiusKm.max} km.`;
+  const radiusError = discoveryRadiusIssue(radius, config.radiusKm);
+  if (radiusError) fields.radiusKm = radiusError;
   if (
     !Number.isSafeInteger(limit) ||
     limit < config.pageSize.min ||
@@ -53,4 +49,13 @@ export function compareDiscoveryKeys(a: DiscoverySortKey, b: DiscoverySortKey) {
     numeric ||
     (a.barberId === b.barberId ? 0 : a.barberId < b.barberId ? -1 : 1)
   );
+}
+
+export function discoveryRadiusIssue(
+  radius: number,
+  bounds: { min: number; max: number },
+) {
+  if (!Number.isFinite(radius) || radius < bounds.min || radius > bounds.max)
+    return `Enter a radius between ${bounds.min} and ${bounds.max} km.`;
+  return undefined;
 }

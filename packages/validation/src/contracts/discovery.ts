@@ -91,3 +91,42 @@ export const discoverySortKeySchema = z.strictObject({
 export type SearchAvailableNowBarbersResponse = z.infer<
   typeof searchAvailableNowBarbersResponseSchema
 >;
+
+export const getDiscoveryFiltersRequestSchema = requestObject({
+  addressId: postgresUuidSchema.optional(),
+});
+export const schedulingConfigSchema = z
+  .strictObject({
+    minimumLeadMinutes: z.number().int().positive().safe(),
+    maximumHorizonDays: z.number().int().positive().safe(),
+  })
+  .refine((v) => v.minimumLeadMinutes <= v.maximumHorizonDays * 24 * 60);
+export const getDiscoveryFiltersResponseSchema = z.strictObject({
+  serverNow: timestampSchema,
+  scheduling: schedulingConfigSchema,
+  radiusKm: rangeSchema.refine((v) => v.min <= v.max),
+  address: z
+    .strictObject({
+      id: postgresUuidSchema,
+      label: nonEmptyStringSchema,
+      point: geographicPointSchema,
+    })
+    .nullable(),
+});
+export type GetDiscoveryFiltersResponse = z.infer<
+  typeof getDiscoveryFiltersResponseSchema
+>;
+
+export const discoveryRadiusFormSchema = z.strictObject({
+  radius: z
+    .string()
+    .refine(
+      (v) => v.trim().length > 0 && Number.isFinite(Number(v)),
+      'Enter a search radius.',
+    ),
+});
+
+export type GetDiscoveryFiltersRequest = z.infer<
+  typeof getDiscoveryFiltersRequestSchema
+>;
+export type DiscoveryFilters = GetDiscoveryFiltersResponse;

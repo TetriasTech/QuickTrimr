@@ -987,7 +987,7 @@ public profiles      get-public-barber-profile
 
 available now        start-available-now-session  update-available-now-session
                      stop-available-now-session  search-available-now-barbers
-                     auto-disable-unresponsive-barber
+                     auto-disable-unresponsive-barber  get-discovery-filters
 
 booking requests     create-booking-request  accept-booking-request  decline-booking-request
                      expire-booking-request  cancel-booking-request

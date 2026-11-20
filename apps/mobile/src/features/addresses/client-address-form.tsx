@@ -17,11 +17,11 @@ import {
   type SavedClientAddress,
 } from '@quicktrimr/validation';
 import { skipToken, useMutation, useQuery } from '@tanstack/react-query';
-import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, View } from 'react-native';
 
+import { currentWorkingPoint } from '@/features/locations/current-working-point';
 import { useMobileSession } from '@/features/session/session-provider';
 import { EdgeFunctionError } from '@/lib/api/invoke-edge-function';
 import { queryKeys } from '@/lib/query/query-keys';
@@ -61,11 +61,13 @@ export function ClientAddressForm({
   address,
   onBack,
   onSaved,
+  initialUseLocation = false,
 }: {
   userId: string;
   address: SavedClientAddress | null;
   onBack: () => void;
-  onSaved: (onboardingComplete: boolean) => void;
+  onSaved: (onboardingComplete: boolean, saved: SavedClientAddress) => void;
+  initialUseLocation?: boolean;
 }) {
   const { supabase } = useMobileSession();
   const [showFields, setShowFields] = useState(address !== null);
@@ -111,15 +113,12 @@ export function ClientAddressForm({
 
   const locate = useMutation({
     async mutationFn() {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (!permission.granted) return null;
-      const { coords } = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
+      const point = await currentWorkingPoint();
+      if (!point) return null;
       return clientAddressOperation<'nearby'>(supabase, userId, {
         operation: 'nearby',
-        lat: coords.latitude,
-        lng: coords.longitude,
+        lat: point.lat,
+        lng: point.lng,
       });
     },
     onSuccess(result) {
@@ -135,6 +134,14 @@ export function ClientAddressForm({
     },
   });
 
+  const didLocate = useRef(false);
+  useEffect(() => {
+    if (initialUseLocation && !didLocate.current) {
+      didLocate.current = true;
+      locate.mutate();
+    }
+  }, [initialUseLocation, locate]);
+
   const save = useMutation({
     mutationFn: (fields: ClientAddressFields) =>
       clientAddressOperation<'create' | 'update'>(supabase, userId, {
@@ -145,7 +152,7 @@ export function ClientAddressForm({
         ...(selected && { directoryId: selected.directoryId }),
       }),
     onSuccess(result) {
-      onSaved(result.onboardingComplete);
+      onSaved(result.onboardingComplete, result.address);
     },
     onError(error) {
       if (error instanceof EdgeFunctionError && error.status === 422) {

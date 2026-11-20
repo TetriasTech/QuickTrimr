@@ -302,6 +302,12 @@ export const CONTRACT_DETAILS = {
     'Own session only. Does not cancel an accepted booking; response is the manually-disabled session projection.',
     [notFound, transition],
   ),
+  'get-discovery-filters': user(
+    'P2-T05',
+    [c],
+    ['ADR-003', 'RULE-SCHED-04', 'RULE-DISCOVERY-06'],
+    'Verified client only; public scheduling/discovery bounds and server time. Optional own active address resolves to label/point; unknown, foreign and archived IDs get the same field-level rejection. No unrelated configuration or address/contact data.',
+  ),
   'search-available-now-barbers': user(
     'P2-T04',
     [c],

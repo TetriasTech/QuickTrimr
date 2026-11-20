@@ -69,6 +69,9 @@ export const queryKeys = {
   },
   discovery: {
     all: rootKeys.discovery,
+    inputs: (userId: string, addressId: string | null) =>
+      ['discovery-inputs', userId, addressId] as const,
+    categories: (userId: string) => ['discovery-categories', userId] as const,
     results: (filters: DiscoveryKeyFilters) =>
       [...rootKeys.discovery, 'results', stableFilters(filters)] as const,
   },

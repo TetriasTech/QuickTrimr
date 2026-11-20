@@ -1,0 +1,53 @@
+$ node --test test/*.test.mjs && jest --runInBand
+✔ wrong password and unknown email have the same public error (0.298125ms)
+✔ provider 429 and rate codes produce a generic rate-limit message (0.059167ms)
+✔ every approved status has distinct copy and every unverified status has a persistent warning/action (0.554875ms)
+✔ return without completion refetches pending and ignores a forged verified callback (0.207292ms)
+✔ onboarding runs with the React Native abort signal surface without throwIfAborted (0.206375ms)
+✔ abandonment rechecks status and the next user action requests a fresh link (0.07725ms)
+✔ an expired-link redirect automatically obtains a different link and refreshes after each browser return (0.077375ms)
+✔ redirect loops stop safely and already-expired responses never open a browser (0.152792ms)
+✔ provider outages propagate for safe retry and browser failures still refresh status (0.163958ms)
+✔ signing out during link creation never opens the old account URL (0.08025ms)
+✔ callbacks require the exact configured destination and never supply an account or status (0.173875ms)
+✔ API calls use current bearer credentials, empty validated bodies, cancellation and user-scoped identity (0.9305ms)
+✔ profile sync uses the current token and stored role after the initial role lookup (1.811833ms)
+✔ profile sync stops if the session changes during the role lookup (0.188916ms)
+✔ signed-out sessions can access only the auth group (0.558917ms)
+✔ incomplete sessions reach onboarding and only barbers reach the Connect callback (0.070875ms)
+✔ complete client sessions reach the client journey and shared modals (0.047ms)
+✔ complete barber sessions reach the barber journey and shared modals (0.042333ms)
+✔ every required Expo Router shell route exists and has a default export (12.862875ms)
+✔ the root navigator protects every journey with typed route access (1.043208ms)
+✔ the Metro resolution probe imports all four shared workspace packages (0.785584ms)
+✔ the mobile shell uses the ADR-003 state libraries and no out-of-scope alternatives (0.798375ms)
+✔ the Edge Function helper surfaces the typed shared error envelope on 422 (1.883959ms)
+✔ the Edge Function helper validates successful responses with the named contract (0.775125ms)
+✔ the query-key factory produces stable, hierarchical keys (4.868084ms)
+✔ the Query client defaults refresh server truth without retrying client errors (0.14575ms)
+✔ the booking draft store contains only local selections, radius and requested time (0.120792ms)
+✔ query keys are constructed only in the query-key factory (11.737583ms)
+✔ the real form uses React Hook Form with the shared Zod schema (0.215458ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 183.460083
+PASS test/working-location-picker.test.tsx
+PASS test/availability-screen.test.tsx
+PASS test/public-profile-screen.test.tsx
+PASS test/connect-card.test.tsx
+PASS test/discovery-filters-screen.test.tsx
+PASS test/barber-services-screen.test.tsx
+PASS test/public-profile-api.test.ts
+PASS test/availability-api.test.ts
+PASS test/barber-services-api.test.ts
+
+Test Suites: 9 passed, 9 total
+Tests:       54 passed, 54 total
+Snapshots:   0 total
+Time:        6.85 s, estimated 8 s
+Ran all test suites.

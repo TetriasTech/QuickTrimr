@@ -50,13 +50,20 @@ export function SavedAddressList({
 export function ClientAddressesScreen({
   userId,
   onBack,
+  onSelect,
+  startWithCurrentLocation = false,
 }: {
   userId: string;
   onBack: () => void;
+  onSelect?: (addressId: string) => void;
+  startWithCurrentLocation?: boolean;
 }) {
   const { supabase } = useMobileSession();
   const cache = useQueryClient();
-  const [form, setForm] = useState<Form>();
+  const [form, setForm] = useState<Form | undefined>(
+    startWithCurrentLocation ? { address: null } : undefined,
+  );
+  const [useLocation, setUseLocation] = useState(startWithCurrentLocation);
   const [archiveTarget, setArchiveTarget] = useState<SavedClientAddress>();
   const ownAddresses = queryKeys.addresses.list(userId);
   const addresses = useInfiniteQuery({
@@ -99,16 +106,25 @@ export function ClientAddressesScreen({
       <ClientAddressForm
         userId={userId}
         address={form.address}
-        onBack={() => setForm(undefined)}
-        onSaved={(complete) => {
+        onBack={() => {
+          setUseLocation(false);
+          setForm(undefined);
+        }}
+        initialUseLocation={useLocation}
+        onSaved={(complete, saved) => {
+          setUseLocation(false);
           setForm(undefined);
           refresh(complete);
+          onSelect?.(saved.id);
         }}
       />
     );
 
   const rows = addresses.data?.pages.flatMap((page) => page.addresses) ?? [];
-  const add = () => setForm({ address: null });
+  const add = () => {
+    setUseLocation(false);
+    setForm({ address: null });
+  };
   return (
     <Screen
       scroll
@@ -144,7 +160,20 @@ export function ClientAddressesScreen({
           <SavedAddressList
             addresses={rows}
             renderActions={(address) => (
-              <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: spacing.sm,
+                }}
+              >
+                {onSelect ? (
+                  <Button
+                    label="Use this address"
+                    accessibilityLabel={`Use ${address.label}`}
+                    onPress={() => onSelect(address.id)}
+                  />
+                ) : null}
                 <Button
                   variant="secondary"
                   label="Edit"

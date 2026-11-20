@@ -126,3 +126,6 @@ verify_jwt = true
 
 [functions.search-available-now-barbers]
 verify_jwt = true
+
+[functions.get-discovery-filters]
+verify_jwt = true

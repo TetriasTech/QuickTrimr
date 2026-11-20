@@ -11,7 +11,7 @@ not copy those records or their statuses for convenient rendering. Screens rende
 query result and invalidate or refetch it after mutations.
 
 Zustand is for local state that has no authoritative server record. The example booking-draft
-store contains only the user's selected barber, service category, address, and booking mode so
+store contains only the user's selected barber, service category, address, booking mode, user-entered radius and requested Scheduled timestamp so
 those selections survive navigation. Prices, statuses, server configuration, and derived money
 do not belong in that store.
 
@@ -45,3 +45,18 @@ verified session integration.
 React Hook Form owns in-progress fields and uses `zodResolver` with schemas exported by
 `packages/validation`. A validated submission may update an allowed local draft or call the
 mutation boundary; it must not make Zustand a second server cache.
+
+## Discovery filter handoff — P2-T05
+
+`radiusKm` and `scheduledFor` join the existing four draft selections. Only IDs, mode
+and user input persist in Zustand. `get-discovery-filters` config, server clock,
+selected address label/point, catalogue rows and search responses remain query
+data scoped to the signed-in user. Sign-out/user changes clear both cache and draft.
+Current location reuses P1-T05's suggest → confirm → save flow and stores only the
+resulting saved address ID. No live sensor tracking is started.
+
+Every committed filter change clears a selected barber, invalidates discovery
+without refetching the old filters, and selects a new query key with no cursor.
+The query obtains fresh server inputs before search to catch times that aged
+inside the lead window or config/archived-address changes. This validation never
+creates a booking; P2-T08/P2-T09 must enforce/recheck again at submission.

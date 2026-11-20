@@ -17,8 +17,16 @@ export {
 } from './availability-transition.ts';
 export {
   discoveryBounds,
+  discoveryRadiusIssue,
   discoveryDistanceBand,
   compareDiscoveryKeys,
   type DiscoveryConfig,
   type DiscoverySortKey,
 } from './discovery.ts';
+
+export {
+  schedulingWindow,
+  scheduledTimeIssue,
+  scheduledLeadGuidance,
+  type SchedulingConfig,
+} from './scheduling.ts';
