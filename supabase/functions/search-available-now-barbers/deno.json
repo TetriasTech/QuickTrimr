@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@quicktrimr/shared": "../../../packages/shared/src/index.ts",
+    "@quicktrimr/validation": "../../../packages/validation/src/index.ts",
+    "zod": "npm:zod@4.6.5",
+    "@quicktrimr/domain": "../../../packages/domain/src/index.ts"
+  }
+}

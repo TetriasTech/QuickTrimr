@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "checks": [
+    "Real JWT/stored-role, forged metadata/identity, field validation and public/private RPC API denial; no private function execution probe",
+    "Separate live/Scheduled geographies and areas; exact public allowlists; shared SAL point; actual signed JPEG download; Scheduled availableUntil null",
+    "Every Connect gate distinct from reliability restricted; all terminal/elapsed session states; both coverage radii and active category prices enforced",
+    "All five reliability levels with/without cooldown in both booking types; exact before/at/after cutoff through real query; no offence/history exposure",
+    "56 tied results across eight pages and reliability boundary: no gaps/duplicates; cross-client/filter/page-size cursor rejection; live gate revocation; runtime config changes",
+    "Natural EXPLAIN plans show the spatial GiST indexes in both booking types against 3,000 far-away rows; database applies global ordering before bounded keyset pages"
+  ],
+  "providerCalls": "Auth and private Storage only; no Google/Stripe",
+  "applicationReset": false
+}

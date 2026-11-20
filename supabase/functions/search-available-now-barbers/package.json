@@ -1,0 +1,19 @@
+{
+  "name": "@quicktrimr/function-search-available-now-barbers",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "dependencies": {
+    "@quicktrimr/shared": "workspace:*",
+    "@quicktrimr/validation": "workspace:*",
+    "zod": "4.6.5",
+    "@quicktrimr/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/deno": "2.7.0"
+  }
+}

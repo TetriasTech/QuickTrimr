@@ -78,6 +78,7 @@ browser bundle. Never use `next.config`'s `env` option to export a private value
 | `STRIPE_CONNECT_WEBHOOK_SECRET` | Edge Functions only: signing secret for the Accounts v2 thin-event destination, if separate from the snapshot listener |
 | `STRIPE_WEBHOOK_SECRET` | Edge Functions only: signing secret for the exact endpoint/listener |
 | `GOOGLE_MAPS_SERVER_API_KEY` | Edge Functions only: Google Routes and Places credential |
+| `DISCOVERY_CURSOR_KEY` | Edge Functions only: base64-encoded random 32-byte AES key for authenticated, opaque search cursors. Keep one stable value per environment across function instances; rotating it invalidates existing pages. Never reuse a provider key. See [discovery setup](discovery.md). |
 | `STRIPE_CONNECT_RETURN_URL` | Edge Functions only: approved Connect return destination, not client input |
 | `STRIPE_CONNECT_REFRESH_URL` | Edge Functions only: approved Connect refresh destination, not client input |
 | `SENTRY_WORKER_DSN` | Backend operator only: dedicated P2-T03 server monitoring credential. The worker installer reads this one value and stores it in Supabase Vault for post-commit pg_net check-ins. It is separate from public app Sentry DSNs and never uploaded with the whole backend environment file. |

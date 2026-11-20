@@ -28,7 +28,7 @@ export const searchAvailableNowBarbersRequestSchema = requestObject({
   radiusKm: positiveNumberSchema,
   scheduledFor: timestampSchema.optional(),
   cursor: nonEmptyStringSchema.nullable().optional(),
-  limit: z.number().int().positive(),
+  limit: z.number().int().positive().optional(),
 }).superRefine((value, context) => {
   if (
     (value.bookingType === BOOKING_TYPE_VALUE.SCHEDULED) !==
@@ -43,16 +43,50 @@ export const searchAvailableNowBarbersRequestSchema = requestObject({
 export type SearchAvailableNowBarbersRequest = z.infer<
   typeof searchAvailableNowBarbersRequestSchema
 >;
+export const discoveryResultSchema = z.strictObject({
+  ...publicBarberIdentityShape,
+  priceCents: integerCentsSchema,
+  distanceBand: distanceBandSchema,
+  availableUntil: timestampSchema.nullable(),
+});
 export const searchAvailableNowBarbersResponseSchema = z.strictObject({
-  results: z.array(
-    z.strictObject({
-      ...publicBarberIdentityShape,
-      priceCents: integerCentsSchema,
-      distanceBand: distanceBandSchema,
-      availableUntil: timestampSchema.nullable(),
-    }),
-  ),
+  results: z.array(discoveryResultSchema),
   nextCursor: nonEmptyStringSchema.nullable(),
+});
+const rangeSchema = z.strictObject({
+  min: z.number().positive().finite(),
+  max: z.number().positive().finite(),
+});
+export const discoveryConfigSchema = z.strictObject({
+  radiusKm: rangeSchema.refine((v) => v.min <= v.max),
+  pageSize: z
+    .strictObject({
+      min: z.number().int().positive(),
+      max: z.number().int().positive(),
+      default: z.number().int().positive(),
+    })
+    .refine((v) => v.min <= v.default && v.default <= v.max),
+  distanceBands: z.strictObject({
+    upperMeters: z
+      .array(z.number().positive().finite())
+      .length(3)
+      .refine((v) => v.every((n, i) => i === 0 || n > v[i - 1]!)),
+    labels: z.tuple([
+      z.literal('under-2km'),
+      z.literal('2-5km'),
+      z.literal('5-10km'),
+      z.literal('10km+'),
+    ]),
+  }),
+});
+// Private cursor keys are authenticated/encrypted; this is never a public result.
+export const discoverySortKeySchema = z.strictObject({
+  demoted: z.boolean(),
+  distanceMeters: z.number().finite().nonnegative(),
+  priceCents: integerCentsSchema,
+  rating: publicBarberIdentityShape.rating,
+  ratingCount: publicBarberIdentityShape.ratingCount,
+  barberId: postgresUuidSchema,
 });
 export type SearchAvailableNowBarbersResponse = z.infer<
   typeof searchAvailableNowBarbersResponseSchema

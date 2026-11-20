@@ -19,6 +19,7 @@ export const serverOnlyNames = [
   'JIRA_API_TOKEN',
   'SENTRY_AUTH_TOKEN',
   'SENTRY_WORKER_DSN',
+  'DISCOVERY_CURSOR_KEY',
   'SUPABASE_ACCESS_TOKEN',
 ];
 

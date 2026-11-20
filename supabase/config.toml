@@ -123,3 +123,6 @@ verify_jwt = true
 
 [functions.auto-disable-unresponsive-barber]
 verify_jwt = true
+
+[functions.search-available-now-barbers]
+verify_jwt = true

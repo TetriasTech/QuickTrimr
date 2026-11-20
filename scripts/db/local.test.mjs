@@ -62,6 +62,10 @@ test('function serve keeps JWT verification enabled and defaults to the credenti
     commandArgs('serve', ['--env-file', 'supabase/.env.local']),
     ['functions', 'serve', '--env-file', 'supabase/.env.local'],
   );
+  assert.deepEqual(
+    commandArgs('serve', ['--env-file', 'supabase/.env.discovery.local']),
+    ['functions', 'serve', '--env-file', 'supabase/.env.discovery.local'],
+  );
   for (const args of [
     ['--no-verify-jwt'],
     ['--env-file', '/outside'],
