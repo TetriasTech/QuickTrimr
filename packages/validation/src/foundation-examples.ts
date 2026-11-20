@@ -202,6 +202,22 @@ export const FOUNDATION_CONTRACT_EXAMPLES = {
     { serviceId: ID },
     { id: ID, archivedAt: AT },
   ),
+  'get-discovery-filters': {
+    request: {
+      valid: {},
+      invalid: [
+        { addressId: 'invalid' },
+        { addressId: 42 },
+        { unexpected: true },
+      ],
+    },
+    response: side({
+      serverNow: AT,
+      scheduling: { minimumLeadMinutes: 240, maximumHorizonDays: 30 },
+      radiusKm: { min: 1, max: 50 },
+      address: null,
+    }),
+  },
   'search-available-now-barbers': example(
     {
       bookingType: BOOKING_TYPE_VALUE.AVAILABLE_NOW,

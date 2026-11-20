@@ -198,6 +198,10 @@ export const CONTRACTS = {
     catalogue.archiveBarberServiceRequestSchema,
     catalogue.archiveBarberServiceResponseSchema,
   ),
+  'get-discovery-filters': contract(
+    discovery.getDiscoveryFiltersRequestSchema,
+    discovery.getDiscoveryFiltersResponseSchema,
+  ),
   'search-available-now-barbers': contract(
     discovery.searchAvailableNowBarbersRequestSchema,
     discovery.searchAvailableNowBarbersResponseSchema,

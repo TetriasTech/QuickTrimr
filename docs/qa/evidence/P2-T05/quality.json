@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-21",
+  "environment": "local QuickTrimr workspace",
+  "checks": [
+    {
+      "command": "pnpm test",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm check:client-env",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/jira/generate-indexes.mjs --check",
+      "exitCode": 0
+    }
+  ],
+  "databaseProofs": {
+    "api": "PASS; api.json",
+    "migration": "PASS; migration.txt"
+  },
+  "nativeVerification": "PASS \u2014 native.json and screenshots",
+  "generatedBacklogSections": "untouched",
+  "additionalMobileRegression": "PASS: 9 Jest suites / 54 tests, including 6 discovery interaction cases; mobile Node tests also pass"
+}

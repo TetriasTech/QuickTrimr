@@ -116,13 +116,15 @@ test('the Query client defaults refresh server truth without retrying client err
   assert.equal(shouldRetryQuery(1, new Error('offline')), false);
 });
 
-test('the booking draft store contains only the four allowed local selections', () => {
+test('the booking draft store contains only local selections, radius and requested time', () => {
   const store = useBookingDraftStore.getState();
   const dataKeys = Object.keys(store).filter(
     (key) => typeof store[key] !== 'function',
   );
 
   assert.deepEqual(dataKeys.sort(), [
+    'radiusKm',
+    'scheduledFor',
     'selectedAddressId',
     'selectedBarberId',
     'selectedBookingType',
@@ -130,6 +132,8 @@ test('the booking draft store contains only the four allowed local selections', 
   ]);
 
   const savedDraft = {
+    radiusKm: null,
+    scheduledFor: null,
     selectedAddressId: 'address-1',
     selectedBarberId: 'barber-1',
     selectedBookingType: BOOKING_TYPE_VALUE.AVAILABLE_NOW,

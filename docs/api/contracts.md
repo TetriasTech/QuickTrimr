@@ -1340,6 +1340,48 @@ Request (decoded envelope only for Stripe):
 | 404 | `{"error":"not_found"}` | Requested entity is missing or not accessible; never expose another user’s record. |
 | 500 | `{"error":"internal_error"}` | Unexpected internal failure; persist/reconcile recoverable work, never blind retry unknown money effects. |
 
+### get-discovery-filters
+
+Owner ticket: P2-T05. Caller: **user**. Roles: client.
+
+Rules: `ADR-003`, `RULE-SCHED-04`, `RULE-DISCOVERY-06`.
+
+Verified client only; public scheduling/discovery bounds and server time. Optional own active address resolves to label/point; unknown, foreign and archived IDs get the same field-level rejection. No unrelated configuration or address/contact data.
+
+Shared request schema: `getDiscoveryFiltersRequestSchema`.
+Shared response schema: `getDiscoveryFiltersResponseSchema`.
+Exports: [packages/validation contracts](../../packages/validation/src/contracts/index.ts). Payload types are z.infer, not parallel interfaces.
+
+Request (decoded envelope only for Stripe):
+
+```json
+{}
+```
+
+200 response:
+
+```json
+{
+  "serverNow": "2026-11-02T00:00:00Z",
+  "scheduling": {
+    "minimumLeadMinutes": 240,
+    "maximumHorizonDays": 30
+  },
+  "radiusKm": {
+    "min": 1,
+    "max": 50
+  },
+  "address": null
+}
+```
+
+| Status | Error response | When |
+| --- | --- | --- |
+| 401 | `{"error":"unauthenticated"}` | Missing or invalid verified user JWT. |
+| 403 | `{"error":"forbidden"}` | Caller lacks the required role, ownership or internal-service permission. |
+| 422 | `{"error":"validation_failed","fields":{"_request":"Invalid request or server-side business validation"}}` | Malformed input or server-side business validation failed; fields identifies invalid inputs. |
+| 500 | `{"error":"internal_error"}` | Unexpected failure; safe error only, no internals or provider payload. |
+
 ### get-public-barber-profile
 
 Owner ticket: P1-T12. Caller: **user**. Roles: client.

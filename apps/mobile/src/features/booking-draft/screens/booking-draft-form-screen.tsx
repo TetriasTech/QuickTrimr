@@ -46,6 +46,8 @@ export function BookingDraftFormScreen() {
     (values) => {
       draft.replaceDraft({
         selectedAddressId: values.clientAddressId,
+        radiusKm: draft.radiusKm,
+        scheduledFor: values.scheduledFor ?? null,
         selectedBarberId: values.barberId,
         selectedBookingType: values.bookingType,
         selectedServiceCategoryId: values.serviceCategoryId,

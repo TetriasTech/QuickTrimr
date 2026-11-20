@@ -6,10 +6,11 @@ import {
 import { invokeEdgeFunction } from '@/lib/api/invoke-edge-function';
 import { supabaseEdgeTransport } from '@/lib/api/supabase-edge-transport';
 
+import { SERVICE_CATALOGUE_PAGE_SIZE } from './service-catalogue';
+
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// Transport page size, not a limit on the categories a barber may offer.
-export const SERVICE_CATALOGUE_PAGE_SIZE = 20;
+export { SERVICE_CATALOGUE_PAGE_SIZE } from './service-catalogue';
 const select =
   'id,slug,displayName:display_name,description,displayOrder:display_order,minPriceCents:min_price_cents,maxPriceCents:max_price_cents,archivedAt:archived_at,services:barber_services(id,serviceCategoryId:service_category_id,priceCents:price_cents,archivedAt:archived_at)';
 

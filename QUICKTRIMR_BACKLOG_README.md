@@ -3228,6 +3228,21 @@ Filters persist in the draft store across navigation, so a client who opens a ba
 
 Invalid combinations are prevented rather than submitted: no service selected, no address, or a past time.
 
+**Implementation contract clarification (2026-11-21)** — `get-discovery-filters` is a verified-client read. Optional `addressId` resolves only that client's active saved address to a label and point; foreign, unknown, archived and unresolved legacy addresses return the same field-level error. Configuration and the returned point remain TanStack Query data. The existing P1-T05 address list/form is the picker: current location suggests addresses for confirmation and saving, then discovery keeps the saved ID. The draft adds only the user's radius and requested timestamp alongside its existing IDs/mode, never config, address rows, prices or result records. Search changes clear a previously selected barber and restart the live query with no cursor.
+
+```jsonc
+// POST get-discovery-filters; omit addressId before choosing an address
+{ "addressId": "66666666-6666-4666-8666-666666666666" }
+// 200; only scheduling/discovery policy and the owner's selected address point
+{ "serverNow": "2026-11-21T00:00:00Z",
+  "scheduling": { "minimumLeadMinutes": 240, "maximumHorizonDays": 30 },
+  "radiusKm": { "min": 1, "max": 50 },
+  "address": { "id": "66666666-6666-4666-8666-666666666666", "label": "Home",
+    "point": { "lat": -37.82, "lng": 145.00 } } }
+// 422; identical for missing, archived and another client's address
+{ "error": "validation_failed", "fields": { "addressId": "Choose an active saved address." } }
+```
+
 **Acceptance criteria**
 
 - [ ] A client can choose booking mode, service category, address or current location, and radius.
@@ -3244,7 +3259,7 @@ Invalid combinations are prevented rather than submitted: no service selected, n
 
 **Out of scope** — the search function (`P2-T04`); results (`P2-T06`, `P2-T07`); submission (`P2-T09`).
 
-**Sync notes** — Consume P2-T04’s approved live, opaque-cursor pagination and stable ordering for unchanged data under `RULE-DISCOVERY-06`; refresh starts a new traversal after live changes. The draft shape defined here is what `P2-T09` submits. Adding a filter means adding it to the request contract too.
+**Sync notes** — Consume P2-T04’s approved live, opaque-cursor pagination and stable ordering for unchanged data under `RULE-DISCOVERY-06`; refresh starts a new traversal after live changes. The draft retains `selectedBookingType`, `selectedServiceCategoryId`, `selectedAddressId`, `selectedBarberId`, `radiusKm` and `scheduledFor`; it stores no server records. Discovery consumers use the common query-key factory and restart without a cursor after filters change. The draft shape defined here is what `P2-T09` submits. Adding a filter means adding it to the request contract too.
 
 ---
 

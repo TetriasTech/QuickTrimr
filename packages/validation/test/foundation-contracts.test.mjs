@@ -21,7 +21,7 @@ const accept = (name, side, value) =>
   CONTRACTS[name][`${side}Schema`].safeParse(value).success;
 const adminIntents = new Set(['admin-resolve-dispute', 'admin-issue-refund']);
 
-test('KB inventory, contract registry, details and fixtures have exactly the same 51 names', async () => {
+test('KB inventory, contract registry, details and fixtures have exactly the same 52 names', async () => {
   const kb = await readFile(
     new URL('QUICKTRIMR_KNOWLEDGE_BASE.md', root),
     'utf8',
@@ -32,8 +32,8 @@ test('KB inventory, contract registry, details and fixtures have exactly the sam
       .split('```')[1]
       .matchAll(/[a-z]+(?:-[a-z]+)+/g),
   ].map((match) => match[0]);
-  assert.equal(inventory.length, 51);
-  assert.equal(new Set(inventory).size, 51);
+  assert.equal(inventory.length, 52);
+  assert.equal(new Set(inventory).size, 52);
   for (const entries of [CONTRACTS, CONTRACT_DETAILS, API_FIXTURES])
     assert.deepEqual(Object.keys(entries).sort(), inventory.toSorted());
   const backlog = await readFile(
@@ -57,7 +57,7 @@ test('KB inventory, contract registry, details and fixtures have exactly the sam
   }
 });
 
-test('all 51 success and every documented error fixture parse, and JSON round trips', () => {
+test('all 52 success and every documented error fixture parse, and JSON round trips', () => {
   for (const [name, fixture] of Object.entries(API_FIXTURES)) {
     assert.equal(
       accept(name, 'request', JSON.parse(JSON.stringify(fixture.request))),

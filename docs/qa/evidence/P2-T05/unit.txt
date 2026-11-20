@@ -1,0 +1,43 @@
+✔ inclusive server-derived scheduling boundaries {"minimumLeadMinutes":240,"maximumHorizonDays":30} (0.448542ms)
+✔ inclusive server-derived scheduling boundaries {"minimumLeadMinutes":90,"maximumHorizonDays":2} (0.074125ms)
+✔ guidance uses live configuration and requested time, without a calendar promise (0.0945ms)
+✔ domestic and international Australian mobiles normalize identically (1.367167ms)
+✔ invalid length, landline, unsupported prefix and missing fields fail validation (0.40775ms)
+✔ every contract has matching valid and invalid examples (24.027208ms)
+✔ every contract uses the shared error response schema (0.232542ms)
+✔ cancellation fixture matches the approved Available Now backlog example (2.104ms)
+✔ request schemas ignore client-supplied identity, status and server-derived money fields (1.160834ms)
+✔ reliability-denial backlog examples reuse the shared error contract (1.263417ms)
+✔ request schemas still reject unknown non-server fields (0.446792ms)
+✔ booking type controls whether a requested scheduled time is present (0.076834ms)
+✔ ETA responses reject private routing data (0.078875ms)
+✔ ETA and its timestamp are returned together (0.07ms)
+✔ success responses reject other valid statuses from the same shared enum (0.227334ms)
+✔ KB inventory, contract registry, details and fixtures have exactly the same 52 names (10.04125ms)
+✔ all 52 success and every documented error fixture parse, and JSON round trips (1.936291ms)
+✔ caller classification separates all workers, provider ingress and admin-only actions (0.141792ms)
+✔ ordinary requests cannot yield trusted server-owned fields; admin refund intent is narrowly explicit (6.479625ms)
+✔ strict success projections reject private fields at root and public nested boundaries (2.787875ms)
+✔ admin status alias is exactly the approved reliability schema and metadata, not new privileges (0.090792ms)
+✔ structural boundaries cover profile, category, discovery, dates and permission denial (0.43625ms)
+✔ decoded webhook envelope is compatible with provider additions but is not an authentication mechanism (0.105584ms)
+✔ worker no-op and empty branches parse without claiming a stale state transition (0.1865ms)
+✔ refund outcomes and monetary responses reject invalid cents/statuses (0.581875ms)
+✔ owning backlog error examples use the shared envelope and are covered by contract details (7.616583ms)
+✔ Postgres UUIDs accept canonical values and reject malformed values (0.633042ms)
+✔ timestamps require an ISO datetime with an explicit offset (0.446667ms)
+✔ geographic points enforce latitude and longitude boundaries (0.74225ms)
+✔ integer cents reject decimals and negatives (0.213542ms)
+✔ every status enum schema is driven by packages/shared (0.550041ms)
+✔ location source uses the shared RULE-AVAIL-02 values (0.063917ms)
+✔ all named contract payload types are inferred with z.infer (3.433625ms)
+✔ validation source does not redeclare shared status literals (4.672625ms)
+✔ filter read verifies stored role before RPC, scopes identity and never forwards unexpected data/errors (18.961666ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 202.632334

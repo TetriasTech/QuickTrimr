@@ -1,0 +1,35 @@
+{
+  "result": "PASS",
+  "date": "2026-11-21",
+  "device": "iPhone 17 / iOS 26.5 / Expo Go SDK 57",
+  "target": "local QuickTrimr only",
+  "syntheticDataOnly": true,
+  "checks": [
+    "Mode/category/saved-address/fractional-radius controls and real Available Now search",
+    "P1 directory lookup \u2192 confirm \u2192 save selected the returned address ID",
+    "Address-management navigation and Back retained filters",
+    "Bounded native Scheduled date and time controls; requested copy; real Scheduled search",
+    "Current location reused P1 suggestions/confirmation/save and retained Scheduled inputs",
+    "Changed local lead bound invalidated time, displayed dynamic guidance and linked to Available Now",
+    "Invalid local config blocked search without fallback; restore/retry retained current draft",
+    "Radius zero showed field error/disabled search; restore/refresh recovered empty state"
+  ],
+  "approvedMinimumLeadMinutesRestored": 240,
+  "temporaryLeadProbeMinutes": 1800,
+  "temporaryInvalidConfigRestored": true,
+  "nativePermissionChanges": false,
+  "applicationReset": false,
+  "hostedDeployment": false,
+  "screenshots": [
+    "native-incomplete.png",
+    "native-scheduled.png",
+    "native-gps-suggestions.png",
+    "native-too-soon.png",
+    "native-config-error.png",
+    "native-empty.png"
+  ],
+  "limits": [
+    "No separate Android manual run or release build",
+    "No separate large-system-text setting change"
+  ]
+}
