@@ -2799,6 +2799,15 @@ Location uses the versioned ABS SAL label and shared representative area point d
     "serviceCategoryId": "55555555-5555-4555-8555-555555555555",
     "displayName": "Skin Fade", "description": "A skin fade.", "priceCents": 4550 }],
   "nextServicesCursor": null } }
+// optional selected-category read added by P2-T06; no price is accepted in navigation/input
+{ "barberId": "44444444-4444-4444-8444-444444444444",
+  "serviceCategoryId": "55555555-5555-4555-8555-555555555555" }
+// 200.profile has the same public fields above plus selectedService, independently of servicesAfter:
+// "selectedService": { "id": "11111111-1111-4111-8111-111111111111",
+//   "serviceCategoryId": "55555555-5555-4555-8555-555555555555",
+//   "displayName": "Skin Fade", "description": "A skin fade.", "priceCents": 4550 }
+// selectedService is null if the category or barber's service is archived/unlisted;
+// it is omitted when serviceCategoryId is omitted. Live edits return the current price.
 // 200 — missing, incomplete or no longer Connect-eligible
 { "profile": null }
 // 401 / 403 / 422: shared safe error envelope; field errors identify malformed input
