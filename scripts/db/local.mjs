@@ -20,11 +20,11 @@ export function commandArgs(command, args = []) {
     if (
       args.length === 2 &&
       args[0] === '--env-file' &&
-      args[1] === 'supabase/.env.local'
+      ['supabase/.env.local', 'supabase/.env.discovery.local'].includes(args[1])
     )
-      return ['functions', 'serve', '--env-file', 'supabase/.env.local'];
+      return ['functions', 'serve', '--env-file', args[1]];
     throw new Error(
-      'Only --env-file supabase/.env.local is accepted by functions:serve.',
+      'Only the approved backend or isolated discovery env file is accepted by functions:serve.',
     );
   }
   if (args.length !== 0)

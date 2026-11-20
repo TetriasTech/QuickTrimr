@@ -1,0 +1,12 @@
+{
+  "result": "PASS",
+  "localOnly": true,
+  "providerCalls": 0,
+  "services": 25,
+  "checks": [
+    "Auth/invalid JWT/stored role/unprofiled/forged body/cursor/DB recheck/direct RPC denial",
+    "Raw exact allowlists at every level; no private fields; signed JPEG from both public and existing owner reads; shared SAL point; 20+5 pages without gaps; no-review/no-service/null-photo branches",
+    "Current 4550→4625 integer-cent price; archived barber service and archived category excluded",
+    "Unknown/incomplete/revoked Connect targets unavailable; raw profile/services read and write denial; private column cannot be selected"
+  ]
+}

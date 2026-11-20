@@ -15,3 +15,10 @@ export {
   availabilityWorkerHealth,
   type AvailabilityEvent,
 } from './availability-transition.ts';
+export {
+  discoveryBounds,
+  discoveryDistanceBand,
+  compareDiscoveryKeys,
+  type DiscoveryConfig,
+  type DiscoverySortKey,
+} from './discovery.ts';

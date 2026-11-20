@@ -1,0 +1,20 @@
+✔ approved search bounds include fractional/end boundaries and runtime config changes (0.676833ms)
+✔ four distance bands have exact half-open boundaries (0.159875ms)
+✔ restricted-last precedes distance, price, score, score count and deterministic ID (0.078209ms)
+✔ migration apply and reset always select the local database (0.507375ms)
+✔ local runner rejects remote targets, unknown flags and extra arguments before calling a child (0.167208ms)
+✔ migration names cannot inject flags, paths or shell arguments (0.104792ms)
+✔ function serve keeps JWT verification enabled and defaults to the credential-free template (0.059542ms)
+✔ local execution drops hosted credentials and suppresses CLI key output (0.16375ms)
+✔ local execution propagates an actual subprocess failure (27.746125ms)
+✔ opaque AES-GCM cursor authenticates sort keys, query/client binding and server key (5.022ms)
+✔ auth/role/validation/config guards precede search; encrypted cursors bind caller and filters; errors are safe (20.283958ms)
+✔ discovery signs one bounded deduplicated batch and validates response paths (8.652375ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 134.134708

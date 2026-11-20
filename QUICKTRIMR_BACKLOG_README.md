@@ -3117,7 +3117,7 @@ priority: Highest
 jiraKey: TRIMR-47
 dependsOn: [P0-D01, P0-D04, P0-D06, P1-T09, P1-T11, P2-T01]
 affects: [P2-T05, P2-T06, P2-T07, P2-T09]
-knowledgeBase: [ADR-008, RULE-DISCOVERY-01, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-04, RULE-SERVICE-05, RULE-RELY-06, CFG-RELIABILITY-SEARCH-PENALTY, RULE-SERVICE-06]
+knowledgeBase: [ADR-008, RULE-DISCOVERY-01, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-04, RULE-SERVICE-05, RULE-RELY-06, CFG-RELIABILITY-SEARCH-PENALTY, RULE-SERVICE-06, RULE-DISCOVERY-06, CFG-DISCOVERY-RADIUS-KM, CFG-DISCOVERY-PAGE-SIZE, CFG-DISCOVERY-DISTANCE-BANDS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, maps, security]
 ```
@@ -3142,6 +3142,8 @@ Response carries the **public projection only** (`RULE-ONBOARD-05`), at the prec
 
 Ordering documented and deliberate: per `CFG-RELIABILITY-SEARCH-PENALTY`, otherwise eligible restricted barbers follow non-restricted barbers in both booking types, before normal deterministic distance/price/rating ordering within each group. Apply that ordering in the bounded database query before pagination, never re-sort a fetched page or expose private offence history in public results.
 
+**Readiness clarification (2026-11-20):** Andrew approved Option A in `RULE-DISCOVERY-06`: independent client radius 1–50 km inclusive/fractional; integer pages 1–50 with omitted-limit default 20; restricted-last, distance ascending, price ascending, rating descending (unrated last), rating count descending, barber ID ascending. Read bounds and the existing distance bands from the cited config. Live pages recheck eligibility; stable traversal is guaranteed for unchanged data, and refresh restarts after live changes. No snapshot lifetime is invented. Encrypt/authenticate any cursor carrying private sort keys; bind it to the verified client and search inputs. Scheduled uses the same endpoint with `bookingType: "scheduled"` and the existing `scheduledFor` timestamp field, returns `availableUntil: null`, and searches configured coverage rather than a live session. It does not claim calendar/slot availability. Current public profiles remain unrated (`rating: null`, `ratingCount: 0`) until Phase 4 owns review storage/aggregation; do not invent review scores here. All six dependencies are Done; the TBC is resolved in place. Filter/list/map/booking-draft consumers must use this policy and preserve cursor opacity.
+
 **Contract example** — `search-available-now-barbers`
 
 ```jsonc
@@ -3158,7 +3160,7 @@ Ordering documented and deliberate: per `CFG-RELIABILITY-SEARCH-PENALTY`, otherw
       "rating": 4.8, "ratingCount": 37,
       "availableUntil": "2026-08-05T09:00:00Z" }
   ],
-  "nextCursor": "eyJvZmZ..." }
+  "nextCursor": "v1.<opaque-nonce>.<authenticated-ciphertext>" }
 
 // 200 — no matches is a success, not an error
 { "results": [], "nextCursor": null }
@@ -3179,7 +3181,7 @@ Ordering documented and deliberate: per `CFG-RELIABILITY-SEARCH-PENALTY`, otherw
 - [ ] **The response contains no private barber field, exact distance, barber coordinate, or location more precise than `RULE-DISCOVERY-05` allows** — asserted field by field on the raw body. The only coordinate returned is the shared public-area map point.
 - [ ] Results are paginated and bounded; there is no unbounded response.
 - [ ] The query uses a PostGIS index — `EXPLAIN` shows an index scan.
-- [ ] Ordering is documented and deterministic for equal values, so pagination does not repeat or skip a barber.
+- [ ] Ordering follows RULE-DISCOVERY-06 and is deterministic across ties/reliability groups, so unchanged data has no repeated/skipped barber; live changes require a fresh traversal.
 - [ ] An empty result is a 200 with an empty array, not an error.
 - [ ] The Google server key is not involved; this is a database query.
 
@@ -3203,7 +3205,7 @@ priority: High
 jiraKey: TRIMR-48
 dependsOn: [P0-D08, P0-T15, P1-T05, P2-T04]
 affects: [P2-T06, P2-T07, P2-T09]
-knowledgeBase: [ADR-003, RULE-DISCOVERY-01, RULE-SCHED-04, ENUM-BOOKING-TYPE, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS]
+knowledgeBase: [ADR-003, RULE-DISCOVERY-01, RULE-SCHED-04, ENUM-BOOKING-TYPE, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, RULE-DISCOVERY-06, CFG-DISCOVERY-RADIUS-KM, CFG-DISCOVERY-PAGE-SIZE]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
@@ -3242,7 +3244,7 @@ Invalid combinations are prevented rather than submitted: no service selected, n
 
 **Out of scope** — the search function (`P2-T04`); results (`P2-T06`, `P2-T07`); submission (`P2-T09`).
 
-**Sync notes** — the draft shape defined here is what `P2-T09` submits. Adding a filter means adding it to the request contract too.
+**Sync notes** — Consume P2-T04’s approved live, opaque-cursor pagination and stable ordering for unchanged data under `RULE-DISCOVERY-06`; refresh starts a new traversal after live changes. The draft shape defined here is what `P2-T09` submits. Adding a filter means adding it to the request contract too.
 
 ---
 
@@ -3258,7 +3260,7 @@ priority: High
 jiraKey: TRIMR-49
 dependsOn: [P0-T15, P1-T12, P2-T04, P2-T05]
 affects: [P2-T09]
-knowledgeBase: [RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-05]
+knowledgeBase: [RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-ONBOARD-05, RULE-DISCOVERY-06]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
@@ -3294,7 +3296,7 @@ Refetch on filter change, and pull-to-refresh for the Available Now case, where 
 
 **Out of scope** — map view (`P2-T07`); submission (`P2-T09`).
 
-**Sync notes** — this card and `P1-T12` render the same projection. They must read the same fields or one will show a price the other does not.
+**Sync notes** — Consume P2-T04’s approved live, opaque-cursor pagination and stable ordering for unchanged data under `RULE-DISCOVERY-06`; refresh starts a new traversal after live changes. This card and `P1-T12` render the same projection. They must read the same fields or one will show a price the other does not.
 
 ---
 
@@ -3310,7 +3312,7 @@ priority: Medium
 jiraKey: TRIMR-50
 dependsOn: [P0-D06, P0-T20, P2-T04, P2-T05]
 affects: []
-knowledgeBase: [ADR-004, ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-DISCOVERY-04, RULE-DISCOVERY-05]
+knowledgeBase: [ADR-004, ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-DISCOVERY-06]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile, maps, security]
 ```
@@ -3353,7 +3355,7 @@ Uses the matching platform-restricted **client** Google key verified in `P0-T20`
 
 **Out of scope** — live tracking, which `ADR-004` forbids; on-the-way ETA (`P4-T06`); submission (`P2-T09`).
 
-**Sync notes** — this and `P2-T06` consume the same search response. A precision change in `P2-T04` changes what this may render.
+**Sync notes** — Consume P2-T04’s approved live, opaque-cursor pagination and stable ordering for unchanged data under `RULE-DISCOVERY-06`; refresh starts a new traversal after live changes. This and `P2-T06` consume the same search response. A precision change in `P2-T04` changes what this may render.
 
 ---
 
@@ -3476,7 +3478,7 @@ priority: Highest
 jiraKey: TRIMR-52
 dependsOn: [P0-D08, P0-T14, P1-T12, P2-T05, P2-T08]
 affects: [P3-T08, P4-T01]
-knowledgeBase: [ADR-006, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-06, RULE-SCHED-02, RULE-SCHED-04, RULE-CANCEL-07, RULE-COPY-01, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS]
+knowledgeBase: [ADR-006, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-06, RULE-SCHED-02, RULE-SCHED-04, RULE-CANCEL-07, RULE-COPY-01, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, RULE-DISCOVERY-06]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
@@ -3515,7 +3517,7 @@ Terminal states rendered honestly: accepted, declined, expired, cancelled — ea
 
 **Out of scope** — request creation (`P2-T08`); payment UI (`P3-T01`); cancellation (`P3-T08`).
 
-**Sync notes** — `P3-T06` adds a payment step to this flow. The screen must be written so a payment-method step can be inserted before submission without a redesign.
+**Sync notes** — Consume P2-T04’s approved live, opaque-cursor pagination and stable ordering for unchanged data under `RULE-DISCOVERY-06`; refresh starts a new traversal after live changes. `P3-T06` adds a payment step to this flow. The screen must be written so a payment-method step can be inserted before submission without a redesign.
 
 ---
 

@@ -1,0 +1,1 @@
+Full migration replay / populated upgrade preservation / exact config and ACLs / 25 bounds and 10 distance-band SQL-domain cases: PASS

@@ -1,0 +1,312 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Limit",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Startup Cost": 130.31,
+      "Total Cost": 130.32,
+      "Plan Rows": 1,
+      "Plan Width": 182,
+      "Plans": [
+        {
+          "Node Type": "Index Scan",
+          "Parent Relationship": "InitPlan",
+          "Subplan Name": "CTE geography_candidates",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Scan Direction": "Forward",
+          "Index Name": "barber_service_area_gist",
+          "Relation Name": "barber_profiles",
+          "Alias": "b_1",
+          "Startup Cost": 0.4,
+          "Total Cost": 83.42,
+          "Plan Rows": 1,
+          "Plan Width": 80,
+          "Index Cond": "(service_area && _st_expand('0101000020E610000066666666662662409A999999991943C0'::geography, '10000'::double precision))",
+          "Filter": "((public_area_id IS NOT NULL) AND st_dwithin(service_area, '0101000020E610000066666666662662409A999999991943C0'::geography, '10000'::double precision, true) AND st_dwithin(service_area, '0101000020E610000066666666662662409A999999991943C0'::geography, ((service_radius_km)::double precision * '1000'::double precision), true))"
+        },
+        {
+          "Node Type": "Sort",
+          "Parent Relationship": "Outer",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 46.89,
+          "Total Cost": 46.9,
+          "Plan Rows": 1,
+          "Plan Width": 182,
+          "Sort Key": [
+            "(COALESCE((r.level = 'restricted'::reliability_level), false))",
+            "g.distance_meters",
+            "s.price_cents",
+            "g.barber_id"
+          ],
+          "Plans": [
+            {
+              "Node Type": "Nested Loop",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Join Type": "Inner",
+              "Startup Cost": 0.84,
+              "Total Cost": 46.88,
+              "Plan Rows": 1,
+              "Plan Width": 182,
+              "Inner Unique": false,
+              "Plans": [
+                {
+                  "Node Type": "Nested Loop",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Join Type": "Inner",
+                  "Startup Cost": 0.84,
+                  "Total Cost": 45.29,
+                  "Plan Rows": 1,
+                  "Plan Width": 167,
+                  "Inner Unique": false,
+                  "Plans": [
+                    {
+                      "Node Type": "Nested Loop",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Join Type": "Inner",
+                      "Startup Cost": 0.57,
+                      "Total Cost": 31.03,
+                      "Plan Rows": 1,
+                      "Plan Width": 167,
+                      "Inner Unique": true,
+                      "Join Filter": "((s.price_cents >= c.min_price_cents) AND (s.price_cents <= c.max_price_cents))",
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Join Type": "Inner",
+                          "Startup Cost": 0.57,
+                          "Total Cost": 25.18,
+                          "Plan Rows": 1,
+                          "Plan Width": 183,
+                          "Inner Unique": true,
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Inner",
+                              "Startup Cost": 0.28,
+                              "Total Cost": 16.87,
+                              "Plan Rows": 1,
+                              "Plan Width": 157,
+                              "Inner Unique": true,
+                              "Join Filter": "(b.id = g.barber_id)",
+                              "Plans": [
+                                {
+                                  "Node Type": "Nested Loop",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Join Type": "Inner",
+                                  "Startup Cost": 0,
+                                  "Total Cost": 8.56,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 100,
+                                  "Inner Unique": false,
+                                  "Join Filter": "(s.barber_id = g.barber_id)",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Seq Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Relation Name": "barber_services",
+                                      "Alias": "s",
+                                      "Startup Cost": 0,
+                                      "Total Cost": 8.53,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 36,
+                                      "Filter": "((archived_at IS NULL) AND (service_category_id = '1d0c6309-f6bf-4125-b0a8-a2a632a31a7e'::uuid))"
+                                    },
+                                    {
+                                      "Node Type": "CTE Scan",
+                                      "Parent Relationship": "Inner",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "CTE Name": "geography_candidates",
+                                      "Alias": "g",
+                                      "Startup Cost": 0,
+                                      "Total Cost": 0.02,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 64
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "barber_profiles_pkey",
+                                  "Relation Name": "barber_profiles",
+                                  "Alias": "b",
+                                  "Startup Cost": 0.28,
+                                  "Total Cost": 8.3,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 89,
+                                  "Index Cond": "(id = s.barber_id)",
+                                  "Filter": "((bio IS NOT NULL) AND (years_experience IS NOT NULL) AND (NULLIF(btrim(display_name), ''::text) IS NOT NULL))"
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "Index Scan",
+                              "Parent Relationship": "Inner",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Scan Direction": "Forward",
+                              "Index Name": "public_areas_pkey",
+                              "Relation Name": "public_areas",
+                              "Alias": "a",
+                              "Startup Cost": 0.29,
+                              "Total Cost": 8.3,
+                              "Plan Rows": 1,
+                              "Plan Width": 58,
+                              "Index Cond": "(id = g.public_area_id)"
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Seq Scan",
+                          "Parent Relationship": "Inner",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Relation Name": "service_categories",
+                          "Alias": "c",
+                          "Startup Cost": 0,
+                          "Total Cost": 5.84,
+                          "Plan Rows": 1,
+                          "Plan Width": 24,
+                          "Filter": "((archived_at IS NULL) AND (id = '1d0c6309-f6bf-4125-b0a8-a2a632a31a7e'::uuid))"
+                        }
+                      ]
+                    },
+                    {
+                      "Node Type": "Limit",
+                      "Parent Relationship": "Inner",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 0.28,
+                      "Total Cost": 14.24,
+                      "Plan Rows": 1,
+                      "Plan Width": 4,
+                      "Plans": [
+                        {
+                          "Node Type": "Subquery Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Alias": "p",
+                          "Startup Cost": 0.28,
+                          "Total Cost": 14.24,
+                          "Plan Rows": 1,
+                          "Plan Width": 4,
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Subquery",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Inner",
+                              "Startup Cost": 0.28,
+                              "Total Cost": 14.23,
+                              "Plan Rows": 1,
+                              "Plan Width": 16,
+                              "Inner Unique": false,
+                              "Plans": [
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "stripe_connect_accounts",
+                                  "Alias": "a_1",
+                                  "Startup Cost": 0,
+                                  "Total Cost": 5.92,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 16,
+                                  "Filter": "(charges_enabled AND payouts_enabled AND (barber_id = g.barber_id) AND (account_status = 'verified'::verification_status))"
+                                },
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "profiles_pkey",
+                                  "Relation Name": "profiles",
+                                  "Alias": "p_1",
+                                  "Startup Cost": 0.28,
+                                  "Total Cost": 8.3,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 16,
+                                  "Index Cond": "(id = g.barber_id)",
+                                  "Filter": "((role = 'barber'::user_role) AND (verification_status = 'verified'::verification_status))"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parent Relationship": "Inner",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Join Type": "Left",
+                  "Startup Cost": 0,
+                  "Total Cost": 1.56,
+                  "Plan Rows": 1,
+                  "Plan Width": 3,
+                  "Inner Unique": true,
+                  "Filter": "COALESCE((r.level <> 'suspended'::reliability_level), true)",
+                  "Plans": [
+                    {
+                      "Node Type": "Result",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 0,
+                      "Total Cost": 0.01,
+                      "Plan Rows": 1,
+                      "Plan Width": 0
+                    },
+                    {
+                      "Node Type": "Seq Scan",
+                      "Parent Relationship": "Inner",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Relation Name": "barber_reliability_state",
+                      "Alias": "r",
+                      "Startup Cost": 0,
+                      "Total Cost": 1.54,
+                      "Plan Rows": 1,
+                      "Plan Width": 4,
+                      "Filter": "(g.barber_id = id)"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
