@@ -3019,8 +3019,8 @@ phase: 2
 priority: High
 jiraKey: TRIMR-46
 dependsOn: [P0-D04, P0-D07, P2-T01]
-affects: [P2-T02, P2-T12, P3-T12]
-knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-03, RULE-AVAIL-05, RULE-RELY-06, ENUM-AVAIL-STATUS, CFG-MISSED-REQUEST-THRESHOLD]
+affects: [P2-T02, P2-T08, P2-T12, P2-T13, P2-T15, P3-T12]
+knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-03, RULE-AVAIL-05, RULE-RELY-06, ENUM-AVAIL-STATUS, CFG-MISSED-REQUEST-THRESHOLD, CFG-AVAIL-WORKER-OPERATIONS, CFG-AVAIL-WORKER-TEST-PROJECT, CFG-AVAIL-WORKER-MONITOR, CFG-AVAIL-WORKER-ALERT-EMAIL, RULE-OPS-AVAIL-WORKER-TEST, RULE-OPS-PROVIDER-OWNERSHIP]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend]
 ```
@@ -3051,7 +3051,37 @@ unowned generic workflow engine. Record operational settings and prove peak-load
 
 A consecutive-miss counter that **resets on a response** — accept or decline. Counting non-consecutive misses over a session would disable a busy barber who answered nine of eleven requests.
 
+**Readiness clarification (2026-11-20):** Andrew approved the development settings in `CFG-AVAIL-WORKER-OPERATIONS`: 10-second sweep, batches of 500, one scheduled sweep at a time, minute health checks, failed-run/stale-heartbeat/overdue alerts and 30-day operational run retention. Prove 1,000 simultaneous expiries alongside 100,000 historical sessions, with every effect at/after its deadline and less than 60 seconds late. Preserve immutable audit/history. Andrew selected the dedicated customer-owned hosted test deployment and external monitoring under `RULE-OPS-AVAIL-WORKER-TEST`, including the narrowly scoped feature-branch deployment exception. Both readiness TBCs are now resolved: the empty Supabase target, CLI/server API access and customer Sentry ownership/access are verified. Use the pinned test/monitor identities and the separately approved worker-alert email in the cited CFG values. The Sentry base plan is Developer; do not depend on its temporary Business trial. Account creation is not deployed-feature evidence. Phase 0 laboratory results do not discharge this feature's hosted tests. Existing product deadlines, the approved two-consecutive-miss threshold and the four resulting statuses remain unchanged.
+
 Audit log for each transition, with the reason (`ADR-013`).
+
+**Internal contract examples** — migration-owned private functions, never client RPCs:
+
+```sql
+-- Request creation (P2-T08) records the server-selected source session on the
+-- request as available_now_session_id under the barber profile parent lock.
+-- No client session id or outcome is accepted.
+
+-- After the owning handler applies its conditional terminal request transition,
+-- call inside that SAME transaction (a later rollback also rolls this back):
+select private.record_available_now_request_outcome(request_id, 'expired'); -- P2-T15 unanswered expiry only
+select private.record_available_now_request_outcome(request_id, 'declined'); -- P2-T13 barber response only
+select private.record_available_now_request_outcome(request_id, 'accepted'); -- P2-T12 acceptance
+-- The stored request status must match; Scheduled requests do not affect this
+-- counter. One immutable request receipt deduplicates retries. Miss/decline
+-- effects belong to the source session; ended sessions are never reactivated.
+-- Acceptance makes the barber's current active session busy, including when
+-- the request's source session was replaced. No active session means no
+-- availability status to disable; booking acceptance remains P2-T12's work.
+-- Bulk closure of other requests under RULE-AVAIL-07 is neither an unanswered
+-- miss nor a barber response, and does not invoke this outcome hook.
+```
+
+The existing protected `auto-disable-unresponsive-barber` API remains reference-only:
+`{"sessionId":"<uuid>"}` returns `{"sessionId":"<uuid>","applied":true,"status":"auto_disabled"}`
+only when current stored misses meet config; stale/duplicate input returns
+`applied:false` with the current status. Neither the API nor the private producer
+hooks implement request creation, acceptance, decline or request expiry themselves.
 
 **Acceptance criteria**
 
@@ -3065,13 +3095,13 @@ Audit log for each transition, with the reason (`ADR-013`).
 - [ ] Missed and declined requests produce no reliability offence (`RULE-RELY-06`); test repeated expiry/delivery and the unchanged two-consecutive-miss auto-disable rule.
 - [ ] Threshold values are read from config; no literal appears in the logic.
 - [ ] Each transition writes an audit log with its reason.
-- [ ] The pg_cron sweep and its independent monitoring work in the deployed test environment; missing ticks/interrupted claims recover without overwriting stopped or busy sessions, including under a stated peak workload (`ADR-011`).
+- [ ] The pg_cron sweep and its independent monitoring work in the dedicated hosted test environment (`RULE-OPS-AVAIL-WORKER-TEST`); missing ticks/interrupted claims recover without overwriting stopped or busy sessions. Measure the approved `CFG-AVAIL-WORKER-OPERATIONS` envelope: 1,000 simultaneous deadlines alongside 100,000 historical sessions, every effect at/after its deadline and less than 60 seconds late; prove the configured failed-run/stale-heartbeat/overdue alerts and operational retention without pruning immutable history (`ADR-011`).
 
 **Tests** — expiry firing once and again as a no-op; consecutive-miss counter reset on decline; a manually stopped session not resurrected or overwritten by a later expiry job; config value change altering behaviour without a code change; repeated parallel sweep/transition calls; stopped cron and interrupted-claim recovery; server-only API denial; independent heartbeat/overdue alerts and peak-load timing.
 
 **Out of scope** — the reliability engine (`P3-T12`); the toggle UI (`P2-T02`); acceptance (`P2-T12`).
 
-**Sync notes** — `P2-T12` sets `busy` through this module rather than writing the status itself, so all four transitions stay in one place.
+**Sync notes** — `P2-T02` already displays these statuses/reasons. `P2-T08` persists the server-selected source session under the profile parent lock. `P2-T12`, `P2-T13` and `P2-T15` invoke the private outcome hook inside their own conditional terminal-request transaction; acceptance makes the current active session busy, decline resets source-session misses, and unanswered expiry counts one source-session miss. Bulk closure under `RULE-AVAIL-07` invokes none of these outcomes. Their handlers are not implemented here. `P3-T12` continues to exclude misses/declines from offences and retains its own operational verification under ADR-011. Generated sections remain managed on main.
 
 ---
 
@@ -3337,7 +3367,7 @@ owner: Andrew
 phase: 2
 priority: Highest
 jiraKey: TRIMR-51
-dependsOn: [P0-D01, P0-D02, P0-D03, P0-D04, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11, P2-T01]
+dependsOn: [P0-D01, P0-D02, P0-D03, P0-D04, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11, P2-T01, P2-T03]
 affects: [P2-T09, P2-T10, P2-T12, P2-T13, P2-T15, P3-T01, P3-T06, P4-T01]
 knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS, RULE-SERVICE-06]
 blockedByTbc: []
@@ -3361,6 +3391,11 @@ Validate: authenticated client with a complete profile, an owned and unarchived 
 Use the shared read-side eligibility helper from `P2-T01` to enforce `RULE-RELY-06` on direct requests: suspension blocks both types; a current cooldown blocks Available Now only; restricted outside a cooldown remains bookable. Re-check server-owned state rather than trusting a stale search result. Reuse `409 barber_unavailable` without disclosing private reliability history to the client.
 
 Booking-type rules — Available Now: reject if the client already holds an active pending Available Now request (`RULE-AVAIL-04`). Scheduled: reject a duplicate intent (`RULE-SCHED-03`) and enforce the lead time and horizon from `RULE-SCHED-04`.
+
+For Available Now, record the current server-selected session in `available_now_session_id`
+under the profile parent lock, using P2-T03's source-session contract. Never accept this
+reference from the client. Later missed/response receipts must not affect a replacement
+session by mistaking a delayed old request for new work.
 
 Write the request plus its snapshots: service price cents, commission percentage (`RULE-PAY-11`), derived gross, commission and barber net, the address, and the barber's details at request time. Read the percentage from `CFG-COMMISSION-PCT`; round commission down and give the barber the remainder. Do not deduct payment-processing fees from barber net or add a client card surcharge.
 
@@ -3640,7 +3675,7 @@ Re-check current server-owned restrictions under `RULE-RELY-06` with the shared 
 
 Concurrency: a conditional update that transitions `pending → accepted` only if it is still `pending`, and a check that the barber holds no active Available Now job. Both under one transaction, with the row locked — but **no external call inside that lock** (`RULE-PAY-09`), which is another reason Stripe is not here.
 
-On success: create the booking at `accepted_pending_payment`, write `booking_status_history` (`ADR-010`), set the Available Now session `busy` via `P2-T03`, and resolve the barber's other pending Available Now requests (`RULE-AVAIL-07`).
+On success: create the booking at `accepted_pending_payment`, write `booking_status_history` (`ADR-010`), invoke `private.record_available_now_request_outcome(request_id, 'accepted')` from `P2-T03` inside that same transaction to make the current active Available Now session `busy`, and resolve the barber's other pending Available Now requests (`RULE-AVAIL-07`). Bulk closure of those other requests does not invoke a miss/response outcome hook.
 
 Audit log (`ADR-013`).
 
@@ -3721,6 +3756,10 @@ Validate authenticated barber, request addressed to them, still `pending`, not e
 Transition `pending → declined` conditionally, so a decline racing an acceptance loses cleanly.
 
 Reset the consecutive-miss counter via `P2-T03` — a decline is a response, not a miss.
+
+Use `private.record_available_now_request_outcome(request_id,'declined')` in the same
+transaction as the conditional request transition. The source-session receipt makes
+duplicate delivery idempotent. Do not call it for requests bulk-closed by another acceptance.
 
 An optional decline reason, for later insight into why requests are refused.
 
@@ -3855,6 +3894,11 @@ Transition `pending → expired` **conditionally**, so a request accepted a seco
 Idempotent: firing twice leaves identical state.
 
 Increment the consecutive-miss counter via `P2-T03` — an expiry is a miss.
+
+For unanswered Available Now expiry, use
+`private.record_available_now_request_outcome(request_id,'expired')` in the same
+transaction. Scheduled expiry and bulk closure under RULE-AVAIL-07 do not produce
+Available Now misses; a replay consumes the same source-session receipt.
 
 **A reconciliation sweep** that catches requests past expiry which the primary sweep missed,
 including missing work records and interrupted claims. Recover from authoritative request state,

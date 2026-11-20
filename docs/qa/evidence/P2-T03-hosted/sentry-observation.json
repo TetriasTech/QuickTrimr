@@ -1,0 +1,15 @@
+{
+  "monitorUrl": "https://quicktrimr.sentry.io/monitors/11013676/?project=4512461869744128",
+  "environment": "development",
+  "observedIncident": "Your monitor is failing: A missed check-in was detected.",
+  "incidentStartedDisplayed": "Nov 20, 5:02 PM AEDT",
+  "databaseTestWindow": "Both schedules paused; no health sender was called during the window.",
+  "alertUrl": "https://quicktrimr.sentry.io/monitors/alerts/6377447/",
+  "alertRule": "monitor.slug equals available-now-worker-health; notify approved member",
+  "emailReceipt": "Andrew confirmed worker failure/recovery emails arrived.",
+  "recovery": {
+    "issueStatus": "resolved",
+    "incidentEndedDisplayed": "Nov 20, 5:04 PM AEDT",
+    "latestCheckins": "Okay at 5:04 and 5:05 PM AEDT"
+  }
+}

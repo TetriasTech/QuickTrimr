@@ -80,6 +80,7 @@ browser bundle. Never use `next.config`'s `env` option to export a private value
 | `GOOGLE_MAPS_SERVER_API_KEY` | Edge Functions only: Google Routes and Places credential |
 | `STRIPE_CONNECT_RETURN_URL` | Edge Functions only: approved Connect return destination, not client input |
 | `STRIPE_CONNECT_REFRESH_URL` | Edge Functions only: approved Connect refresh destination, not client input |
+| `SENTRY_WORKER_DSN` | Backend operator only: dedicated P2-T03 server monitoring credential. The worker installer reads this one value and stores it in Supabase Vault for post-commit pg_net check-ins. It is separate from public app Sentry DSNs and never uploaded with the whole backend environment file. |
 | `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_PROJECT_KEY` | Operator script only: site, service account and fixed `TRIMR` project |
 | `JIRA_API_TOKEN` | Operator script only: password-manager-held service-account token |
 | `JIRA_AC_FIELD` | Operator script only: optional custom field; blank uses description |

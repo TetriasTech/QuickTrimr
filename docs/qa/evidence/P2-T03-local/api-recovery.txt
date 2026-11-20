@@ -1,0 +1,5 @@
+Five real six-request API races and every unpermitted role: PASS
+RLS enabled, private/managed schemas denied at API, owner/cross-owner read: PASS
+Interrupted claim/transaction, authoritative retry, single committed audit: PASS
+Stopped scheduler resumed and recovered an unscheduled due entity: PASS
+{"target":"local","result":"PASS","historicalSessions":100000,"early":0,"dueSessions":1000,"maxLatenessSeconds":12.30706,"p95LatenessSeconds":12.3043565}

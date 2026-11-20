@@ -1,0 +1,4 @@
+108 exact SQL/domain transition cases: PASS
+Five real six-connection duplicate receipt races, exactly one count: PASS
+Upgrade preservation, response reset, config, stale states, acceptance, unchanged reliability and immutable receipts: PASS
+Full worker migration replay, health parity, atomic failed batch/retry, 30-day retention and immutable history: PASS

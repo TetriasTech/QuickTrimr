@@ -1,0 +1,9 @@
+{
+  "target": "local",
+  "result": "PASS",
+  "historicalSessions": 100000,
+  "early": 0,
+  "dueSessions": 1000,
+  "maxLatenessSeconds": 12.30706,
+  "p95LatenessSeconds": 12.3043565
+}

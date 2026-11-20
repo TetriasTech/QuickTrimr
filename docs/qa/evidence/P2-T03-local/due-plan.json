@@ -1,0 +1,84 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Limit",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Startup Cost": 0.55,
+      "Total Cost": 4984.52,
+      "Plan Rows": 500,
+      "Plan Width": 24,
+      "Plans": [
+        {
+          "Node Type": "Nested Loop",
+          "Parent Relationship": "Outer",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Join Type": "Inner",
+          "Startup Cost": 0.55,
+          "Total Cost": 9629.59,
+          "Plan Rows": 966,
+          "Plan Width": 24,
+          "Inner Unique": false,
+          "Plans": [
+            {
+              "Node Type": "Index Only Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Scan Direction": "Forward",
+              "Index Name": "available_now_due",
+              "Relation Name": "available_now_sessions",
+              "Alias": "s",
+              "Startup Cost": 0.28,
+              "Total Cost": 1592.47,
+              "Plan Rows": 966,
+              "Plan Width": 40,
+              "Index Cond": "(available_until <= (statement_timestamp() + '00:00:20'::interval))"
+            },
+            {
+              "Node Type": "Subquery Scan",
+              "Parent Relationship": "Inner",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Alias": "claimed",
+              "Startup Cost": 0.27,
+              "Total Cost": 8.31,
+              "Plan Rows": 1,
+              "Plan Width": 0,
+              "Plans": [
+                {
+                  "Node Type": "LockRows",
+                  "Parent Relationship": "Subquery",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 0.27,
+                  "Total Cost": 8.3,
+                  "Plan Rows": 1,
+                  "Plan Width": 22,
+                  "Plans": [
+                    {
+                      "Node Type": "Index Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Scan Direction": "Forward",
+                      "Index Name": "profiles_pkey",
+                      "Relation Name": "profiles",
+                      "Alias": "p",
+                      "Startup Cost": 0.27,
+                      "Total Cost": 8.29,
+                      "Plan Rows": 1,
+                      "Plan Width": 22,
+                      "Index Cond": "(id = s.barber_id)"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

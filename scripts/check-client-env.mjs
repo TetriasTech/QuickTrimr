@@ -18,6 +18,7 @@ export const serverOnlyNames = [
   'STRIPE_CONNECT_REFRESH_URL',
   'JIRA_API_TOKEN',
   'SENTRY_AUTH_TOKEN',
+  'SENTRY_WORKER_DSN',
   'SUPABASE_ACCESS_TOKEN',
 ];
 
