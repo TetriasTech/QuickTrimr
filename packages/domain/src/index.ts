@@ -10,3 +10,8 @@ export {
   type ConnectVerificationInput,
 } from './connect-verification.ts';
 export { bookingEligibility, availableNowBoundsFit } from './availability.ts';
+export {
+  availabilityTransition,
+  availabilityWorkerHealth,
+  type AvailabilityEvent,
+} from './availability-transition.ts';

@@ -1,0 +1,110 @@
+[
+  {
+    "stage": "hosted-retention",
+    "oldOperationalRunPruned": true,
+    "unreportedFailurePreserved": true,
+    "immutableHistoryPreserved": true
+  },
+  {
+    "stage": "baseline",
+    "createdAt": "2026-11-20T05:54:00.064929+00:00",
+    "healthStatus": "ok",
+    "httpStatus": 202,
+    "outcome": "accepted"
+  },
+  {
+    "stage": "overdue-detected",
+    "failedRuns": 0,
+    "healthy": false,
+    "lastSuccessAt": "2026-11-20T05:54:12.430318+00:00",
+    "oldestDueAt": "2026-11-20T05:53:16.093111+00:00",
+    "overdue": true,
+    "serverNow": "2026-11-20T05:54:21.204072+00:00",
+    "staleHeartbeat": false
+  },
+  {
+    "stage": "overdue-alert",
+    "createdAt": "2026-11-20T05:55:00.061545+00:00",
+    "healthStatus": "error",
+    "httpStatus": 202,
+    "outcome": "accepted"
+  },
+  {
+    "stage": "overdue-recovery",
+    "createdAt": "2026-11-20T05:56:00.03318+00:00",
+    "healthStatus": "ok",
+    "httpStatus": 202,
+    "outcome": "accepted"
+  },
+  {
+    "stage": "failure-detected",
+    "failedRuns": 1,
+    "healthy": false,
+    "lastSuccessAt": "2026-11-20T05:56:13.213934+00:00",
+    "oldestDueAt": "2026-11-20T05:56:13.399039+00:00",
+    "overdue": false,
+    "serverNow": "2026-11-20T05:56:18.465323+00:00",
+    "staleHeartbeat": false
+  },
+  {
+    "stage": "failed-run-alert",
+    "createdAt": "2026-11-20T05:57:00.036945+00:00",
+    "healthStatus": "error",
+    "httpStatus": 202,
+    "outcome": "accepted"
+  },
+  {
+    "stage": "failed-run-recovery",
+    "createdAt": "2026-11-20T05:58:00.028704+00:00",
+    "healthStatus": "ok",
+    "httpStatus": 202,
+    "outcome": "accepted"
+  },
+  {
+    "stage": "stale-detected",
+    "failedRuns": 0,
+    "healthy": false,
+    "lastSuccessAt": "2026-11-20T05:56:22.206255+00:00",
+    "oldestDueAt": null,
+    "overdue": false,
+    "serverNow": "2026-11-20T05:58:27.19135+00:00",
+    "staleHeartbeat": true
+  },
+  {
+    "stage": "stale-heartbeat-alert",
+    "createdAt": "2026-11-20T05:59:00.069677+00:00",
+    "healthStatus": "error",
+    "httpStatus": 202,
+    "outcome": "accepted"
+  },
+  {
+    "stage": "stale-heartbeat-recovery",
+    "createdAt": "2026-11-20T06:00:00.027321+00:00",
+    "healthStatus": "ok",
+    "httpStatus": 202,
+    "outcome": "accepted"
+  },
+  {
+    "stage": "independent-missing-window-start",
+    "serverNow": "2026-11-20T06:00:20.147369+00:00",
+    "bothJobsPaused": true
+  },
+  {
+    "stage": "independent-missing-window-end",
+    "serverNow": "2026-11-20T06:03:24.502831+00:00",
+    "bothJobsPaused": true
+  },
+  {
+    "stage": "missing-checkin-recovery",
+    "createdAt": "2026-11-20T06:04:00.380527+00:00",
+    "healthStatus": "ok",
+    "httpStatus": 202,
+    "outcome": "accepted"
+  },
+  {
+    "stage": "restored",
+    "schedulesRestored": true,
+    "syntheticRowsRemoved": true,
+    "immutableAuditPreserved": true
+  }
+]

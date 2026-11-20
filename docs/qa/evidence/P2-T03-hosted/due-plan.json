@@ -1,0 +1,84 @@
+[
+  {
+    "Plan": {
+      "Async Capable": false,
+      "Node Type": "Limit",
+      "Parallel Aware": false,
+      "Plan Rows": 500,
+      "Plan Width": 24,
+      "Plans": [
+        {
+          "Async Capable": false,
+          "Inner Unique": false,
+          "Join Type": "Inner",
+          "Node Type": "Nested Loop",
+          "Parallel Aware": false,
+          "Parent Relationship": "Outer",
+          "Plan Rows": 895,
+          "Plan Width": 24,
+          "Plans": [
+            {
+              "Alias": "s",
+              "Async Capable": false,
+              "Index Cond": "(available_until <= (statement_timestamp() + '00:00:20'::interval))",
+              "Index Name": "available_now_due",
+              "Node Type": "Index Only Scan",
+              "Parallel Aware": false,
+              "Parent Relationship": "Outer",
+              "Plan Rows": 895,
+              "Plan Width": 40,
+              "Relation Name": "available_now_sessions",
+              "Scan Direction": "Forward",
+              "Startup Cost": 0.28,
+              "Total Cost": 414.61
+            },
+            {
+              "Alias": "claimed",
+              "Async Capable": false,
+              "Node Type": "Subquery Scan",
+              "Parallel Aware": false,
+              "Parent Relationship": "Inner",
+              "Plan Rows": 1,
+              "Plan Width": 0,
+              "Plans": [
+                {
+                  "Async Capable": false,
+                  "Node Type": "LockRows",
+                  "Parallel Aware": false,
+                  "Parent Relationship": "Subquery",
+                  "Plan Rows": 1,
+                  "Plan Width": 22,
+                  "Plans": [
+                    {
+                      "Alias": "p",
+                      "Async Capable": false,
+                      "Index Cond": "(id = s.barber_id)",
+                      "Index Name": "profiles_pkey",
+                      "Node Type": "Index Scan",
+                      "Parallel Aware": false,
+                      "Parent Relationship": "Outer",
+                      "Plan Rows": 1,
+                      "Plan Width": 22,
+                      "Relation Name": "profiles",
+                      "Scan Direction": "Forward",
+                      "Startup Cost": 0.27,
+                      "Total Cost": 2.49
+                    }
+                  ],
+                  "Startup Cost": 0.27,
+                  "Total Cost": 2.5
+                }
+              ],
+              "Startup Cost": 0.27,
+              "Total Cost": 2.5
+            }
+          ],
+          "Startup Cost": 0.55,
+          "Total Cost": 2665.53
+        }
+      ],
+      "Startup Cost": 0.55,
+      "Total Cost": 1489.36
+    }
+  }
+]

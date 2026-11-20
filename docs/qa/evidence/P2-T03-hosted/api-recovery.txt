@@ -1,0 +1,6 @@
+Five real six-request API races and every unpermitted role: PASS
+RLS enabled, private/managed schemas denied at API, owner/cross-owner read: PASS
+Interrupted claim/transaction, authoritative retry, single committed audit: PASS
+Stopped scheduler resumed and recovered an unscheduled due entity: PASS
+
+The combined run then stopped at a query-plan JSON parser assertion. That parser was corrected; the separate capacity-only rerun passed afterward (capacity.json / due-plan.json).

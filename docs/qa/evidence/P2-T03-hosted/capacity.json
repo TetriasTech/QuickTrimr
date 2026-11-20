@@ -1,0 +1,9 @@
+{
+  "target": "hosted",
+  "result": "PASS",
+  "historicalSessions": 100000,
+  "dueSessions": 1000,
+  "early": 0,
+  "maxLatenessSeconds": 13.866368,
+  "p95LatenessSeconds": 13.85189975
+}

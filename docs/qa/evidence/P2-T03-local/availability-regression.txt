@@ -1,0 +1,16 @@
+{
+  "result": "PASS",
+  "checks": [
+    "All three live endpoints: anonymous, stored non-barber/admin/unprofiled roles and malformed input denied",
+    "Exact raw response contains no private coordinate; verified JWT owns writes; foreign read/write and direct table/RPC denial",
+    "Interior/boundary ST_Covers resolution with deterministic code tie-break; crafted area rejected; Scheduled centre unchanged",
+    "Live fractional/inclusive radius bounds, end-time errors and independent charges/payouts gates",
+    "15 live level/cooldown combinations: start and update enforce stored restrictions, stop allowed, no deadline reset",
+    "Real parallel starts: 5 rounds × 6 requests, exactly one current active session after each round; all starts atomically replace",
+    "Three real parent-lock races: committed suspension denies queued activation; server clock sampled after wait rejects an end time that expired while queued",
+    "Runtime config change immediately alters both radius and end-time validation; launch defaults restored",
+    "Idempotent stop, no terminal resurrection; append-only audit contains no point/address/contact fields"
+  ],
+  "applicationReset": false,
+  "fixtures": "Synthetic local rows and append-only audits retained; disposable logins soft-deleted."
+}

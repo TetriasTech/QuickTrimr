@@ -1,0 +1,36 @@
+{
+  "health": {
+    "failedRuns": 0,
+    "healthy": true,
+    "lastSuccessAt": "2026-11-20T06:06:15.877616+00:00",
+    "oldestDueAt": null,
+    "overdue": false,
+    "serverNow": "2026-11-20T06:06:21.170618+00:00",
+    "staleHeartbeat": false
+  },
+  "operations": {
+    "batchSize": 500,
+    "healthCheckSeconds": 60,
+    "overdueSeconds": 60,
+    "peakDueSessions": 1000,
+    "peakExpiryLatenessSecondsExclusive": 60,
+    "peakHistoricalSessions": 100000,
+    "runRetentionDays": 30,
+    "scheduledConcurrency": 1,
+    "staleHeartbeatSeconds": 120,
+    "sweepSeconds": 10
+  },
+  "schedules": [
+    {
+      "active": true,
+      "name": "quicktrimr.available_now.expiry",
+      "schedule": "10 seconds"
+    },
+    {
+      "active": true,
+      "name": "quicktrimr.available_now.health",
+      "schedule": "* * * * *"
+    }
+  ],
+  "threshold": 2
+}

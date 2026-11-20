@@ -68,6 +68,10 @@ export async function withIsolatedSchema(work) {
     grant usage on schema public to anon, authenticated, service_role;`,
     );
   };
+  let workError,
+    workResult,
+    cleanupError,
+    workFailed = false;
   try {
     assert.equal(
       docker(['createdb', '-U', 'postgres', database]).status,
@@ -120,13 +124,38 @@ export async function withIsolatedSchema(work) {
     grant all on all tables in schema auth, storage to postgres;
     grant execute on all functions in schema auth, storage to postgres;`);
     resetApplicationSchema();
-    return await work({ query, replay, files, sqlFor, resetApplicationSchema });
+    workResult = await work({
+      query,
+      replay,
+      files,
+      sqlFor,
+      resetApplicationSchema,
+      database,
+    });
+  } catch (error) {
+    workFailed = true;
+    workError = error;
   } finally {
-    assert.equal(
-      docker(['dropdb', '-U', 'postgres', '--if-exists', '--force', database])
-        .status,
-      0,
-      'Isolated replay database cleanup',
-    );
+    const cleanup = docker([
+      'dropdb',
+      '-U',
+      'postgres',
+      '--if-exists',
+      '--force',
+      database,
+    ]);
+    if (cleanup.status !== 0) {
+      cleanupError = new Error(
+        'Isolated replay database cleanup failed; diagnostic output suppressed.',
+      );
+    }
   }
+  if (workFailed && cleanupError)
+    throw new AggregateError(
+      [workError, cleanupError],
+      'Migration proof and cleanup failed.',
+    );
+  if (workFailed) throw workError;
+  if (cleanupError) throw cleanupError;
+  return workResult;
 }

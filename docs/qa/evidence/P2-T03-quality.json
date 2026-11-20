@@ -1,0 +1,11 @@
+{
+  "lint": "PASS",
+  "typecheck": "PASS",
+  "test": "PASS",
+  "format": "PASS",
+  "clientEnvironment": "PASS",
+  "graph": "PASS",
+  "jiraProjection": "5 descriptions updated; 4 links added; statuses and assignees unchanged",
+  "generatedBacklogSections": "unchanged",
+  "secretScan": "PASS — staged text scanned; backend env ignored; UI screenshots inspected"
+}

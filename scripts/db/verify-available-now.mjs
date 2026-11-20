@@ -122,7 +122,7 @@ try {
   for (const name of ['barberB', 'clientA']) {
     const read = await apiJson(
       status,
-      `/rest/v1/available_now_sessions?id=eq.${foreignId}&select=*`,
+      `/rest/v1/available_now_sessions?id=eq.${foreignId}&select=id,barber_id,location,status,created_at,updated_at,location_source,radius_km,available_until,public_area_id`,
       tokens[name],
     );
     assert.equal(read.status, 200);
@@ -328,11 +328,11 @@ try {
     const ready = new Promise((resolve) =>
       child.stdout.on('data', (chunk) => {
         output += chunk.toString();
-        if (output.includes('QA_LOCK_HELD')) resolve();
+        if (/QA_LOCK_HELD:\d+/.test(output)) resolve();
       }),
     );
     child.stdin.write(
-      `begin;select id from public.profiles where id='${users.barberA}' for update;\n\\echo QA_LOCK_HELD\n`,
+      `begin;select id from public.profiles where id='${users.barberA}' for update;select 'QA_LOCK_HELD:'||pg_backend_pid();\n`,
     );
     await Promise.race([
       ready,
@@ -340,10 +340,12 @@ try {
         throw new Error('Fixture lock not acquired');
       }),
     ]);
-    return async (sql = '') => {
+    const release = async (sql = '') => {
       child.stdin.end(sql + ';commit;\n');
       await finished;
     };
+    release.pid = Number(output.match(/QA_LOCK_HELD:(\d+)/)[1]);
+    return release;
   }
   for (let round = 0; round < 3; round++) {
     const release = await holdProfile();
@@ -353,7 +355,7 @@ try {
       for (let n = 0; n < 100; n++) {
         waiting =
           queryLocal(
-            "select exists(select 1 from pg_stat_activity where wait_event_type='Lock' and query like '%manage_available_now_session%');",
+            `select exists(select 1 from pg_stat_activity where ${release.pid}=any(pg_blocking_pids(pid)));`,
           ) === 't';
         if (waiting) break;
         await delay(25);
