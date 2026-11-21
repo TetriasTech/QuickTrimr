@@ -12,9 +12,8 @@ import {
   LoadingState,
   Screen,
   TextInput,
-  colors,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import {
   upsertBarberServiceRequestSchema,
@@ -56,6 +55,7 @@ const eligibilityCopy =
   'Enable and price at least one service before you can appear in search. Stripe setup and other eligibility checks also apply.';
 
 export function BarberServicesScreen({ userId }: { userId: string }) {
+  const { colors, typography } = useTheme();
   const { supabase } = useMobileSession();
   const cache = useQueryClient();
   const api = barberServicesApi(supabase, userId);
@@ -284,6 +284,7 @@ function ServiceRow({
   saveError: boolean;
   saved: boolean;
 }) {
+  const { colors, typography } = useTheme();
   const { control } = useFormContext<Fields>();
   const original = valuesFor(category.services[0]);
   const enabledName = `services.${category.id}.enabled` as const;
@@ -316,7 +317,7 @@ function ServiceRow({
           control={control}
           defaultValue={original.enabled}
           render={({ field }) => (
-            <Host matchContents>
+            <Host seedColor={colors.accent} matchContents>
               <Switch
                 label={`Offer ${category.displayName}`}
                 value={field.value}

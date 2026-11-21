@@ -1,0 +1,12 @@
+{
+  "verifiedAt": "2026-11-21T10:27:10.954Z",
+  "categoryArchivedWithAudit": true,
+  "barbersArchived": 2,
+  "fixtureLoginsSoftDeleted": 9,
+  "activeFixtureSessions": 0,
+  "temporaryCredentialFileRemoved": true,
+  "immutableAuditHistoryPreserved": true,
+  "auxiliaryTestArtifactsRetained": false,
+  "syntheticLocalityRemoved": true,
+  "syntheticPhotosRemoved": 1
+}

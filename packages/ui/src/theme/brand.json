@@ -1,0 +1,34 @@
+{
+  "name": "QuickTrimr",
+  "tagline": "Grooming, on your terms.",
+  "palette": {
+    "forest": "#183D32",
+    "ink": "#152D25",
+    "ivory": "#F6F5ED",
+    "paper": "#FFFFFF",
+    "citrus": "#D6EE8A",
+    "sage": "#E8EDE1",
+    "muted": "#5C6A60",
+    "line": "#DDE3D8",
+    "night": "#10251D",
+    "nightSurface": "#1B352A",
+    "nightRaised": "#294637",
+    "nightMuted": "#B0BFB1",
+    "nightLine": "#395345",
+    "inputLine": "#708775",
+    "nightInputLine": "#7D9885"
+  },
+  "fonts": {
+    "regular": "Manrope_400Regular",
+    "medium": "Manrope_500Medium",
+    "bold": "Manrope_700Bold",
+    "display": "InstrumentSerif_400Regular",
+    "displayItalic": "InstrumentSerif_400Regular_Italic"
+  },
+  "mark": {
+    "viewBox": "0 0 100 100",
+    "ring": "M 67 65 A 28 28 0 1 1 74 43",
+    "tail": "M 52 54 L 78 80",
+    "strokeWidth": 9
+  }
+}

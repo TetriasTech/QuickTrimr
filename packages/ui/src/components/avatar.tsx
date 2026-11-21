@@ -1,7 +1,7 @@
 import { Image, type ImageSource } from 'expo-image';
 import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, radius, sizes, typography, useTheme } from '../theme';
+import { radius, sizes, useTheme } from '../theme';
 
 export type AvatarSize = 'small' | 'medium' | 'large';
 
@@ -28,7 +28,21 @@ export function Avatar({
   style,
   testID,
 }: AvatarProps) {
-  useTheme();
+  const { brand, typography } = useTheme();
+  const styles = {
+    avatar: {
+      overflow: 'hidden',
+    },
+    fallback: {
+      alignItems: 'center',
+      backgroundColor: brand.palette.forest,
+      justifyContent: 'center',
+    },
+    image: {
+      height: '100%',
+      width: '100%',
+    },
+  } as const satisfies Record<string, ViewStyle>;
   const dimension = avatarSizes[size];
   const sharedStyle: ViewStyle = {
     borderRadius: radius.full,
@@ -52,23 +66,15 @@ export function Avatar({
       {source ? (
         <Image contentFit="cover" source={source} style={styles.image} />
       ) : (
-        <Text style={typography.headline}>{initials}</Text>
+        <Text
+          style={[
+            size === 'large' ? typography.editorial : typography.headline,
+            { color: brand.palette.citrus },
+          ]}
+        >
+          {initials}
+        </Text>
       )}
     </View>
   );
 }
-
-const styles = {
-  avatar: {
-    overflow: 'hidden',
-  },
-  fallback: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceMuted,
-    justifyContent: 'center',
-  },
-  image: {
-    height: '100%',
-    width: '100%',
-  },
-} as const satisfies Record<string, ViewStyle>;

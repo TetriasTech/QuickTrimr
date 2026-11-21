@@ -1,0 +1,63 @@
+{
+  "checkedAt": "2026-11-21T10:29:23.859Z",
+  "checks": [
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm --filter @quicktrimr/mobile build",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm check:client-env",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/jira/generate-indexes.mjs --check",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "testCounts": {
+    "sharedUiJest": 30,
+    "mobileNode": 29,
+    "mobileJest": 62,
+    "rootToolingNode": 218
+  },
+  "native": {
+    "platform": "iOS",
+    "device": "iPhone 17",
+    "os": "26.5",
+    "runtime": "Expo Go SDK 57",
+    "welcome": true,
+    "signIn": true,
+    "discoveryForm": true,
+    "emptyResults": true,
+    "populatedScheduledResults": true,
+    "publicProfile": true,
+    "darkAppearance": true,
+    "largerText": true,
+    "leftOnWelcome": true
+  },
+  "audit": {
+    "scope": "branding diff from main",
+    "checklist": "A-F",
+    "unresolvedFindings": 0
+  }
+}

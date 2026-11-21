@@ -1,6 +1,8 @@
 import { BOOKING_TYPE_VALUE } from '@quicktrimr/shared';
 import {
   Avatar,
+  brandAssets,
+  sizes,
   Button,
   Card,
   EmptyState,
@@ -8,9 +10,11 @@ import {
   LoadingState,
   Screen,
   spacing,
-  typography,
+  radius,
+  useTheme,
 } from '@quicktrimr/ui';
 import { formatAudCents } from '@quicktrimr/ui/presentation';
+import { Image } from 'expo-image';
 import { memo, useCallback } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
@@ -43,6 +47,7 @@ const ResultCard = memo(function ResultCard({
   photoBaseUrl: string;
   onSelect: (barberId: string) => void;
 }) {
+  const { colors, typography } = useTheme();
   const availability =
     bookingType === BOOKING_TYPE_VALUE.AVAILABLE_NOW && result.availableUntil
       ? `Available Now until ${new Date(result.availableUntil).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
@@ -53,37 +58,86 @@ const ResultCard = memo(function ResultCard({
       accessibilityRole="button"
       accessibilityLabel={`View ${result.displayName}, ${serviceName}, ${formatAudCents(result.priceCents)}. ${result.approximateArea.label}, approximate service area. ${distanceLabels[result.distanceBand]}. ${rating}. ${availability}.`}
       onPress={() => onSelect(result.barberId)}
+      style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
     >
-      <Card variant="outlined">
+      <Card style={{ gap: spacing.md }}>
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: spacing.md,
+            gap: spacing.compact,
           }}
         >
           <Avatar
             initials={publicProfileInitials(result.displayName)}
+            style={{ borderRadius: radius.md }}
             {...(result.photoUrl
               ? { source: { uri: new URL(result.photoUrl, photoBaseUrl).href } }
               : {})}
-            accessibilityLabel={`${result.displayName} profile photo`}
+            accessibilityLabel={
+              result.photoUrl
+                ? `${result.displayName} profile photo`
+                : `${result.displayName} initials`
+            }
           />
           <View style={{ flex: 1, gap: spacing.xs }}>
             <Text style={typography.headline}>{result.displayName}</Text>
-            <Text style={typography.body}>
-              {serviceName} · {formatAudCents(result.priceCents)}
+            <Text style={typography.caption}>
+              {result.approximateArea.label}
             </Text>
           </View>
+          <View
+            style={{ alignItems: 'flex-end', gap: spacing.xs, flexShrink: 1 }}
+          >
+            <Text style={typography.headline}>
+              {formatAudCents(result.priceCents)}
+            </Text>
+            <Text style={typography.caption}>{serviceName}</Text>
+          </View>
         </View>
-        <Text style={typography.body}>
-          {result.approximateArea.label} · Approximate service area
-        </Text>
-        <Text style={typography.body}>
-          {distanceLabels[result.distanceBand]}
-        </Text>
-        <Text style={typography.body}>{rating}</Text>
-        <Text style={typography.caption}>{availability}</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: spacing.sm,
+            paddingTop: spacing.compact,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+          }}
+        >
+          <Text style={[typography.caption, { color: colors.text }]}>
+            {distanceLabels[result.distanceBand]}
+          </Text>
+          <Text style={typography.caption}>· {rating}</Text>
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.sm,
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.surfaceMuted,
+              paddingHorizontal: spacing.compact,
+              paddingVertical: spacing.sm,
+              borderRadius: radius.sm,
+            }}
+          >
+            <Text style={[typography.caption, { color: colors.accent }]}>
+              {availability}
+            </Text>
+          </View>
+          <Image
+            accessible={false}
+            source={brandAssets.arrowIcon}
+            tintColor={colors.accent}
+            style={{ width: sizes.iconMedium, height: sizes.iconMedium }}
+          />
+        </View>
+        <Text style={typography.caption}>Approximate service area</Text>
       </Card>
     </Pressable>
   );
@@ -133,6 +187,7 @@ export function DiscoveryResultsList({
   onChangeService: () => void;
   onTryScheduled: () => void;
 }) {
+  const { typography } = useTheme();
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<Result>) => (
       <ResultCard
@@ -156,8 +211,9 @@ export function DiscoveryResultsList({
         data={results}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: spacing.md, gap: spacing.md }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
         contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View style={{ gap: spacing.md }}>
@@ -180,8 +236,13 @@ export function DiscoveryResultsList({
         ListEmptyComponent={
           complete && !error && !loading && !refreshing ? (
             <EmptyState
+              title="Nothing nearby just yet."
               message="No barbers matched these filters. Try another service, a wider radius or Scheduled."
-              action={{ label: 'Widen search radius', onPress: onWidenRadius }}
+              action={{
+                label: 'Widen search radius',
+                onPress: onWidenRadius,
+                variant: 'primary',
+              }}
             />
           ) : null
         }
@@ -195,20 +256,29 @@ export function DiscoveryResultsList({
             !loading &&
             !refreshing &&
             results.length === 0 ? (
-              <>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  gap: spacing.xs,
+                }}
+              >
                 <Button
                   label="Choose another service"
-                  variant="secondary"
+                  variant="ghost"
+                  size="small"
                   onPress={onChangeService}
                 />
                 {bookingType !== BOOKING_TYPE_VALUE.SCHEDULED ? (
                   <Button
                     label="Try Scheduled"
-                    variant="secondary"
+                    variant="ghost"
+                    size="small"
                     onPress={onTryScheduled}
                   />
                 ) : null}
-              </>
+              </View>
             ) : null}
             {hasNextPage && !error ? (
               <Button

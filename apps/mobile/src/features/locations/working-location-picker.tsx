@@ -1,4 +1,4 @@
-import { Button, TextInput, colors, spacing, typography } from '@quicktrimr/ui';
+import { Button, TextInput, spacing, useTheme } from '@quicktrimr/ui';
 import { minimumAddressSearchLength } from '@quicktrimr/validation';
 import { skipToken, useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -34,6 +34,7 @@ export function WorkingLocationPicker({
   disabled: boolean;
   error: string | undefined;
 }) {
+  const { colors, typography } = useTheme();
   const available = mode === 'available';
   const { supabase } = useMobileSession();
   const [text, setText] = useState('');

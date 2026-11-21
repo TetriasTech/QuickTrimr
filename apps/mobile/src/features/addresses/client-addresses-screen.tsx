@@ -7,7 +7,7 @@ import {
   LoadingState,
   Screen,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import {
   useInfiniteQuery,
@@ -38,6 +38,7 @@ export function SavedAddressList({
   addresses: readonly SavedClientAddress[];
   renderActions: (address: SavedClientAddress) => ReactNode;
 }) {
+  const { typography } = useTheme();
   return addresses.map((address) => (
     <Card key={address.id}>
       <Text style={typography.subhead}>{address.label}</Text>
@@ -58,6 +59,7 @@ export function ClientAddressesScreen({
   onSelect?: (addressId: string) => void;
   startWithCurrentLocation?: boolean;
 }) {
+  const { typography } = useTheme();
   const { supabase } = useMobileSession();
   const cache = useQueryClient();
   const [form, setForm] = useState<Form | undefined>(

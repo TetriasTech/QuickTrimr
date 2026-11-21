@@ -6,9 +6,10 @@ import {
   ErrorState,
   LoadingState,
   Screen,
-  colors,
   spacing,
-  typography,
+  radius,
+  brand,
+  useTheme,
 } from '@quicktrimr/ui';
 import { formatAudCents } from '@quicktrimr/ui/presentation';
 import {
@@ -44,6 +45,7 @@ export function PublicBarberProfileScreen({
   onBack: () => void;
   active?: boolean;
 }) {
+  const { colors, typography } = useTheme();
   const validId = postgresUuidSchema.safeParse(barberId).success;
   const query = useInfiniteQuery({
     queryKey: queryKeys.publicProfiles.detail(
@@ -119,7 +121,7 @@ export function PublicBarberProfileScreen({
       <FlatList
         data={services}
         keyExtractor={(service) => service.id}
-        contentContainerStyle={{ padding: spacing.md, gap: spacing.md }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
         contentInsetAdjustmentBehavior="automatic"
         refreshing={query.isRefetching && !query.isFetchingNextPage}
         onRefresh={() => {
@@ -135,52 +137,94 @@ export function PublicBarberProfileScreen({
                 }}
               />
             ) : null}
-            <View style={{ alignItems: 'center', gap: spacing.sm }}>
-              <Avatar
-                size="large"
-                initials={publicProfileInitials(profile.displayName)}
-                {...(source ? { source } : {})}
-                accessibilityLabel={`${profile.displayName} profile photo`}
-              />
-              <Text selectable style={typography.title}>
-                {profile.displayName}
+            <View
+              style={{
+                backgroundColor: brand.palette.forest,
+                borderRadius: radius.lg,
+                padding: spacing.lg,
+                gap: spacing.lg,
+              }}
+            >
+              <Text
+                style={[typography.eyebrow, { color: brand.palette.citrus }]}
+              >
+                MEET YOUR BARBER
               </Text>
-              <Text selectable style={typography.body}>
-                {profile.approximateArea.label}
-              </Text>
-              <Text selectable style={typography.caption}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing.md,
+                }}
+              >
+                <Avatar
+                  size="large"
+                  initials={publicProfileInitials(profile.displayName)}
+                  style={{ borderRadius: radius.md }}
+                  {...(source ? { source } : {})}
+                  accessibilityLabel={
+                    source
+                      ? `${profile.displayName} profile photo`
+                      : `${profile.displayName} initials`
+                  }
+                />
+                <View style={{ flex: 1, gap: spacing.sm }}>
+                  <Text
+                    selectable
+                    accessibilityRole="header"
+                    style={[typography.title, { color: brand.palette.ivory }]}
+                  >
+                    {profile.displayName}
+                  </Text>
+                  <Text
+                    selectable
+                    style={[typography.subhead, { color: brand.palette.sage }]}
+                  >
+                    {profile.approximateArea.label}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[typography.caption, { color: brand.palette.sage }]}>
                 Approximate service area
               </Text>
             </View>
-            <Card>
-              <Text accessibilityRole="header" style={typography.headline}>
-                About
+            <View style={{ gap: spacing.compact, paddingVertical: spacing.md }}>
+              <Text accessibilityRole="header" style={typography.editorial}>
+                Behind the craft.
               </Text>
               <Text selectable style={typography.body}>
                 {profile.bio || 'No bio added yet.'}
               </Text>
-              <Text selectable style={typography.body}>
+              <Text selectable style={typography.subhead}>
                 {profile.yearsExperience}{' '}
                 {profile.yearsExperience === 1 ? 'year' : 'years'} of experience
               </Text>
-            </Card>
-            <Card>
-              <Text accessibilityRole="header" style={typography.headline}>
-                Reviews
-              </Text>
-              <Text selectable style={typography.body}>
-                {publicRatingLabel(profile)}
-              </Text>
-            </Card>
+              <View
+                style={{
+                  paddingTop: spacing.md,
+                  borderTopWidth: 1,
+                  borderTopColor: colors.border,
+                }}
+              >
+                <Text selectable style={typography.subhead}>
+                  {publicRatingLabel(profile)}
+                </Text>
+              </View>
+            </View>
             {selectedServiceId ? (
-              <Card variant="outlined">
-                <Text style={typography.headline}>Your selected service</Text>
+              <Card
+                style={{
+                  backgroundColor: colors.surfaceMuted,
+                  gap: spacing.compact,
+                }}
+              >
+                <Text style={typography.eyebrow}>YOUR SELECTED SERVICE</Text>
                 {selectedService ? (
                   <>
                     <Text style={typography.body}>
                       {selectedService.displayName}
                     </Text>
-                    <Text style={typography.headline}>
+                    <Text style={typography.price}>
                       {formatAudCents(selectedService.priceCents)}
                     </Text>
                     <Text style={typography.caption}>
@@ -196,41 +240,52 @@ export function PublicBarberProfileScreen({
                 )}
               </Card>
             ) : null}
-            <Text accessibilityRole="header" style={typography.headline}>
-              Services & prices
+            <Text
+              accessibilityRole="header"
+              style={[typography.editorial, { marginTop: spacing.md }]}
+            >
+              The service menu.
             </Text>
           </View>
         }
         renderItem={({ item }) => (
-          <Card
-            variant={
-              item.serviceCategoryId === selectedServiceId?.toLowerCase()
-                ? 'outlined'
-                : 'filled'
-            }
+          <View
+            style={{
+              paddingVertical: spacing.md,
+              gap: spacing.sm,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
           >
-            <Text selectable style={typography.headline}>
-              {item.displayName}
-            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: spacing.md,
+              }}
+            >
+              <Text selectable style={[typography.headline, { flex: 1 }]}>
+                {item.displayName}
+              </Text>
+              <Text
+                selectable
+                style={[typography.headline, { fontVariant: ['tabular-nums'] }]}
+              >
+                {formatAudCents(item.priceCents)}
+              </Text>
+            </View>
             {item.description ? (
-              <Text selectable style={typography.body}>
+              <Text selectable style={typography.subhead}>
                 {item.description}
               </Text>
             ) : null}
-            <Text
-              selectable
-              style={{
-                ...typography.headline,
-                color: colors.text,
-                fontVariant: ['tabular-nums'],
-              }}
-            >
-              {formatAudCents(item.priceCents)}
-            </Text>
             {item.serviceCategoryId === selectedServiceId?.toLowerCase() ? (
-              <Text style={typography.caption}>Selected service</Text>
+              <Text style={[typography.caption, { color: colors.accent }]}>
+                Selected service
+              </Text>
             ) : null}
-          </Card>
+          </View>
         )}
         ListEmptyComponent={
           <EmptyState

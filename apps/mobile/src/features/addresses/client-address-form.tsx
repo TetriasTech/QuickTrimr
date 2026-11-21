@@ -5,9 +5,8 @@ import {
   LoadingState,
   Screen,
   TextInput,
-  colors,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import {
   clientAddressFieldsSchema,
@@ -69,6 +68,7 @@ export function ClientAddressForm({
   onSaved: (onboardingComplete: boolean, saved: SavedClientAddress) => void;
   initialUseLocation?: boolean;
 }) {
+  const { colors, typography } = useTheme();
   const { supabase } = useMobileSession();
   const [showFields, setShowFields] = useState(address !== null);
   const [selected, setSelected] = useState<ClientAddressCandidate>();

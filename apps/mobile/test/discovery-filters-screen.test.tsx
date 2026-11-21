@@ -156,18 +156,14 @@ afterEach(async () => {
 });
 test('invalid filters are blocked; mode/category/radius/address changes invalidate and refetch with no mirrored server data', async () => {
   const { cache } = await mount();
-  await screen.findByText('Booking mode');
+  await screen.findByText('01 / WHEN');
   expect(
     screen.getByRole('button', { name: 'Refresh search' }).props
       .accessibilityState.disabled,
   ).toBe(true);
   expect(mockApi.search).not.toHaveBeenCalled();
   const invalidation = jest.spyOn(cache, 'invalidateQueries');
-  await fireEvent(
-    screen.getByTestId('booking-mode'),
-    'valueChange',
-    'available_now',
-  );
+  await fireEvent.press(screen.getByRole('button', { name: 'Available Now' }));
   await fireEvent(
     screen.getByTestId('service-category'),
     'valueChange',
@@ -221,13 +217,9 @@ test('invalid filters are blocked; mode/category/radius/address changes invalida
 test('Scheduled picker uses live server bounds, requested copy and too-soon guidance; switching modes hides it', async () => {
   seed();
   await mount();
-  await screen.findByText('Booking mode');
-  await fireEvent(
-    screen.getByTestId('booking-mode'),
-    'valueChange',
-    'scheduled',
-  );
-  expect(screen.getByText('Requested date and time')).toBeTruthy();
+  await screen.findByText('01 / WHEN');
+  await fireEvent.press(screen.getByRole('button', { name: 'Scheduled' }));
+  expect(screen.getByText('REQUESTED DATE & TIME')).toBeTruthy();
   await fireEvent.press(
     screen.getByRole('button', { name: 'Choose requested date' }),
   );
@@ -247,7 +239,7 @@ test('Scheduled picker uses live server bounds, requested copy and too-soon guid
   await fireEvent.press(
     screen.getByRole('button', { name: 'Try Available Now' }),
   );
-  expect(screen.queryByText('Requested date and time')).toBeNull();
+  expect(screen.queryByText('REQUESTED DATE & TIME')).toBeNull();
   expect(useBookingDraftStore.getState().scheduledFor).toBeNull();
 });
 test('a fresh server policy can invalidate the draft without dropping it; failures have no hard-coded fallback', async () => {
@@ -281,7 +273,7 @@ test('a fresh server policy can invalidate the draft without dropping it; failur
 test('draft persists across leaving/remounting, and the current-location action reuses the existing picker', async () => {
   seed();
   const mounted = await mount();
-  await screen.findByText('Booking mode');
+  await screen.findByText('01 / WHEN');
   await fireEvent.press(
     screen.getByRole('button', { name: 'Use current location' }),
   );
@@ -291,10 +283,8 @@ test('draft persists across leaving/remounting, and the current-location action 
   );
   await mounted.unmount();
   await mount();
-  await screen.findByText('Booking mode');
-  expect(screen.getByTestId('booking-mode').props.selectedValue).toBe(
-    'available_now',
-  );
+  await screen.findByText('01 / WHEN');
+  expect(screen.getByRole('button', { name: 'Available Now' })).toBeSelected();
   expect(screen.getByLabelText('Search radius (km)').props.value).toBe('10');
   expect(useBookingDraftStore.getState().selectedAddressId).toBe(addressId);
 });
@@ -306,7 +296,7 @@ test('config loading/error/recovery, catalogue empty and search failure retain d
     await screen.findByText(/Could not load search settings/),
   ).toBeTruthy();
   expect(mockApi.search).not.toHaveBeenCalled();
-  expect(screen.queryByText('Booking mode')).toBeNull();
+  expect(screen.queryByText('01 / WHEN')).toBeNull();
   mockApi.inputs.mockResolvedValue({
     ...config,
     address: {
@@ -354,7 +344,7 @@ test('an archived selected address can be replaced after its initial lookup fail
   await fireEvent.press(
     screen.getByRole('button', { name: 'Select saved address' }),
   );
-  expect(await screen.findByText('Booking mode')).toBeTruthy();
+  expect(await screen.findByText('01 / WHEN')).toBeTruthy();
 });
 
 const barberId = '44444444-4444-4444-8444-444444444444';
@@ -380,12 +370,11 @@ test('public cards show cents, SAL, approved distance and honest availability; t
   mockApi.search.mockResolvedValue({ results: [result()], nextCursor: null });
   const { navigate } = await mount();
   await screen.findByText('Synthetic Barber');
-  expect(screen.getByText('Synthetic haircut · A$45.50')).toBeTruthy();
-  expect(
-    screen.getByText('QA Locality · Approximate service area'),
-  ).toBeTruthy();
+  expect(screen.getByText('Synthetic haircut')).toBeTruthy();
+  expect(screen.getByText('A$45.50')).toBeTruthy();
+  expect(screen.getByText('QA Locality')).toBeTruthy();
   expect(screen.getByText('2–5 km away')).toBeTruthy();
-  expect(screen.getByText('No reviews yet')).toBeTruthy();
+  expect(screen.getByText(/No reviews yet/)).toBeTruthy();
   expect(screen.getByText(/Available Now until/)).toBeTruthy();
   await fireEvent.press(
     screen.getByRole('button', { name: /View Synthetic Barber/ }),
@@ -459,9 +448,9 @@ test('empty actions open editable radius/service controls and Scheduled without 
   const mounted = await mount();
   await screen.findByText(/No barbers matched/);
   await fireEvent.press(screen.getByText('Show barbers'));
-  expect(screen.queryByText('Booking mode')).toBeNull();
+  expect(screen.queryByText('01 / WHEN')).toBeNull();
   await fireEvent.press(screen.getByText('Widen search radius'));
-  expect(screen.getByText('Booking mode')).toBeTruthy();
+  expect(screen.getByText('01 / WHEN')).toBeTruthy();
   expect(screen.getByLabelText('Search radius (km)').props.value).toBe('');
   expect(useBookingDraftStore.getState().radiusKm).toBeNull();
   await mounted.unmount();

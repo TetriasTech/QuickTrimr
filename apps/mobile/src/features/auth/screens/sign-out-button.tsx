@@ -1,10 +1,11 @@
-import { Button, colors, typography } from '@quicktrimr/ui';
+import { Button, useTheme } from '@quicktrimr/ui';
 import { useMutation } from '@tanstack/react-query';
 import { Text } from 'react-native';
 
 import { useMobileSession } from '@/features/session/session-provider';
 
 export function SignOutButton() {
+  const { colors, typography } = useTheme();
   const { supabase } = useMobileSession();
   const signOut = useMutation({
     async mutationFn() {
@@ -25,7 +26,8 @@ export function SignOutButton() {
       )}
       <Button
         label="Sign out"
-        variant="secondary"
+        variant="ghost"
+        size="small"
         loading={signOut.isPending}
         onPress={() => signOut.mutate()}
       />

@@ -1,11 +1,11 @@
 import { USER_ROLE_VALUE } from '@quicktrimr/shared';
 import {
+  BrandLockup,
   Button,
   Screen,
   TextInput,
-  colors,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import {
   authCodeSchema,
@@ -16,6 +16,7 @@ import {
 import { useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { WelcomeScreen } from '@/brand/welcome-screen';
 import { authFailure, authMessages } from '@/features/auth/auth-errors';
 import { useMobileSession } from '@/features/session/session-provider';
 import { createRecoverySupabase } from '@/lib/api/supabase';
@@ -49,7 +50,9 @@ const actions: Record<Mode, string> = {
 };
 
 export function AuthScreen() {
+  const { colors, typography } = useTheme();
   const { supabase } = useMobileSession();
+  const [entered, setEntered] = useState(false);
   const [mode, setMode] = useState<Mode>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -223,14 +226,37 @@ export function AuthScreen() {
     }
   }
 
+  if (!entered)
+    return (
+      <WelcomeScreen
+        onSignIn={() => {
+          transition('sign-in');
+          setEntered(true);
+        }}
+        onCreateAccount={() => {
+          transition('sign-up');
+          setEntered(true);
+        }}
+      />
+    );
+
   return (
     <Screen
       scroll
       contentContainerStyle={{ gap: spacing.lg, padding: spacing.lg }}
     >
+      <Button
+        label="← Back"
+        accessibilityLabel="Back to welcome"
+        variant="ghost"
+        style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}
+        disabled={busy}
+        onPress={() => setEntered(false)}
+      />
       <View style={{ gap: spacing.xs }}>
-        <Text style={typography.subhead}>QuickTrimr</Text>
-        <Text accessibilityRole="header" style={typography.title}>
+        <BrandLockup />
+        <Text style={typography.eyebrow}>YOUR NEXT GREAT CUT STARTS HERE</Text>
+        <Text accessibilityRole="header" style={typography.display}>
           {titles[mode]}
         </Text>
       </View>

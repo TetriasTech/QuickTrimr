@@ -1,6 +1,6 @@
 import { ActivityIndicator, Text, View, type ViewStyle } from 'react-native';
 
-import { colors, spacing, typography, useTheme } from '../theme';
+import { spacing, useTheme } from '../theme';
 
 export interface LoadingStateProps {
   message?: string;
@@ -11,7 +11,8 @@ export function LoadingState({
   message = 'Loading…',
   testID,
 }: LoadingStateProps) {
-  useTheme();
+  const { colors, typography } = useTheme();
+
   return (
     <View
       accessible
