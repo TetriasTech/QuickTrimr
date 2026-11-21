@@ -1,6 +1,6 @@
 {
   "environment": "iPhone 17 / iOS 26.5 / Expo Go SDK57, local synthetic data",
-  "result": "PARTIAL - physical swipe/pull confirmation pending",
+  "result": "PASS",
   "passed": [
     "Photo and initials fallback; selected Haircut A$45.50; SAL label, approved band, no-review and availability copy",
     "Card -> public profile -> Back, including final-page QA Barber 45",
@@ -9,11 +9,20 @@
     "Real local malformed page-size config yields visible top error with old cards retained; restoring config and retry succeeds",
     "A transaction-held local read delay displays real loading and native refresh indicator; transaction rolled back and config verified restored",
     "Continuation controls reach final QA Barber 45 with no more-page button",
-    "Native Refresh search from final page resets viewport to top and 45 loaded cards -> 20 with continuation"
+    "Native Refresh search from final page resets viewport to top and 45 loaded cards -> 20 with continuation",
+    "Andrew confirmed on 2026-11-21 that physical scrolling automatically loaded through QA Barber 45 and physical pull-to-refresh worked",
+    "Agent observed the confirmed pull result: 20 cards, continuation restored, and refreshed availability label",
+    "After fixture archival/disable, agent refreshed the app and observed the actionable no-matches state"
   ],
-  "pending": [
-    "Physical scroll automatically loads later pages",
-    "Physical pull-to-refresh gesture"
-  ],
-  "cleanup": "Config/latency probes restored; synthetic barber fixtures retained only for pending manual check; no test diagnostics remain in source"
+  "pending": [],
+  "cleanup": "45 owned synthetic barbers archived/disabled and Auth logins soft-deleted; service/history rows preserved; config restored; inert synthetic reference area/photo records retained locally; no test diagnostics remain in source",
+  "manualConfirmation": {
+    "by": "Andrew",
+    "date": "2026-11-21",
+    "answer": "Both worked",
+    "checks": [
+      "Automatic page loading on physical scroll",
+      "Physical pull-to-refresh"
+    ]
+  }
 }
