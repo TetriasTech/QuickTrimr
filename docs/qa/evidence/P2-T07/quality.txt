@@ -1,0 +1,155 @@
+P2-T07 / TRIMR-50 — local quality output, 2026-11-22
+
+$ pnpm typecheck
+Exit: 0
+packages/shared typecheck: Done
+packages/validation typecheck: Done
+packages/domain typecheck: Done
+supabase/functions/workspace-contract typecheck: Done
+packages/ui typecheck: Done
+.../functions/archive-barber-service typecheck: Done
+supabase/functions/_shared typecheck: Done
+apps/admin typecheck: Done
+.../functions/archive-service-category typecheck: Done
+.../auto-disable-unresponsive-barber typecheck: Done
+.../functions/complete-barber-profile typecheck: Done
+apps/mobile typecheck: Done
+.../functions/complete-client-profile typecheck: Done
+.../functions/create-or-sync-profile typecheck: Done
+.../functions/create-service-category typecheck: Done
+supabase/functions/get-discovery-filters typecheck: Done
+...create-stripe-connect-onboarding-link typecheck: Done
+.../functions/get-public-barber-profile typecheck: Done
+.../functions/manage-client-addresses typecheck: Done
+.../search-available-now-barbers typecheck: Done
+.../start-available-now-session typecheck: Done
+.../refresh-stripe-connect-status typecheck: Done
+.../functions/stop-available-now-session typecheck: Done
+.../functions/update-service-category typecheck: Done
+.../update-available-now-session typecheck: Done
+supabase/functions/upsert-barber-service typecheck: Done
+supabase/functions/stripe-webhook typecheck: Done
+
+$ pnpm lint
+Exit: 0
+packages/shared lint: Done
+packages/domain lint: Done
+supabase/functions/workspace-contract lint: Done
+packages/validation lint: Done
+packages/ui lint: Done
+.../functions/archive-barber-service lint: Done
+supabase/functions/_shared lint: Done
+.../functions/archive-service-category lint: Done
+.../auto-disable-unresponsive-barber lint: Done
+apps/admin lint: Done
+apps/mobile lint: Done
+.../functions/complete-barber-profile lint: Done
+.../functions/complete-client-profile lint: Done
+.../functions/create-or-sync-profile lint: Done
+.../functions/create-service-category lint: Done
+supabase/functions/get-discovery-filters lint: Done
+.../functions/get-public-barber-profile lint: Done
+...create-stripe-connect-onboarding-link lint: Done
+.../functions/manage-client-addresses lint: Done
+.../search-available-now-barbers lint: Done
+.../refresh-stripe-connect-status lint: Done
+.../start-available-now-session lint: Done
+.../functions/stop-available-now-session lint: Done
+.../update-available-now-session lint: Done
+.../functions/update-service-category lint: Done
+supabase/functions/stripe-webhook lint: Done
+supabase/functions/upsert-barber-service lint: Done
+
+$ pnpm test
+Exit: 0
+packages/shared test: ℹ tests 24
+packages/shared test: ℹ pass 24
+packages/shared test: ℹ fail 0
+packages/shared test: ℹ skipped 0
+packages/shared test: Done
+packages/domain test: ℹ tests 21
+packages/domain test: ℹ pass 21
+packages/domain test: ℹ fail 0
+packages/domain test: ℹ skipped 0
+packages/domain test: Done
+supabase/functions/workspace-contract test: ℹ tests 2
+supabase/functions/workspace-contract test: ℹ pass 2
+supabase/functions/workspace-contract test: ℹ fail 0
+supabase/functions/workspace-contract test: ℹ skipped 0
+supabase/functions/workspace-contract test: Done
+packages/validation test: ℹ tests 33
+packages/validation test: ℹ pass 33
+packages/validation test: ℹ fail 0
+packages/validation test: ℹ skipped 0
+packages/validation test: Done
+packages/ui test: Test Suites: 4 passed, 4 total
+packages/ui test: Tests:       30 passed, 30 total
+packages/ui test: Done
+.../functions/create-or-sync-profile test: ℹ tests 6
+.../functions/create-or-sync-profile test: ℹ pass 6
+.../functions/create-or-sync-profile test: ℹ fail 0
+.../functions/create-or-sync-profile test: ℹ skipped 0
+.../functions/create-or-sync-profile test: Done
+supabase/functions/_shared test: ℹ tests 37
+supabase/functions/_shared test: ℹ pass 37
+supabase/functions/_shared test: ℹ fail 0
+supabase/functions/_shared test: ℹ skipped 0
+supabase/functions/_shared test: Done
+apps/mobile test: ℹ tests 29
+apps/mobile test: ℹ pass 29
+apps/mobile test: ℹ fail 0
+apps/mobile test: ℹ skipped 0
+.../functions/get-public-barber-profile test: ℹ tests 7
+.../functions/get-public-barber-profile test: ℹ pass 7
+.../functions/get-public-barber-profile test: ℹ fail 0
+.../functions/get-public-barber-profile test: ℹ skipped 0
+.../functions/get-public-barber-profile test: Done
+...create-stripe-connect-onboarding-link test: ℹ tests 8
+...create-stripe-connect-onboarding-link test: ℹ pass 8
+...create-stripe-connect-onboarding-link test: ℹ fail 0
+...create-stripe-connect-onboarding-link test: ℹ skipped 0
+...create-stripe-connect-onboarding-link test: Done
+.../refresh-stripe-connect-status test: ℹ tests 5
+.../refresh-stripe-connect-status test: ℹ pass 5
+.../refresh-stripe-connect-status test: ℹ fail 0
+.../refresh-stripe-connect-status test: ℹ skipped 0
+.../refresh-stripe-connect-status test: Done
+supabase/functions/stripe-webhook test: ℹ tests 5
+supabase/functions/stripe-webhook test: ℹ pass 5
+supabase/functions/stripe-webhook test: ℹ fail 0
+supabase/functions/stripe-webhook test: ℹ skipped 0
+supabase/functions/stripe-webhook test: Done
+apps/admin test: Done
+apps/mobile test: Test Suites: 12 passed, 12 total
+apps/mobile test: Tests:       70 passed, 70 total
+apps/mobile test: Done
+ℹ tests 218
+ℹ pass 218
+ℹ fail 0
+ℹ skipped 0
+
+$ pnpm --filter @quicktrimr/mobile test (focused final correction)
+Exit: 0
+ℹ tests 29
+ℹ pass 29
+ℹ fail 0
+ℹ skipped 0
+Test Suites: 12 passed, 12 total
+Tests:       70 passed, 70 total
+
+$ pnpm format:check
+Exit: 0
+All matched files use Prettier code style!
+
+$ NODE_ENV=production pnpm --filter @quicktrimr/mobile build
+Exit: 0
+Exported: dist/android
+Exported: dist/ios
+
+$ pnpm --filter @quicktrimr/admin exec next build --webpack
+Exit: 0
+✓ Compiled successfully in 3.4s
+
+pnpm check:client-env: Client environment boundary: PASS
+node scripts/jira/generate-indexes.mjs --check: 108 tickets, 218 KB IDs, 0 open TBC, OK
+Default pnpm build: failed in unchanged admin Turbopack CSS worker (port binding EPERM); webpack admin build and both mobile exports passed independently.

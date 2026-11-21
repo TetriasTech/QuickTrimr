@@ -77,6 +77,7 @@ const now = Date.now();
 const config: DiscoveryFilters = {
   serverNow: new Date(now).toISOString(),
   scheduling: { minimumLeadMinutes: 240, maximumHorizonDays: 30 },
+  map: { refreshIntervalMs: 2000 },
   radiusKm: { min: 1, max: 50 },
   address: null,
 };
@@ -476,4 +477,72 @@ test('initial search loading is distinct from empty results', async () => {
   await mount();
   await screen.findByText('Updating nearby search…');
   expect(screen.queryByText(/No barbers matched/)).toBeNull();
+});
+
+test('map shares loaded pages, manually paginates, opens only its area cards in server order and keeps the service origin', async () => {
+  seed();
+  const other = {
+    ...result('55555555-5555-4555-8555-555555555555'),
+    displayName: 'Other area barber',
+    approximateArea: {
+      id: 'sal:2021:other',
+      label: 'Other area',
+      mapPoint: { lat: -38.1, lng: 145.1 },
+    },
+  };
+  const first = { ...result(), displayName: 'First area barber' };
+  const second = {
+    ...result('66666666-6666-4666-8666-666666666666'),
+    displayName: 'Second area barber',
+  };
+  mockApi.search.mockImplementation(async (request: unknown) =>
+    (request as { cursor?: string }).cursor
+      ? { results: [second], nextCursor: 'another-page' }
+      : { results: [other, first], nextCursor: 'opaque' },
+  );
+  const { navigate } = await mount();
+  await screen.findByText('First area barber');
+  await fireEvent.press(screen.getByText('Show barbers'));
+  await fireEvent.press(screen.getByText('View map'));
+  const map = screen.getByTestId('discovery-google-map');
+  expect(map.props.initialCamera.center).toEqual({
+    latitude: -38.2,
+    longitude: 145.2,
+  });
+  expect(mockApi.search).toHaveBeenCalledTimes(1);
+  await fireEvent.press(screen.getByText('Load more barbers'));
+  await waitFor(() => expect(mockApi.search).toHaveBeenCalledTimes(2));
+  await waitFor(() =>
+    expect(screen.getByTestId('area-sal:2021:qa').props.title).toContain(
+      '2 loaded matches',
+    ),
+  );
+  await fireEvent(screen.getByTestId('area-sal:2021:qa'), 'press');
+  const list = screen.getByTestId('barber-results');
+  expect(
+    list.props.data.map((r: { displayName: string }) => r.displayName),
+  ).toEqual(['First area barber', 'Second area barber']);
+  expect(list.props.onEndReached).toBeUndefined();
+  expect(screen.queryByText('Other area barber')).toBeNull();
+  expect(mockApi.search).toHaveBeenCalledTimes(2);
+  await fireEvent.press(
+    screen.getByRole('button', { name: /View First area barber/ }),
+  );
+  expect(navigate).toHaveBeenCalledWith(barberId, categoryId);
+  expect(useBookingDraftStore.getState()).toMatchObject({
+    selectedAddressId: addressId,
+    radiusKm: 10,
+    selectedBarberId: barberId,
+  });
+  await fireEvent.press(screen.getByText('Back to map'));
+  expect(screen.getByTestId('service-address-marker').props.coordinate).toEqual(
+    { latitude: -38.2, longitude: 145.2 },
+  );
+  expect(
+    mockApi.search.mock.calls.every(
+      ([r]) =>
+        (r as { lat: number; lng: number }).lat === -38.2 &&
+        (r as { lng: number }).lng === 145.2,
+    ),
+  ).toBe(true);
 });

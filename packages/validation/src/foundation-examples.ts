@@ -214,6 +214,7 @@ export const FOUNDATION_CONTRACT_EXAMPLES = {
     response: side({
       serverNow: AT,
       scheduling: { minimumLeadMinutes: 240, maximumHorizonDays: 30 },
+      map: { refreshIntervalMs: 2000 },
       radiusKm: { min: 1, max: 50 },
       address: null,
     }),

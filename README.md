@@ -39,6 +39,34 @@ pnpm build
 scripts. `format` writes the shared Prettier style across the repository; `format:check` is
 read-only and exits nonzero for unformatted code. These script names are the P0-T04 CI contract.
 
+## Mobile development builds
+
+Discovery maps use Google Maps on both iOS and Android. Use the app's own development
+client with the approved `com.quicktrimr.dev` identity; Expo Go does not exercise that
+identity's key restrictions. Put the existing platform-restricted client keys in the
+ignored `apps/mobile/.env.local`, using `EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY` and
+`EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY`. Keep the Supabase development variables in
+the mobile environment too. See [the environment contract](.env.example) and
+[Google development evidence](docs/qa/P0-T20.md).
+
+```bash
+pnpm --filter @quicktrimr/mobile ios
+pnpm --filter @quicktrimr/mobile android
+pnpm --filter @quicktrimr/mobile start --dev-client
+```
+
+Native changes (plugins, identity or keys) need a new binary. Expo CNG owns the ignored
+`apps/mobile/ios` and `apps/mobile/android` folders. SDK 57 prebuild recreates them by
+default; use `expo prebuild --no-clean --no-install --platform android` when preserving
+an existing local debug signer. After a fresh Android generation, select the same
+debug keystore whose SHA-1 is registered on the development Maps key. Verify the APK's
+signer with `apksigner verify --print-certs` before testing; package alone is insufficient.
+Do not broaden the key restrictions. iOS secure storage is scoped to this app's own
+keychain group, using the signing team's normal app-identifier prefix.
+
+Maps show shared public suburb points and loaded matching counts. Panning keeps the
+selected service address and radius; it does not choose a new booking destination.
+
 ## Continuous integration and reviews
 
 Every PR targeting `main` and every push to `main` runs GitHub Actions CI, with no path filters:

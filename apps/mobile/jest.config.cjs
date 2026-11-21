@@ -2,6 +2,7 @@ module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: [
     '<rootDir>/../../packages/ui/test/native-input-setup.ts',
+    '<rootDir>/test/map-native-setup.tsx',
   ],
   testMatch: ['<rootDir>/test/**/*.test.ts?(x)'],
   moduleNameMapper: {

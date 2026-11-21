@@ -165,6 +165,8 @@ export function DiscoveryResultsList({
   onWidenRadius,
   onChangeService,
   onTryScheduled,
+  autoLoadMore = true,
+  emptyMessage,
 }: {
   listRef: RefObject<FlatList<Result> | null>;
   header: ReactElement;
@@ -186,6 +188,8 @@ export function DiscoveryResultsList({
   onWidenRadius: () => void;
   onChangeService: () => void;
   onTryScheduled: () => void;
+  autoLoadMore?: boolean;
+  emptyMessage?: string | undefined;
 }) {
   const { typography } = useTheme();
   const renderItem = useCallback(
@@ -229,7 +233,12 @@ export function DiscoveryResultsList({
         refreshing={refreshing}
         onRefresh={complete ? onRefresh : undefined}
         onEndReached={
-          hasNextPage && !error && !refreshing && !loading && !fetchingNextPage
+          autoLoadMore &&
+          hasNextPage &&
+          !error &&
+          !refreshing &&
+          !loading &&
+          !fetchingNextPage
             ? onMore
             : undefined
         }
@@ -237,7 +246,10 @@ export function DiscoveryResultsList({
           complete && !error && !loading && !refreshing ? (
             <EmptyState
               title="Nothing nearby just yet."
-              message="No barbers matched these filters. Try another service, a wider radius or Scheduled."
+              message={
+                emptyMessage ??
+                'No barbers matched these filters. Try another service, a wider radius or Scheduled.'
+              }
               action={{
                 label: 'Widen search radius',
                 onPress: onWidenRadius,

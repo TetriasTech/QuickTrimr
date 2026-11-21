@@ -30,3 +30,4 @@ export {
   scheduledLeadGuidance,
   type SchedulingConfig,
 } from './scheduling.ts';
+export { discoveryMapAreas, type DiscoveryMapArea } from './discovery-map.ts';

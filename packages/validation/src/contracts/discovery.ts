@@ -101,7 +101,12 @@ export const schedulingConfigSchema = z
     maximumHorizonDays: z.number().int().positive().safe(),
   })
   .refine((v) => v.minimumLeadMinutes <= v.maximumHorizonDays * 24 * 60);
+export const discoveryMapPolicySchema = z.strictObject({
+  // JavaScript timeout delay is a signed 32-bit millisecond value.
+  refreshIntervalMs: z.number().int().positive().max(2_147_483_647),
+});
 export const getDiscoveryFiltersResponseSchema = z.strictObject({
+  map: discoveryMapPolicySchema,
   serverNow: timestampSchema,
   scheduling: schedulingConfigSchema,
   radiusKm: rangeSchema.refine((v) => v.min <= v.max),

@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "localOnly": true,
+  "checks": [
+    "Real Auth/invalid JWT and all wrong stored roles rejected before data",
+    "Owner-only selected address point; identical foreign/missing/archived/unresolved-legacy rejection; forged identity ignored",
+    "Strict public scheduling/radius/map projection, live server timestamp and no unrelated config",
+    "Map cadence reads 2000 from platform config, changes to 3500 immediately, and null/zero/negative values fail closed",
+    "Direct RPC denied to mobile roles; service RPC rechecks stored client role",
+    "Live config changes immediately apply; invalid/missing config fails closed with generic error",
+    "Owned synthetic addresses archived, Auth fixtures soft-deleted; original config restored; no database reset"
+  ]
+}

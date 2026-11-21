@@ -25,13 +25,18 @@
         }
       ],
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      "expo-dev-client"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "android": {
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.quicktrimr.dev"
+    },
+    "ios": {
+      "bundleIdentifier": "com.quicktrimr.dev"
     }
   }
 }

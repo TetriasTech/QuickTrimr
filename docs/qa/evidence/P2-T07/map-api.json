@@ -1,0 +1,19 @@
+{
+  "result": "PASS",
+  "localOnly": true,
+  "checks": [
+    "Two real JWT search pages contain only the strict public DTO; exact raw keys asserted",
+    "Each result equals the database public SAL representative point; no barber coordinate, contact, exact distance or jitter field",
+    "One cluster for two loaded barbers, with duplicate pages counted once",
+    "Opaque cursor continuation used once; no hidden full traversal"
+  ],
+  "publicArea": {
+    "id": "sal:2026:22054",
+    "label": "Pearcedale",
+    "mapPoint": {
+      "lat": -38.198251265,
+      "lng": 145.249183816162
+    }
+  },
+  "loadedCount": 2
+}
