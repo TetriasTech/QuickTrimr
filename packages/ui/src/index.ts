@@ -1,3 +1,4 @@
+export { BrandLockup } from './components/brand-lockup';
 export { UI_PACKAGE_NAME } from './node.ts';
 
 export { Avatar } from './components/avatar';

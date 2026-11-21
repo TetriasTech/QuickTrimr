@@ -61,9 +61,7 @@ test('P0-T08 fixture renders all public fields and current cents with no live ba
   );
   expect(screen.getByText(profile.bio)).toBeOnTheScreen();
   expect(screen.getByText('10 years of experience')).toBeOnTheScreen();
-  expect(
-    screen.getByLabelText('Marcus Example profile photo'),
-  ).toBeOnTheScreen();
+  expect(screen.getByLabelText('Marcus Example initials')).toBeOnTheScreen();
   expect(screen.getByText('Richmond')).toBeOnTheScreen();
   expect(screen.getByText('Skin Fade')).toBeOnTheScreen();
   expect(screen.getByText('A$45.50')).toBeOnTheScreen();

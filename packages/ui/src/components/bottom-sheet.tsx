@@ -3,7 +3,7 @@ import {
   type BottomSheetProps as ExpoBottomSheetProps,
 } from '@expo/ui';
 
-import { colors, spacing, useTheme } from '../theme';
+import { spacing, useTheme } from '../theme';
 
 import type { ReactNode } from 'react';
 
@@ -24,7 +24,8 @@ export function BottomSheet({
   snapPoints,
   testID,
 }: BottomSheetProps) {
-  useTheme();
+  const { colors } = useTheme();
+
   return (
     <ExpoBottomSheet
       containerColor={colors.background}

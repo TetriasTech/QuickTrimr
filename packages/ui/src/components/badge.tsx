@@ -1,6 +1,6 @@
 import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, radius, spacing, typography, useTheme } from '../theme';
+import { radius, spacing, useTheme } from '../theme';
 
 import type { BadgeTone } from '../presentation/status';
 
@@ -13,16 +13,25 @@ export interface BadgeProps {
   testID?: string;
 }
 
-const toneColors = {
-  neutral: colors.textMuted,
-  info: colors.accent,
-  success: colors.success,
-  warning: colors.warning,
-  danger: colors.danger,
-} as const;
-
 export function Badge({ label, tone = 'neutral', style, testID }: BadgeProps) {
-  useTheme();
+  const { colors, typography } = useTheme();
+  const toneColors = {
+    neutral: colors.textMuted,
+    info: colors.accent,
+    success: colors.success,
+    warning: colors.warning,
+    danger: colors.danger,
+  } as const;
+  const styles = {
+    badge: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+    },
+  } as const satisfies Record<string, ViewStyle>;
   const toneColor = toneColors[tone];
 
   return (
@@ -35,14 +44,3 @@ export function Badge({ label, tone = 'neutral', style, testID }: BadgeProps) {
     </View>
   );
 }
-
-const styles = {
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-} as const satisfies Record<string, ViewStyle>;

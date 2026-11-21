@@ -9,15 +9,14 @@ import {
 import { BOOKING_TYPE_VALUE } from '@quicktrimr/shared';
 import {
   Button,
-  Card,
+  radius,
   EmptyState,
   ErrorState,
   LoadingState,
   Screen,
   TextInput,
-  colors,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import { discoveryRadiusFormSchema } from '@quicktrimr/validation';
 import {
@@ -46,6 +45,7 @@ import type {
   SearchAvailableNowBarbersRequest,
   SearchAvailableNowBarbersResponse,
 } from '@quicktrimr/validation';
+import type { ReactNode } from 'react';
 
 function radiusIssue(radius: number, inputs: DiscoveryFilters) {
   return discoveryRadiusIssue(radius, inputs.radiusKm);
@@ -61,6 +61,7 @@ export function DiscoveryFiltersScreen({
   onManageAddresses: () => void;
   onSelectBarber: (barberId: string, serviceCategoryId: string) => void;
 }) {
+  const { colors, typography } = useTheme();
   const { supabase } = useMobileSession(),
     cache = useQueryClient(),
     draft = useBookingDraftStore();
@@ -299,237 +300,253 @@ export function DiscoveryFiltersScreen({
   const header =
     filtersOpen || !complete ? (
       <View style={{ gap: spacing.lg }}>
-        <Text style={typography.body}>
-          Choose where and when you would like a barber to visit.
-        </Text>
-        {inputs.isError ? (
-          <ErrorState
-            message={
-              inputAddressError ??
-              'Could not refresh search settings. Your selections are kept; refresh before searching.'
-            }
-            onRetry={() => {
-              inputs.refetch().catch(() => undefined);
-            }}
-          />
-        ) : null}
-        <Card>
-          <Text style={typography.headline}>Booking mode</Text>
-          <Host matchContents>
-            <Picker
-              testID="booking-mode"
-              selectedValue={draft.selectedBookingType ?? ''}
-              onValueChange={(value) => {
-                if (
-                  value === BOOKING_TYPE_VALUE.AVAILABLE_NOW ||
-                  value === BOOKING_TYPE_VALUE.SCHEDULED
-                ) {
-                  change({
-                    selectedBookingType: value,
-                    ...(value === BOOKING_TYPE_VALUE.AVAILABLE_NOW
-                      ? { scheduledFor: null }
-                      : {}),
-                  });
-                  setPicker(null);
-                }
-              }}
-            >
-              <Picker.Item value="" label="Choose booking mode" />
-              <Picker.Item
-                value={BOOKING_TYPE_VALUE.AVAILABLE_NOW}
-                label="Available Now"
-              />
-              <Picker.Item
-                value={BOOKING_TYPE_VALUE.SCHEDULED}
-                label="Scheduled"
-              />
-            </Picker>
-          </Host>
-        </Card>
-        <Card>
-          <Text style={typography.headline}>Service</Text>
-          {!catalogue.data ? (
-            <>
-              {catalogue.error ? (
-                <ErrorState
-                  message="Could not load services."
-                  onRetry={() => {
-                    catalogue.refetch().catch(() => undefined);
-                  }}
-                />
-              ) : (
-                <LoadingState message="Loading services…" />
-              )}
-            </>
-          ) : !categories.length ? (
-            <EmptyState
-              message="No services are listed yet. Try refreshing later."
-              action={{
-                label: 'Refresh services',
-                onPress: () => {
-                  catalogue.refetch().catch(() => undefined);
-                },
+        <View style={{ gap: spacing.sm, paddingVertical: spacing.sm }}>
+          <Text style={typography.eyebrow}>GOOD GROOMING. YOUR PLACE.</Text>
+          <Text accessibilityRole="header" style={typography.display}>
+            Your next great cut.
+          </Text>
+          <Text style={typography.subhead}>
+            Find a barber who fits your day.
+          </Text>
+        </View>
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: radius.lg,
+            paddingHorizontal: spacing.inset,
+          }}
+        >
+          {inputs.isError ? (
+            <ErrorState
+              message={
+                inputAddressError ??
+                'Could not refresh search settings. Your selections are kept; refresh before searching.'
+              }
+              onRetry={() => {
+                inputs.refetch().catch(() => undefined);
               }}
             />
-          ) : (
-            <>
-              <Host matchContents>
-                <Picker
-                  testID="service-category"
-                  selectedValue={draft.selectedServiceCategoryId ?? ''}
-                  onValueChange={(id) =>
-                    change({ selectedServiceCategoryId: String(id) || null })
+          ) : null}
+          <FilterSection label="01 / WHEN">
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              {[
+                {
+                  value: BOOKING_TYPE_VALUE.AVAILABLE_NOW,
+                  label: 'Available Now',
+                },
+                { value: BOOKING_TYPE_VALUE.SCHEDULED, label: 'Scheduled' },
+              ].map((option) => (
+                <Button
+                  key={option.value}
+                  label={option.label}
+                  testID={`booking-mode-${option.value}`}
+                  style={{ flex: 1, paddingHorizontal: spacing.sm }}
+                  variant={
+                    draft.selectedBookingType === option.value
+                      ? 'primary'
+                      : 'secondary'
                   }
+                  accessibilityState={{
+                    selected: draft.selectedBookingType === option.value,
+                  }}
+                  onPress={() => {
+                    change({
+                      selectedBookingType: option.value,
+                      ...(option.value === BOOKING_TYPE_VALUE.AVAILABLE_NOW
+                        ? { scheduledFor: null }
+                        : {}),
+                    });
+                    setPicker(null);
+                  }}
+                />
+              ))}
+            </View>
+          </FilterSection>
+          <FilterSection label="02 / YOUR SERVICE">
+            {!catalogue.data ? (
+              <>
+                {catalogue.error ? (
+                  <ErrorState
+                    message="Could not load services."
+                    onRetry={() => {
+                      catalogue.refetch().catch(() => undefined);
+                    }}
+                  />
+                ) : (
+                  <LoadingState message="Loading services…" />
+                )}
+              </>
+            ) : !categories.length ? (
+              <EmptyState
+                message="No services are listed yet. Try refreshing later."
+                action={{
+                  label: 'Refresh services',
+                  onPress: () => {
+                    catalogue.refetch().catch(() => undefined);
+                  },
+                }}
+              />
+            ) : (
+              <>
+                <Host seedColor={colors.accent} matchContents>
+                  <Picker
+                    testID="service-category"
+                    selectedValue={draft.selectedServiceCategoryId ?? ''}
+                    onValueChange={(id) =>
+                      change({ selectedServiceCategoryId: String(id) || null })
+                    }
+                  >
+                    <Picker.Item value="" label="Choose a service" />
+                    {categories.map((c) => (
+                      <Picker.Item
+                        key={c.id}
+                        value={c.id}
+                        label={c.displayName}
+                      />
+                    ))}
+                  </Picker>
+                </Host>
+                {!categoryValid && draft.selectedServiceCategoryId ? (
+                  <Text accessibilityRole="alert">
+                    Choose a currently listed service, or load more services.
+                  </Text>
+                ) : null}
+                {catalogue.hasNextPage ? (
+                  <Button
+                    label="Load more services"
+                    loading={catalogue.isFetchingNextPage}
+                    onPress={() => {
+                      catalogue.fetchNextPage().catch(() => undefined);
+                    }}
+                  />
+                ) : null}
+                {catalogue.isError ? (
+                  <ErrorState
+                    message="Could not refresh services. Your selection is kept."
+                    onRetry={() => {
+                      catalogue.refetch().catch(() => undefined);
+                    }}
+                  />
+                ) : null}
+              </>
+            )}
+          </FilterSection>
+          <FilterSection label="03 / YOUR PLACE">
+            <Text selectable style={typography.body}>
+              {data.address?.label ??
+                'Choose where the service should take place.'}
+            </Text>
+            <Button
+              label="Choose service address"
+              variant="secondary"
+              onPress={() => setAddressPicker('list')}
+            />
+            <Button
+              label="Use current location"
+              variant="ghost"
+              onPress={() => setAddressPicker('current')}
+            />
+            <Text style={typography.caption}>
+              Confirm and save an address before searching. You can also enter
+              it manually.
+            </Text>
+          </FilterSection>
+          <FilterSection>
+            <Controller
+              control={form.control}
+              name="radius"
+              render={({ field, fieldState }) => (
+                <TextInput
+                  label="Search radius (km)"
+                  keyboardType="decimal-pad"
+                  value={field.value}
+                  onChangeText={field.onChange}
+                  onBlur={() => {
+                    field.onBlur();
+                    const value = Number(form.getValues('radius'));
+                    change({
+                      radiusKm:
+                        Number.isFinite(value) &&
+                        form.getValues('radius').trim()
+                          ? value
+                          : null,
+                    });
+                  }}
+                  error={
+                    fieldState.error?.message ??
+                    (fieldState.isTouched || field.value.trim()
+                      ? radiusError
+                      : undefined) ??
+                    fieldError?.radiusKm
+                  }
+                />
+              )}
+            />
+            <Text style={typography.caption}>
+              Choose {data.radiusKm.min}–{data.radiusKm.max} km. Fractions are
+              allowed.
+            </Text>
+          </FilterSection>
+          {draft.selectedBookingType === BOOKING_TYPE_VALUE.SCHEDULED ? (
+            <FilterSection label="REQUESTED DATE & TIME">
+              <Text selectable style={typography.body}>
+                {draft.scheduledFor
+                  ? new Date(draft.scheduledFor).toLocaleString()
+                  : 'Choose a requested date and time.'}
+              </Text>
+              <Text style={typography.caption}>
+                This is a requested time. The barber confirms availability by
+                accepting your request.
+              </Text>
+              <Button
+                label="Choose requested date"
+                variant="secondary"
+                onPress={() => setPicker('date')}
+              />
+              <Button
+                label="Choose requested time"
+                variant="secondary"
+                onPress={() => setPicker('time')}
+              />
+              {picker ? (
+                <DateTimePicker
+                  testID="requested-picker"
+                  mode={picker}
+                  value={selectedDate}
+                  minimumDate={new Date(window.minimum)}
+                  maximumDate={new Date(window.maximum)}
+                  onDismiss={() => setPicker(null)}
+                  onValueChange={(_event, date) => {
+                    change({ scheduledFor: date.toISOString() });
+                    setPicker(null);
+                  }}
+                />
+              ) : null}
+              {(scheduleIssue ?? fieldError?.scheduledFor) ? (
+                <Text
+                  selectable
+                  accessibilityRole="alert"
+                  style={{ color: colors.danger }}
                 >
-                  <Picker.Item value="" label="Choose a service" />
-                  {categories.map((c) => (
-                    <Picker.Item
-                      key={c.id}
-                      value={c.id}
-                      label={c.displayName}
-                    />
-                  ))}
-                </Picker>
-              </Host>
-              {!categoryValid && draft.selectedServiceCategoryId ? (
-                <Text accessibilityRole="alert">
-                  Choose a currently listed service, or load more services.
+                  {scheduleIssue ?? fieldError?.scheduledFor}
                 </Text>
               ) : null}
-              {catalogue.hasNextPage ? (
+              {scheduleIssue ? (
                 <Button
-                  label="Load more services"
-                  loading={catalogue.isFetchingNextPage}
+                  label="Try Available Now"
+                  variant="secondary"
                   onPress={() => {
-                    catalogue.fetchNextPage().catch(() => undefined);
+                    change({
+                      selectedBookingType: BOOKING_TYPE_VALUE.AVAILABLE_NOW,
+                      scheduledFor: null,
+                    });
+                    setPicker(null);
                   }}
                 />
               ) : null}
-              {catalogue.isError ? (
-                <ErrorState
-                  message="Could not refresh services. Your selection is kept."
-                  onRetry={() => {
-                    catalogue.refetch().catch(() => undefined);
-                  }}
-                />
-              ) : null}
-            </>
-          )}
-        </Card>
-        <Card>
-          <Text style={typography.headline}>Service address</Text>
-          <Text selectable style={typography.body}>
-            {data.address?.label ??
-              'Choose where the service should take place.'}
-          </Text>
-          <Button
-            label="Choose service address"
-            variant="secondary"
-            onPress={() => setAddressPicker('list')}
-          />
-          <Button
-            label="Use current location"
-            variant="secondary"
-            onPress={() => setAddressPicker('current')}
-          />
-          <Text style={typography.caption}>
-            Current location suggests addresses for you to confirm and save. You
-            can enter an address if location access is off.
-          </Text>
-        </Card>
-        <Card>
-          <Controller
-            control={form.control}
-            name="radius"
-            render={({ field, fieldState }) => (
-              <TextInput
-                label="Search radius (km)"
-                keyboardType="decimal-pad"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={() => {
-                  field.onBlur();
-                  const value = Number(form.getValues('radius'));
-                  change({
-                    radiusKm:
-                      Number.isFinite(value) && form.getValues('radius').trim()
-                        ? value
-                        : null,
-                  });
-                }}
-                error={
-                  fieldState.error?.message ??
-                  radiusError ??
-                  fieldError?.radiusKm
-                }
-              />
-            )}
-          />
-          <Text style={typography.caption}>
-            Choose {data.radiusKm.min}–{data.radiusKm.max} km. Fractions are
-            allowed.
-          </Text>
-        </Card>
-        {draft.selectedBookingType === BOOKING_TYPE_VALUE.SCHEDULED ? (
-          <Card>
-            <Text style={typography.headline}>Requested date and time</Text>
-            <Text selectable style={typography.body}>
-              {draft.scheduledFor
-                ? new Date(draft.scheduledFor).toLocaleString()
-                : 'Choose a requested date and time.'}
-            </Text>
-            <Text style={typography.caption}>
-              This is a requested time. The barber confirms availability by
-              accepting your request.
-            </Text>
-            <Button
-              label="Choose requested date"
-              variant="secondary"
-              onPress={() => setPicker('date')}
-            />
-            <Button
-              label="Choose requested time"
-              variant="secondary"
-              onPress={() => setPicker('time')}
-            />
-            {picker ? (
-              <DateTimePicker
-                testID="requested-picker"
-                mode={picker}
-                value={selectedDate}
-                minimumDate={new Date(window.minimum)}
-                maximumDate={new Date(window.maximum)}
-                onDismiss={() => setPicker(null)}
-                onValueChange={(_event, date) => {
-                  change({ scheduledFor: date.toISOString() });
-                  setPicker(null);
-                }}
-              />
-            ) : null}
-            {(scheduleIssue ?? fieldError?.scheduledFor) ? (
-              <Text
-                selectable
-                accessibilityRole="alert"
-                style={{ color: colors.danger }}
-              >
-                {scheduleIssue ?? fieldError?.scheduledFor}
-              </Text>
-            ) : null}
-            {scheduleIssue ? (
-              <Button
-                label="Try Available Now"
-                variant="secondary"
-                onPress={() => {
-                  change({
-                    selectedBookingType: BOOKING_TYPE_VALUE.AVAILABLE_NOW,
-                    scheduledFor: null,
-                  });
-                  setPicker(null);
-                }}
-              />
-            ) : null}
-          </Card>
-        ) : null}
+            </FilterSection>
+          ) : null}
+        </View>
         {!complete ? (
           <Text accessibilityLiveRegion="polite" style={typography.body}>
             Choose a booking mode, listed service, active address and valid
@@ -541,6 +558,7 @@ export function DiscoveryFiltersScreen({
           </Text>
         ) : null}
         <Button
+          size="large"
           label="Show barbers"
           disabled={!complete || inputs.isError || catalogue.isError}
           onPress={() => {
@@ -550,9 +568,10 @@ export function DiscoveryFiltersScreen({
         />
       </View>
     ) : (
-      <Card>
-        <Text style={typography.headline}>
-          Barbers near your service address
+      <View style={{ gap: spacing.md, paddingVertical: spacing.md }}>
+        <Text style={typography.eyebrow}>A CUT ABOVE, CLOSE BY</Text>
+        <Text accessibilityRole="header" style={typography.display}>
+          Barbers for you.
         </Text>
         <Text style={typography.body}>
           {
@@ -568,10 +587,12 @@ export function DiscoveryFiltersScreen({
         </Text>
         <Button
           label="Change filters"
-          variant="secondary"
+          size="small"
+          style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}
+          variant="ghost"
           onPress={() => setFiltersOpen(true)}
         />
-      </Card>
+      </View>
     );
   return (
     <DiscoveryResultsList
@@ -581,16 +602,28 @@ export function DiscoveryFiltersScreen({
         <>
           <Button
             label="Refresh search"
+            variant="ghost"
+            size="small"
             disabled={!complete || inputs.isError || catalogue.isError}
             loading={search.isFetching || isRestarting}
             onPress={refresh}
           />
-          <Button
-            label="Service addresses"
-            variant="ghost"
-            onPress={onManageAddresses}
-          />
-          <SignOutButton />
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: spacing.xs,
+            }}
+          >
+            <Button
+              label="Service addresses"
+              size="small"
+              variant="ghost"
+              onPress={onManageAddresses}
+            />
+            <SignOutButton />
+          </View>
         </>
       }
       results={results}
@@ -635,5 +668,28 @@ export function DiscoveryFiltersScreen({
         })
       }
     />
+  );
+}
+
+function FilterSection({
+  label,
+  children,
+}: {
+  label?: string;
+  children: ReactNode;
+}) {
+  const { colors, typography } = useTheme();
+  return (
+    <View
+      style={{
+        gap: spacing.compact,
+        paddingVertical: spacing.inset,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+      }}
+    >
+      {label ? <Text style={typography.eyebrow}>{label}</Text> : null}
+      {children}
+    </View>
   );
 }

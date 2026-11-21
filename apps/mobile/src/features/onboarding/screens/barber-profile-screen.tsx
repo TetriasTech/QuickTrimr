@@ -7,9 +7,8 @@ import {
   LoadingState,
   Screen,
   TextInput,
-  colors,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import {
   barberProfileFormSchema,
@@ -105,6 +104,7 @@ function BarberProfileForm({
   userId: string;
   profile: CompleteBarberProfileResponse | null;
 }) {
+  const { colors, typography } = useTheme();
   const { supabase } = useMobileSession();
   const cache = useQueryClient();
   const {

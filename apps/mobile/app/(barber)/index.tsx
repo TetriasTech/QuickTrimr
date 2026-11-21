@@ -1,5 +1,5 @@
-import { BarberPlaceholderScreen } from '@/features/barber/screens/barber-placeholder-screen';
+import { BarberHomeScreen } from '@/features/barber/screens/barber-home-screen';
 
 export default function BarberRoute() {
-  return <BarberPlaceholderScreen />;
+  return <BarberHomeScreen />;
 }

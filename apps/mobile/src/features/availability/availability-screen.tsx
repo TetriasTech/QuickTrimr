@@ -9,9 +9,8 @@ import {
   LoadingState,
   Screen,
   TextInput,
-  colors,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
@@ -41,6 +40,7 @@ import type {
 
 type Values = { radius: string; end: string };
 export function AvailabilityScreen({ userId }: { userId: string }) {
+  const { colors, typography } = useTheme();
   const { supabase } = useMobileSession();
   const api = availabilityApi(supabase, userId);
   const cache = useQueryClient();
@@ -188,7 +188,7 @@ export function AvailabilityScreen({ userId }: { userId: string }) {
         <Text style={typography.headline} selectable>
           {availabilityStatus(data)}
         </Text>
-        <Host matchContents>
+        <Host seedColor={colors.accent} matchContents>
           <Switch
             label="Available Now"
             testID="available-now-toggle"
@@ -358,6 +358,7 @@ export function AvailabilityScreen({ userId }: { userId: string }) {
   );
 }
 function SessionDetails({ state }: { state: OwnAvailableNowState }) {
+  const { typography } = useTheme();
   const s = state.session;
   if (!s) return null;
   return (

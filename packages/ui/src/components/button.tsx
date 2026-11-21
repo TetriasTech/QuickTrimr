@@ -9,9 +9,10 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { colors, radius, sizes, spacing, typography, useTheme } from '../theme';
+import { radius, sizes, spacing, useTheme } from '../theme';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
+export type ButtonVariant =
+  'primary' | 'secondary' | 'ghost' | 'destructive' | 'highlight' | 'inverse';
 export type ButtonSize = 'small' | 'medium' | 'large';
 
 export interface ButtonProps extends Omit<
@@ -31,29 +32,6 @@ type ButtonVariantStyle = {
   label: TextStyle;
   indicator: ColorValue;
 };
-
-const variants = {
-  primary: {
-    container: { backgroundColor: colors.accent },
-    label: { color: colors.onAccent },
-    indicator: colors.onAccent,
-  },
-  secondary: {
-    container: { backgroundColor: colors.surfaceMuted },
-    label: { color: colors.text },
-    indicator: colors.text,
-  },
-  ghost: {
-    container: { backgroundColor: colors.transparent },
-    label: { color: colors.accent },
-    indicator: colors.accent,
-  },
-  destructive: {
-    container: { backgroundColor: colors.danger },
-    label: { color: colors.onDanger },
-    indicator: colors.onDanger,
-  },
-} as const satisfies Record<ButtonVariant, ButtonVariantStyle>;
 
 const sizeStyles = {
   small: {
@@ -82,7 +60,43 @@ export function Button({
   style,
   ...pressableProps
 }: ButtonProps) {
-  useTheme();
+  const { colors, typography, brand } = useTheme();
+  const variants = {
+    highlight: {
+      container: { backgroundColor: brand.palette.citrus },
+      label: { color: brand.palette.ink },
+      indicator: brand.palette.ink,
+    },
+    inverse: {
+      container: {
+        backgroundColor: colors.transparent,
+        borderWidth: 1,
+        borderColor: brand.palette.nightLine,
+      },
+      label: { color: brand.palette.ivory },
+      indicator: brand.palette.ivory,
+    },
+    primary: {
+      container: { backgroundColor: colors.accent },
+      label: { color: colors.onAccent },
+      indicator: colors.onAccent,
+    },
+    secondary: {
+      container: { backgroundColor: colors.surfaceMuted },
+      label: { color: colors.text },
+      indicator: colors.text,
+    },
+    ghost: {
+      container: { backgroundColor: colors.transparent },
+      label: { color: colors.accent },
+      indicator: colors.accent,
+    },
+    destructive: {
+      container: { backgroundColor: colors.danger },
+      label: { color: colors.onDanger },
+      indicator: colors.onDanger,
+    },
+  } as const satisfies Record<ButtonVariant, ButtonVariantStyle>;
   const unavailable = disabled || loading;
   const variantStyle = variants[variant];
 
@@ -91,7 +105,11 @@ export function Button({
       {...pressableProps}
       accessibilityLabel={pressableProps.accessibilityLabel ?? label}
       accessibilityRole="button"
-      accessibilityState={{ disabled: unavailable, busy: loading }}
+      accessibilityState={{
+        ...pressableProps.accessibilityState,
+        disabled: unavailable,
+        busy: loading,
+      }}
       disabled={unavailable}
       style={({ pressed }) => [
         styles.container,
@@ -108,7 +126,15 @@ export function Button({
           testID="button-loading-indicator"
         />
       ) : (
-        <Text style={[typography.headline, variantStyle.label]}>{label}</Text>
+        <Text
+          style={[
+            typography.headline,
+            { textAlign: 'center' },
+            variantStyle.label,
+          ]}
+        >
+          {label}
+        </Text>
       )}
     </Pressable>
   );
@@ -118,7 +144,7 @@ const styles = {
   container: {
     alignItems: 'center',
     borderCurve: 'continuous',
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     justifyContent: 'center',
   },
   disabled: {

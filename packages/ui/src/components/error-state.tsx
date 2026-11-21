@@ -1,6 +1,6 @@
 import { Text, View, type ViewStyle } from 'react-native';
 
-import { colors, spacing, typography, useTheme } from '../theme';
+import { spacing, useTheme } from '../theme';
 
 import { Button } from './button';
 
@@ -17,7 +17,20 @@ export function ErrorState({
   retryLabel = 'Try again',
   testID,
 }: ErrorStateProps) {
-  useTheme();
+  const { colors, typography } = useTheme();
+  const styles = {
+    message: {
+      ...typography.body,
+      color: colors.danger,
+      textAlign: 'center',
+    },
+    state: {
+      alignItems: 'center',
+      gap: spacing.md,
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+  } as const satisfies Record<string, ViewStyle | TextStyle>;
   return (
     <View style={styles.state} testID={testID}>
       <Text accessibilityRole="alert" selectable style={styles.message}>
@@ -27,19 +40,5 @@ export function ErrorState({
     </View>
   );
 }
-
-const styles = {
-  message: {
-    ...typography.body,
-    color: colors.danger,
-    textAlign: 'center',
-  },
-  state: {
-    alignItems: 'center',
-    gap: spacing.md,
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-} as const satisfies Record<string, ViewStyle | TextStyle>;
 
 type TextStyle = import('react-native').TextStyle;

@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { colors, spacing, useTheme } from '../theme';
+import { spacing, useTheme } from '../theme';
 
 import type { ReactNode } from 'react';
 
@@ -31,11 +31,26 @@ export function Screen({
   keyboardShouldPersistTaps = 'handled',
   testID,
 }: ScreenProps) {
-  useTheme();
+  const { colors } = useTheme();
+  const styles = {
+    content: {
+      flexGrow: 1,
+      gap: spacing.md,
+      padding: spacing.lg,
+    },
+    keyboard: {
+      flex: 1,
+    },
+    safeArea: {
+      backgroundColor: colors.background,
+      flex: 1,
+    },
+  } as const satisfies Record<string, ViewStyle>;
   const content = scroll ? (
     <ScrollView
       contentContainerStyle={[styles.content, contentContainerStyle]}
       contentInsetAdjustmentBehavior="automatic"
+      keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
     >
       {children}
@@ -59,18 +74,3 @@ export function Screen({
     </SafeAreaView>
   );
 }
-
-const styles = {
-  content: {
-    flexGrow: 1,
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  keyboard: {
-    flex: 1,
-  },
-  safeArea: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-} as const satisfies Record<string, ViewStyle>;

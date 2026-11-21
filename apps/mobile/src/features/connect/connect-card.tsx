@@ -4,9 +4,8 @@ import {
   Card,
   ErrorState,
   LoadingState,
-  colors,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import { Text, View } from 'react-native';
 
@@ -18,6 +17,7 @@ import {
 import { useConnect } from './connect-provider';
 
 export function ConnectCard() {
+  const { colors, typography } = useTheme();
   const flow = useConnect();
   const { status } = flow;
   const accountStatus = status.data?.accountStatus;

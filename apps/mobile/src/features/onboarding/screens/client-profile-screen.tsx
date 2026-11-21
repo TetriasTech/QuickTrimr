@@ -6,10 +6,9 @@ import {
   LoadingState,
   Screen,
   TextInput,
-  colors,
   sizes,
   spacing,
-  typography,
+  useTheme,
 } from '@quicktrimr/ui';
 import {
   completeClientProfileRequestSchema,
@@ -72,6 +71,7 @@ function ClientProfileForm({
   userId: string;
   initial: Awaited<ReturnType<typeof readClientProfile>>;
 }) {
+  const { colors, typography } = useTheme();
   const { supabase } = useMobileSession();
   const queryClient = useQueryClient();
   const { control, getValues, handleSubmit, reset, setError } =

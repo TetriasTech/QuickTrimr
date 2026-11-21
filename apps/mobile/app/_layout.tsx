@@ -1,9 +1,22 @@
-import { LoadingState, ErrorState, Screen } from '@quicktrimr/ui';
+import {
+  LoadingState,
+  ErrorState,
+  Screen,
+  brand,
+  brandAssets,
+  sizes,
+  spacing,
+  useTheme,
+} from '@quicktrimr/ui';
+import { useFonts } from 'expo-font';
+import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Text } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
+import { brandFonts } from '@/brand/assets';
+import { useBrandNavigationOptions } from '@/brand/navigation';
 import { SignOutButton } from '@/features/auth/screens/sign-out-button';
 import { ConnectProvider } from '@/features/connect/connect-provider';
 import { getRouteAccess } from '@/features/session/route-access';
@@ -15,6 +28,7 @@ import { createMobileSupabase } from '@/lib/api/supabase';
 import { MobileQueryProvider } from '@/lib/query/query-provider';
 
 function RootNavigator() {
+  const navigationOptions = useBrandNavigationOptions();
   const { state, retry, supabase, userId } = useMobileSession();
   if (state.status === 'loading')
     return (
@@ -37,7 +51,7 @@ function RootNavigator() {
 
   const navigation = (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={navigationOptions}>
         <Stack.Protected guard={access.connect}>
           <Stack.Screen name="connect" />
         </Stack.Protected>
@@ -90,6 +104,8 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(brandFonts);
+  const { colors } = useTheme();
   const [supabase] = useState(() => {
     try {
       return createMobileSupabase();
@@ -97,6 +113,40 @@ export default function RootLayout() {
       return null;
     }
   });
+  if (!fontsLoaded && !fontError)
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: brand.palette.forest,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: spacing.lg,
+        }}
+      >
+        <Image
+          source={brandAssets.markInverse}
+          style={{ width: sizes.markLarge, height: sizes.markLarge }}
+          accessibilityLabel="QuickTrimr"
+        />
+        <ActivityIndicator color={brand.palette.citrus} />
+      </View>
+    );
+  if (fontError)
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ color: colors.text }}>
+          Please reopen QuickTrimr to finish loading.
+        </Text>
+      </View>
+    );
   if (!supabase)
     return (
       <Screen>

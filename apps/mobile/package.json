@@ -14,6 +14,8 @@
     "build": "expo export --platform android --output-dir dist/android && expo export --platform ios --output-dir dist/ios"
   },
   "dependencies": {
+    "@expo-google-fonts/instrument-serif": "^0.4.1",
+    "@expo-google-fonts/manrope": "^0.4.3",
     "@expo/ui": "~57.0.20",
     "@hookform/resolvers": "^5.9.1",
     "@quicktrimr/domain": "workspace:*",
@@ -25,6 +27,7 @@
     "expo": "~57.0.24",
     "expo-constants": "~57.0.19",
     "expo-file-system": "~57.0.7",
+    "expo-font": "~57.0.4",
     "expo-image": "~57.0.5",
     "expo-image-manipulator": "~57.0.22",
     "expo-image-picker": "~57.0.21",
@@ -32,6 +35,7 @@
     "expo-location": "~57.0.23",
     "expo-router": "~57.0.22",
     "expo-secure-store": "~57.0.4",
+    "expo-splash-screen": "~57.0.11",
     "expo-status-bar": "~57.0.1",
     "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
