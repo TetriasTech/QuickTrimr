@@ -104,6 +104,7 @@ export function DiscoveryResultsList({
   fetchingNextPage,
   hasNextPage,
   error,
+  continuationError,
   onRefresh,
   onMore,
   onSelect,
@@ -124,6 +125,7 @@ export function DiscoveryResultsList({
   fetchingNextPage: boolean;
   hasNextPage: boolean;
   error: string | null;
+  continuationError: boolean;
   onRefresh: () => void;
   onMore: () => void;
   onSelect: (barberId: string) => void;
@@ -157,7 +159,17 @@ export function DiscoveryResultsList({
         contentContainerStyle={{ padding: spacing.md, gap: spacing.md }}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={header}
+        ListHeaderComponent={
+          <View style={{ gap: spacing.md }}>
+            {header}
+            {loading || refreshing ? (
+              <LoadingState message="Updating nearby search…" />
+            ) : null}
+            {error && !continuationError ? (
+              <ErrorState message={error} onRetry={onRefresh} />
+            ) : null}
+          </View>
+        }
         refreshing={refreshing}
         onRefresh={complete ? onRefresh : undefined}
         onEndReached={
@@ -175,10 +187,9 @@ export function DiscoveryResultsList({
         }
         ListFooterComponent={
           <View style={{ gap: spacing.md }}>
-            {loading || refreshing ? (
-              <LoadingState message="Updating nearby search…" />
+            {error && continuationError ? (
+              <ErrorState message={error} onRetry={onRefresh} />
             ) : null}
-            {error ? <ErrorState message={error} onRetry={onRefresh} /> : null}
             {complete &&
             !error &&
             !loading &&

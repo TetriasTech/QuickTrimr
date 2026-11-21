@@ -226,6 +226,7 @@ export function DiscoveryFiltersScreen({
     if (restarting.current || !complete) return;
     restarting.current = true;
     setIsRestarting(true);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
     try {
       // Discard the old cursor chain; v5 would otherwise refetch every loaded page.
       await cache.cancelQueries({
@@ -605,6 +606,7 @@ export function DiscoveryFiltersScreen({
         isRestarting || (search.isRefetching && !search.isFetchingNextPage)
       }
       fetchingNextPage={search.isFetchingNextPage}
+      continuationError={search.isFetchNextPageError}
       hasNextPage={complete && !!search.hasNextPage}
       error={
         search.fetchStatus === 'paused'
