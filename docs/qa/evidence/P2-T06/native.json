@@ -1,0 +1,19 @@
+{
+  "environment": "iPhone 17 / iOS 26.5 / Expo Go SDK57, local synthetic data",
+  "result": "PARTIAL - physical swipe/pull confirmation pending",
+  "passed": [
+    "Photo and initials fallback; selected Haircut A$45.50; SAL label, approved band, no-review and availability copy",
+    "Card -> public profile -> Back, including final-page QA Barber 45",
+    "Native selected-category-25 deep link displays A$45.74 immediately while normal services remain paginated",
+    "Haircut -> Skin Fade refetches to no matches; radius/category/Scheduled empty actions open actual controls without invented date",
+    "Real local malformed page-size config yields visible top error with old cards retained; restoring config and retry succeeds",
+    "A transaction-held local read delay displays real loading and native refresh indicator; transaction rolled back and config verified restored",
+    "Continuation controls reach final QA Barber 45 with no more-page button",
+    "Native Refresh search from final page resets viewport to top and 45 loaded cards -> 20 with continuation"
+  ],
+  "pending": [
+    "Physical scroll automatically loads later pages",
+    "Physical pull-to-refresh gesture"
+  ],
+  "cleanup": "Config/latency probes restored; synthetic barber fixtures retained only for pending manual check; no test diagnostics remain in source"
+}
