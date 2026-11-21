@@ -92,3 +92,43 @@ test('canonical UUID case is accepted without changing target identity', async (
   ).toBe(id);
   expect(JSON.parse(f.invoke.mock.calls[0]![1].body).barberId).toBe(id);
 });
+
+test('selected-category lookup carries only IDs and rejects a different or missing selected projection', async () => {
+  const f = fixture();
+  const selected = response.profile!.services[0]!;
+  const api = publicProfileApi(
+    {
+      auth: { getSession: f.getSession },
+      functions: { invoke: f.invoke },
+    } as unknown as SupabaseClient,
+    'synthetic-client',
+    barberId,
+    selected.serviceCategoryId,
+  );
+  f.invoke.mockResolvedValue({
+    data: { profile: { ...response.profile, selectedService: selected } },
+    error: null,
+  });
+  expect(
+    (await api.page(undefined, new AbortController().signal)).profile!
+      .selectedService!.priceCents,
+  ).toBe(selected.priceCents);
+  expect(JSON.parse(f.invoke.mock.calls[0]![1].body)).toEqual({
+    barberId,
+    serviceCategoryId: selected.serviceCategoryId,
+  });
+  for (const selectedService of [
+    undefined,
+    { ...selected, serviceCategoryId: '22222222-2222-4222-8222-222222222222' },
+    { ...selected, priceCents: 45.5 },
+    { ...selected, privateAddress: 'forged' },
+  ]) {
+    f.invoke.mockResolvedValue({
+      data: { profile: { ...response.profile, selectedService } },
+      error: null,
+    });
+    await expect(
+      api.page(undefined, new AbortController().signal),
+    ).rejects.toThrow();
+  }
+});

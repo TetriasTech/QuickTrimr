@@ -12,6 +12,7 @@ export function publicProfileApi(
   supabase: SupabaseClient,
   userId: string,
   barberId: string,
+  serviceCategoryId?: string,
 ) {
   async function session(signal: AbortSignal) {
     const { data, error } = await supabase.auth.getSession();
@@ -25,12 +26,26 @@ export function publicProfileApi(
       const result = await invokeEdgeFunction(
         supabaseEdgeTransport(supabase, current.access_token, signal),
         'get-public-barber-profile',
-        { barberId, ...(after ? { servicesAfter: after } : {}) },
+        {
+          barberId,
+          ...(after ? { servicesAfter: after } : {}),
+          ...(serviceCategoryId ? { serviceCategoryId } : {}),
+        },
       );
       await session(signal);
       if (result.profile && result.profile.barberId !== barberId.toLowerCase())
         throw new Error('Unexpected profile.');
-      return getPublicBarberProfileResponseSchema.parse(result);
+      const parsed = getPublicBarberProfileResponseSchema.parse(result);
+      if (
+        serviceCategoryId &&
+        parsed.profile &&
+        (parsed.profile.selectedService === undefined ||
+          (parsed.profile.selectedService &&
+            parsed.profile.selectedService.serviceCategoryId !==
+              serviceCategoryId.toLowerCase()))
+      )
+        throw new Error('Unexpected selected service.');
+      return parsed;
     },
   };
 }

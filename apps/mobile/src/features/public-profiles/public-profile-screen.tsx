@@ -20,6 +20,11 @@ import { FlatList, Text, View } from 'react-native';
 
 import { queryKeys } from '@/lib/query/query-keys';
 
+import {
+  publicProfileInitials,
+  publicRatingLabel,
+} from './public-profile-presentation';
+
 import type { PublicProfileApi } from './public-profile-api';
 
 export function PublicBarberProfileScreen({
@@ -41,7 +46,11 @@ export function PublicBarberProfileScreen({
 }) {
   const validId = postgresUuidSchema.safeParse(barberId).success;
   const query = useInfiniteQuery({
-    queryKey: queryKeys.publicProfiles.detail(userId, barberId),
+    queryKey: queryKeys.publicProfiles.detail(
+      userId,
+      barberId,
+      selectedServiceId,
+    ),
     queryFn: ({ pageParam, signal }) => api.page(pageParam, signal),
     initialPageParam: undefined as PublicServicesCursor | undefined,
     getNextPageParam: (page) => page.profile?.nextServicesCursor ?? undefined,
@@ -98,6 +107,7 @@ export function PublicBarberProfileScreen({
         .map((service) => [service.id, service]),
     ).values(),
   ];
+  const selectedService = query.data?.pages.at(-1)?.profile?.selectedService;
   const source = profile.photoUrl
     ? { uri: new URL(profile.photoUrl, photoBaseUrl).href }
     : undefined;
@@ -128,12 +138,7 @@ export function PublicBarberProfileScreen({
             <View style={{ alignItems: 'center', gap: spacing.sm }}>
               <Avatar
                 size="large"
-                initials={profile.displayName
-                  .trim()
-                  .split(/\s+/)
-                  .map((word) => word[0])
-                  .slice(0, 2)
-                  .join('')}
+                initials={publicProfileInitials(profile.displayName)}
                 {...(source ? { source } : {})}
                 accessibilityLabel={`${profile.displayName} profile photo`}
               />
@@ -164,11 +169,33 @@ export function PublicBarberProfileScreen({
                 Reviews
               </Text>
               <Text selectable style={typography.body}>
-                {profile.rating === null || profile.ratingCount === 0
-                  ? 'No reviews yet'
-                  : `${profile.rating} out of 5 · ${profile.ratingCount} reviews`}
+                {publicRatingLabel(profile)}
               </Text>
             </Card>
+            {selectedServiceId ? (
+              <Card variant="outlined">
+                <Text style={typography.headline}>Your selected service</Text>
+                {selectedService ? (
+                  <>
+                    <Text style={typography.body}>
+                      {selectedService.displayName}
+                    </Text>
+                    <Text style={typography.headline}>
+                      {formatAudCents(selectedService.priceCents)}
+                    </Text>
+                    <Text style={typography.caption}>
+                      Current price. Prices can change before you send a
+                      request.
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={typography.body}>
+                    This selected service is no longer available. Go back to
+                    choose another service.
+                  </Text>
+                )}
+              </Card>
+            ) : null}
             <Text accessibilityRole="header" style={typography.headline}>
               Services & prices
             </Text>
@@ -177,7 +204,7 @@ export function PublicBarberProfileScreen({
         renderItem={({ item }) => (
           <Card
             variant={
-              item.serviceCategoryId === selectedServiceId
+              item.serviceCategoryId === selectedServiceId?.toLowerCase()
                 ? 'outlined'
                 : 'filled'
             }
@@ -200,7 +227,7 @@ export function PublicBarberProfileScreen({
             >
               {formatAudCents(item.priceCents)}
             </Text>
-            {item.serviceCategoryId === selectedServiceId ? (
+            {item.serviceCategoryId === selectedServiceId?.toLowerCase() ? (
               <Text style={typography.caption}>Selected service</Text>
             ) : null}
           </Card>

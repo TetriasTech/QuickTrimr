@@ -1,0 +1,26 @@
+[
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm test",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0
+  },
+  {
+    "command": "node scripts/check-client-env.mjs",
+    "exitCode": 0
+  },
+  {
+    "command": "node scripts/jira/generate-indexes.mjs --check",
+    "exitCode": 0
+  }
+]

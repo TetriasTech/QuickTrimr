@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "ownedSyntheticBarbers": 45,
+  "activeSessionsRemaining": 0,
+  "activeServicesRemaining": 0,
+  "serviceRowsPreserved": 114,
+  "history": "No history or audit row was updated or deleted",
+  "config": "Original page-size policy retained",
+  "references": "Inert synthetic reference area/photo records retained locally"
+}

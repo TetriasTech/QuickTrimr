@@ -1,3 +1,4 @@
+import { integerCentsSchema } from '@quicktrimr/validation';
 import {
   notifyManager,
   QueryClient,
@@ -118,7 +119,12 @@ async function mount(
   const navigate = jest.fn();
   const rendered = await render(
     <QueryClientProvider client={cache}>
-      <DiscoveryFiltersScreen userId={user} onManageAddresses={navigate} />
+      <DiscoveryFiltersScreen
+        userId={user}
+        photoBaseUrl="http://127.0.0.1:55321"
+        onManageAddresses={navigate}
+        onSelectBarber={navigate}
+      />
     </QueryClientProvider>,
   );
   return { cache, navigate, ...rendered };
@@ -349,4 +355,136 @@ test('an archived selected address can be replaced after its initial lookup fail
     screen.getByRole('button', { name: 'Select saved address' }),
   );
   expect(await screen.findByText('Booking mode')).toBeTruthy();
+});
+
+const barberId = '44444444-4444-4444-8444-444444444444';
+function result(id = barberId) {
+  return {
+    barberId: id,
+    displayName: 'Synthetic Barber',
+    photoUrl: null,
+    approximateArea: {
+      id: 'sal:2021:qa',
+      label: 'QA Locality',
+      mapPoint: { lat: -38, lng: 145 },
+    },
+    priceCents: integerCentsSchema.parse(4550),
+    rating: null,
+    ratingCount: 0,
+    distanceBand: '2-5km' as const,
+    availableUntil: new Date(now + 3600000).toISOString(),
+  };
+}
+test('public cards show cents, SAL, approved distance and honest availability; tap carries only the selected IDs', async () => {
+  seed();
+  mockApi.search.mockResolvedValue({ results: [result()], nextCursor: null });
+  const { navigate } = await mount();
+  await screen.findByText('Synthetic Barber');
+  expect(screen.getByText('Synthetic haircut · A$45.50')).toBeTruthy();
+  expect(
+    screen.getByText('QA Locality · Approximate service area'),
+  ).toBeTruthy();
+  expect(screen.getByText('2–5 km away')).toBeTruthy();
+  expect(screen.getByText('No reviews yet')).toBeTruthy();
+  expect(screen.getByText(/Available Now until/)).toBeTruthy();
+  await fireEvent.press(
+    screen.getByRole('button', { name: /View Synthetic Barber/ }),
+  );
+  expect(navigate).toHaveBeenCalledWith(barberId, categoryId);
+  expect(useBookingDraftStore.getState().selectedBarberId).toBe(barberId);
+});
+test('opaque continuation appends in server order once, and refresh restarts without the old chain', async () => {
+  seed();
+  const second = '55555555-5555-4555-8555-555555555555';
+  mockApi.search.mockImplementation(async (request: unknown) =>
+    (request as { cursor?: string }).cursor
+      ? { results: [result(second)], nextCursor: null }
+      : { results: [result()], nextCursor: 'opaque-server-cursor' },
+  );
+  const { cache } = await mount();
+  await screen.findByText('Load more barbers');
+  await act(async () => {
+    const onEnd = screen.getByTestId('barber-results').props.onEndReached;
+    onEnd();
+    onEnd();
+  });
+  await waitFor(() => expect(mockApi.search).toHaveBeenCalledTimes(2));
+  expect(mockApi.search.mock.calls[1]![0]).toMatchObject({
+    cursor: 'opaque-server-cursor',
+  });
+  await waitFor(() =>
+    expect(screen.queryByText('Load more barbers')).toBeNull(),
+  );
+  const pages = cache.getQueriesData<{
+    pages: SearchAvailableNowBarbersResponse[];
+  }>({ queryKey: ['discovery'] })[0]![1]!.pages;
+  expect(pages.flatMap((p) => p.results.map((r) => r.barberId))).toEqual([
+    barberId,
+    second,
+  ]);
+  await fireEvent(screen.getByTestId('barber-results'), 'refresh');
+  await waitFor(() => expect(mockApi.search).toHaveBeenCalledTimes(3));
+  expect(mockApi.search.mock.calls[2]![0]).not.toHaveProperty('cursor');
+  await waitFor(() =>
+    expect(
+      cache.getQueriesData<{ pages: unknown[] }>({
+        queryKey: ['discovery'],
+      })[0]![1]!.pages,
+    ).toHaveLength(1),
+  );
+  await fireEvent.changeText(screen.getByLabelText('Search radius (km)'), '11');
+  await fireEvent(screen.getByLabelText('Search radius (km)'), 'blur');
+  await waitFor(() => expect(mockApi.search).toHaveBeenCalledTimes(4));
+  expect(mockApi.search.mock.calls[3]![0]).toMatchObject({ radiusKm: 11 });
+  expect(mockApi.search.mock.calls[3]![0]).not.toHaveProperty('cursor');
+});
+test('continuation failure keeps loaded cards, suppresses empty and retries with a fresh first page', async () => {
+  seed();
+  mockApi.search
+    .mockResolvedValueOnce({ results: [result()], nextCursor: 'opaque' })
+    .mockRejectedValueOnce(new Error('offline'));
+  await mount();
+  await screen.findByText('Load more barbers');
+  await fireEvent.press(screen.getByText('Load more barbers'));
+  await screen.findByText(/Could not update nearby search/);
+  expect(screen.getByText('Synthetic Barber')).toBeTruthy();
+  expect(screen.queryByText(/No barbers matched/)).toBeNull();
+  mockApi.search.mockResolvedValue({ results: [], nextCursor: null });
+  await fireEvent.press(screen.getByText('Try again'));
+  await screen.findByText(/No barbers matched/);
+  expect(mockApi.search.mock.calls.at(-1)![0]).not.toHaveProperty('cursor');
+});
+test('empty actions open editable radius/service controls and Scheduled without inventing a date', async () => {
+  seed();
+  const mounted = await mount();
+  await screen.findByText(/No barbers matched/);
+  await fireEvent.press(screen.getByText('Show barbers'));
+  expect(screen.queryByText('Booking mode')).toBeNull();
+  await fireEvent.press(screen.getByText('Widen search radius'));
+  expect(screen.getByText('Booking mode')).toBeTruthy();
+  expect(screen.getByLabelText('Search radius (km)').props.value).toBe('');
+  expect(useBookingDraftStore.getState().radiusKm).toBeNull();
+  await mounted.unmount();
+  seed();
+  await mount();
+  await screen.findByText(/No barbers matched/);
+  await fireEvent.press(screen.getByText('Choose another service'));
+  expect(useBookingDraftStore.getState().selectedServiceCategoryId).toBeNull();
+  await cleanup();
+  seed();
+  await mount();
+  await screen.findByText(/No barbers matched/);
+  await fireEvent.press(screen.getByText('Try Scheduled'));
+  expect(useBookingDraftStore.getState().selectedBookingType).toBe('scheduled');
+  expect(useBookingDraftStore.getState().scheduledFor).toBeNull();
+  expect(
+    screen.getAllByText('Choose a requested date and time.').length,
+  ).toBeGreaterThan(0);
+});
+test('initial search loading is distinct from empty results', async () => {
+  seed();
+  mockApi.search.mockImplementation(() => new Promise(() => {}));
+  await mount();
+  await screen.findByText('Updating nearby search…');
+  expect(screen.queryByText(/No barbers matched/)).toBeNull();
 });

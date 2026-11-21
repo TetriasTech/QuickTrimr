@@ -31,8 +31,13 @@ export const queryKeys = {
     state: (userId: string) => ['availability', userId, 'state'] as const,
   },
   publicProfiles: {
-    detail: (userId: string, barberId: string) =>
-      ['public-profiles', userId, barberId.toLowerCase()] as const,
+    detail: (userId: string, barberId: string, serviceCategoryId?: string) =>
+      [
+        'public-profiles',
+        userId,
+        barberId.toLowerCase(),
+        ...(serviceCategoryId ? [serviceCategoryId.toLowerCase()] : []),
+      ] as const,
   },
   session: {
     profile: (userId: string | null) => ['session', 'profile', userId] as const,

@@ -1,0 +1,6 @@
+45 real PostGIS results traverse default 20/20/5 opaque pages in stable UUID tie order, without duplicates or gaps: PASS
+Card and immediate profile selected-service prices match, including category 25 outside the first 20 services: PASS
+Strict raw public allowlists expose no private address/contact, exact distance or barber point; cross-user GET/POST/PATCH/DELETE remain denied: PASS
+Selected lookup checks verified caller/stored client role and UUID; four-argument RPC is denied to anon and all authenticated roles: PASS
+Live price updates read current integer cents on both screens; a changed filter rejects old cursors and succeeds from a fresh traversal: PASS
+Archived selection returns null and disappears from search; loss of Connect eligibility removes the profile: PASS

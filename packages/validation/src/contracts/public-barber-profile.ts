@@ -44,12 +44,16 @@ export const publicServicesCursorSchema = z.strictObject({
 export const getPublicBarberProfileRequestSchema = requestObject({
   barberId: postgresUuidSchema.transform((id) => id.toLowerCase()),
   servicesAfter: publicServicesCursorSchema.optional(),
+  serviceCategoryId: postgresUuidSchema
+    .transform((id) => id.toLowerCase())
+    .optional(),
 });
 export const publicBarberProfileSchema = z.strictObject({
   ...publicBarberIdentityShape,
   bio: z.string(),
   yearsExperience: nonNegativeIntegerSchema,
   services: z.array(publicBarberServiceSchema),
+  selectedService: publicBarberServiceSchema.nullable().optional(),
   nextServicesCursor: publicServicesCursorSchema.nullable(),
 });
 export const getPublicBarberProfileResponseSchema = z.strictObject({
