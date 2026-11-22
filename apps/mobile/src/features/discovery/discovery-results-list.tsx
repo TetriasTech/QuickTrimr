@@ -22,18 +22,13 @@ import {
   publicProfileInitials,
   publicRatingLabel,
 } from '@/features/public-profiles/public-profile-presentation';
+import { distanceBandLabels } from '@/lib/presentation/distance';
 
 import type { SearchAvailableNowBarbersResponse } from '@quicktrimr/validation';
 import type { ReactElement, RefObject } from 'react';
 import type { ListRenderItemInfo } from 'react-native';
 
 type Result = SearchAvailableNowBarbersResponse['results'][number];
-const distanceLabels: Record<Result['distanceBand'], string> = {
-  'under-2km': 'Under 2 km away',
-  '2-5km': '2–5 km away',
-  '5-10km': '5–10 km away',
-  '10km+': '10 km or more away',
-};
 const ResultCard = memo(function ResultCard({
   result,
   serviceName,
@@ -56,7 +51,7 @@ const ResultCard = memo(function ResultCard({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`View ${result.displayName}, ${serviceName}, ${formatAudCents(result.priceCents)}. ${result.approximateArea.label}, approximate service area. ${distanceLabels[result.distanceBand]}. ${rating}. ${availability}.`}
+      accessibilityLabel={`View ${result.displayName}, ${serviceName}, ${formatAudCents(result.priceCents)}. ${result.approximateArea.label}, approximate service area. ${distanceBandLabels[result.distanceBand]}. ${rating}. ${availability}.`}
       onPress={() => onSelect(result.barberId)}
       style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
     >
@@ -106,7 +101,7 @@ const ResultCard = memo(function ResultCard({
           }}
         >
           <Text style={[typography.caption, { color: colors.text }]}>
-            {distanceLabels[result.distanceBand]}
+            {distanceBandLabels[result.distanceBand]}
           </Text>
           <Text style={typography.caption}>· {rating}</Text>
         </View>

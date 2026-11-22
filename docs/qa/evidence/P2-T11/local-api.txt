@@ -1,0 +1,7 @@
+PASS Job slot: all 15 statuses, session independence, Scheduled exclusion, owner and role denial, cursor validation, exact raw projection.
+PASS Both live request types, snapshotted origins, exact safe payload keys and values, null rating and empty inbox.
+PASS Role and owner guards, direct foreign ID and RLS denial, unexposed snapshots, and verified role over JWT metadata.
+PASS Live changes to source points, address, name and price leave the original inbox projection unchanged.
+PASS Configured default and maximum page sizes, request ID tie-breaks, no duplicate rows, validated cursors and exact expiry boundary.
+PASS EXPLAIN ANALYZE: Limit → Nested Loop → booking_requests_barber_inbox_idx Index Scan; conditions barber_id, status, expires_at; no sort; 21 probed rows.
+PASS Synthetic requests cancelled where pending, supply archived, sessions disabled and fixture logins soft-deleted.

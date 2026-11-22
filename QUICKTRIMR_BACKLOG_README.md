@@ -3646,9 +3646,9 @@ phase: 2
 priority: High
 jiraKey: TRIMR-54
 dependsOn: [P0-T14, P2-T02, P2-T10]
-affects: [P2-T14]
-knowledgeBase: [RULE-AVAIL-05, RULE-AVAIL-06, RULE-SCHED-02, ENUM-REQUEST-STATUS, RULE-BARBER-INBOX-01]
-blockedByTbc: []
+affects: [P2-T12, P2-T14]
+knowledgeBase: [RULE-AVAIL-05, RULE-AVAIL-06, RULE-AVAIL-09, RULE-SCHED-02, ENUM-REQUEST-STATUS, RULE-BARBER-INBOX-01]
+blockedByTbc: [TBC-AVAIL-ACTIVE-JOB-STATUS]
 labels: [quicktrimr, phase-2, mobile]
 ```
 
@@ -3664,9 +3664,9 @@ A list of pending requests with a card per request: service, price, distance ban
 
 Available Now and Scheduled visually distinct — they have different urgencies and different expiry scales.
 
-When the barber already holds an active Available Now job, other Available Now requests show as unacceptable **with the reason**, rather than offering an accept that will fail.
+When the barber holds the job slot under `RULE-AVAIL-09`, other Available Now requests show the reason they cannot be accepted. Use the owner-only `get_barber_request_inbox_page` RPC. It delegates to the `P2-T10` page query and adds a `hasActiveAvailableNowJob` boolean from `private.has_active_available_now_job(barber_id)`. It accepts the same continuation fields (`p_after_expires_at` and `p_after_request_id`), omitted together on the first page. The response remains `{ requests, serverNow, nextCursor }` with the added boolean. It returns no booking details.
 
-Refresh on focus and on push (`P6-T02`), so a barber returning to the app does not act on a stale list.
+Refresh from the first page on screen focus and app foreground. `P6-T02` owns wiring push delivery to refresh the inbox.
 
 Empty state distinguishing "you're not Available Now" — with a link to the toggle — from "you're available and there's nothing yet".
 
@@ -3675,18 +3675,18 @@ Empty state distinguishing "you're not Available Now" — with a link to the tog
 - [ ] Pending Available Now and Scheduled requests are listed and visually distinguished.
 - [ ] Each card shows service, price, suburb, client display name, and the distance band and rating when available.
 - [ ] A countdown to expiry is prominent on each card.
-- [ ] **When a barber holds an active Available Now job, other Available Now requests show as unacceptable with the reason** (`RULE-AVAIL-05`) rather than a failing accept button.
+- [ ] **When the server reports that a barber holds the Available Now job slot, other Available Now requests show as unacceptable with the reason** (`RULE-AVAIL-05`, `RULE-AVAIL-09`). Scheduled requests remain unaffected by this slot.
 - [ ] An expired request cannot be actioned and updates in place.
 - [ ] The list refreshes on focus.
 - [ ] The empty state distinguishes "not available" from "available, nothing yet", and the former links to the toggle.
 - [ ] Loading and error states exist.
 - [ ] No client address or contact detail is rendered.
 
-**Tests** — the one-active-job state disabling other Available Now cards with a reason; expiry updating in place; both empty states rendering distinctly; no identifying field present in the rendered tree.
+**Tests** — approval status matrix and owner-only boolean on the raw API response; the occupied slot disabling other Available Now cards with a reason; expiry updating in place; both empty states rendering distinctly; no client address or contact detail in the API response or rendered tree.
 
-**Out of scope** — accept and decline actions (`P2-T14`); the query (`P2-T10`).
+**Out of scope** — accept and decline actions (`P2-T14`); replacing the paged request query (`P2-T10`); push delivery (`P6-T02`).
 
-**Sync notes** — Page through the approved P2-T10 projection using its continuation cursor. Refresh starts with the first page. Use honest absence states for a null band or rating. `P2-T14` adds the action buttons to these cards.
+**Sync notes** — Page through the approved P2-T10 projection using its continuation cursor. Refresh starts with the first page. Omit unavailable band and rating. The `P2-T02` session state distinguishes the empty states. `P2-T12` reuses the private job-slot query under its acceptance lock. `P2-T14` adds actions and treats the server as authoritative.
 
 ---
 
@@ -3700,10 +3700,10 @@ owner: Andrew
 phase: 2
 priority: Highest
 jiraKey: TRIMR-55
-dependsOn: [P0-D04, P0-T07, P2-T01, P2-T03, P2-T08, P2-T10]
+dependsOn: [P0-D04, P0-T07, P2-T01, P2-T03, P2-T08, P2-T10, P2-T11]
 affects: [P2-T14, P3-T02, P3-T06, P4-T01, P4-T02]
-knowledgeBase: [ADR-010, ADR-013, RULE-REQUEST-05, RULE-AVAIL-05, RULE-AVAIL-07, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
-blockedByTbc: []
+knowledgeBase: [ADR-010, ADR-013, RULE-REQUEST-05, RULE-AVAIL-05, RULE-AVAIL-07, RULE-AVAIL-09, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
+blockedByTbc: [TBC-AVAIL-ACTIVE-JOB-STATUS]
 labels: [quicktrimr, phase-2, backend, security]
 ```
 
@@ -3721,7 +3721,7 @@ Validate: authenticated barber, request addressed to them, status still `pending
 
 Re-check current server-owned restrictions under `RULE-RELY-06` with the shared eligibility helper from `P2-T01` inside the acceptance transaction. Suspension blocks both types; cooldown blocks Available Now only; restricted outside cooldown is permitted. Coordinate with concurrent restriction writers so a stale preflight check cannot accept after a restriction takes effect. Never trust body-supplied standing or cooldown times.
 
-Concurrency: a conditional update that transitions `pending → accepted` only if it is still `pending`, and a check that the barber holds no active Available Now job. Both under one transaction, with the row locked — but **no external call inside that lock** (`RULE-PAY-09`), which is another reason Stripe is not here.
+Concurrency: a conditional update that transitions `pending → accepted` only if it is still `pending`, and for an Available Now request use `private.has_active_available_now_job(barber_id)` from `P2-T11` to check the slot under `RULE-AVAIL-09`. Serialize that check on the barber profile lock before creating the booking, in the same transaction as the conditional request update. Keep external calls outside these locks (`RULE-PAY-09`).
 
 On success: create the booking at `accepted_pending_payment`, write `booking_status_history` (`ADR-010`), invoke `private.record_available_now_request_outcome(request_id, 'accepted')` from `P2-T03` inside that same transaction to make the current active Available Now session `busy`, and resolve the barber's other pending Available Now requests (`RULE-AVAIL-07`). Bulk closure of those other requests does not invoke a miss/response outcome hook.
 
@@ -6720,7 +6720,7 @@ Copy compliant with `RULE-COPY-01` — nothing implying a charge that is only a 
 
 **Out of scope** — token registration (`P6-T01`); notification preferences; SMS and email.
 
-**Sync notes** — six tickets trigger notifications through this helper. A new lifecycle event needs a case here or it is silent.
+**Sync notes** — six tickets trigger notifications through this helper. A new lifecycle event needs a case here or it is silent. The incoming-request push refreshes the addressed barber's `P2-T11` inbox from the first page when that screen is open.
 
 ---
 

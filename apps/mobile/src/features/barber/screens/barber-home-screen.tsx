@@ -25,8 +25,13 @@ export function BarberHomeScreen() {
           Set your Available Now session when you’re ready to take requests.
         </Text>
         <Button
-          label="Available Now"
+          label="Booking requests"
           size="large"
+          onPress={() => router.navigate('/request-inbox')}
+        />
+        <Button
+          label="Available Now"
+          variant="secondary"
           onPress={() => router.push('/available-now')}
         />
         <Button
