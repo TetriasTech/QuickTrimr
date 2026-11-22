@@ -6,6 +6,7 @@ import { publicProfileApi } from '@/features/public-profiles/public-profile-api'
 import { PublicBarberProfileScreen } from '@/features/public-profiles/public-profile-screen';
 import { useMobileSession } from '@/features/session/session-provider';
 import { mobileEnv } from '@/lib/env';
+import { useBookingDraftStore } from '@/stores/booking-draft-store';
 
 export default function BarberProfileRoute() {
   const { barberId, serviceCategoryId } = useLocalSearchParams<{
@@ -15,6 +16,14 @@ export default function BarberProfileRoute() {
   const { supabase, userId } = useMobileSession();
   const router = useRouter();
   const active = useIsFocused();
+  const canReview = useBookingDraftStore(
+    (draft) =>
+      draft.selectedBarberId === barberId &&
+      !!serviceCategoryId &&
+      draft.selectedServiceCategoryId === serviceCategoryId &&
+      !!draft.selectedBookingType &&
+      !!draft.selectedAddressId,
+  );
   const api = useMemo(
     () => publicProfileApi(supabase, userId ?? '', barberId, serviceCategoryId),
     [supabase, userId, barberId, serviceCategoryId],
@@ -37,6 +46,9 @@ export default function BarberProfileRoute() {
           api={api}
           active={active}
           photoBaseUrl={mobileEnv.supabaseUrl}
+          {...(canReview
+            ? { onReviewRequest: () => router.push('/requests/review') }
+            : {})}
           onBack={() =>
             router.canGoBack() ? router.back() : router.replace('/(client)')
           }

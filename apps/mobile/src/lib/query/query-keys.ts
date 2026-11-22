@@ -1,3 +1,5 @@
+import type { CreateBookingRequestRequest } from '@quicktrimr/validation';
+
 export type DiscoveryKeyFilters = Readonly<
   Record<string, boolean | number | string | null | readonly string[]>
 >;
@@ -71,6 +73,29 @@ export const queryKeys = {
     all: rootKeys.bookingRequests,
     detail: (requestId: string) =>
       [...rootKeys.bookingRequests, 'detail', requestId] as const,
+    review: (userId: string, input: CreateBookingRequestRequest) =>
+      [
+        ...rootKeys.bookingRequests,
+        userId,
+        'review',
+        input.bookingType,
+        input.barberId,
+        input.serviceCategoryId,
+        input.clientAddressId,
+        input.scheduledFor ?? null,
+      ] as const,
+    status: (
+      userId: string,
+      requestId: string | null,
+      activeAvailableNow: boolean,
+    ) =>
+      [
+        ...rootKeys.bookingRequests,
+        userId,
+        'status',
+        requestId,
+        activeAvailableNow,
+      ] as const,
   },
   discovery: {
     all: rootKeys.discovery,

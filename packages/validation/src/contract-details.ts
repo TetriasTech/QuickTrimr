@@ -341,6 +341,11 @@ export const CONTRACT_DETAILS = {
         'duplicate_request_intent',
         'Duplicate submission must reuse the original request, not create another.',
       ),
+      error(
+        409,
+        'review_changed',
+        'The reviewed price, address or terms changed. Reload review before resubmitting.',
+      ),
       barberUnavailable,
     ],
   ),

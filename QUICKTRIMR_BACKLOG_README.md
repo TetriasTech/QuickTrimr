@@ -3535,21 +3535,27 @@ Two things must be honest here. First, `RULE-REQUEST-04` — a request cannot be
 
 **Scope**
 
-A review screen showing barber, service, price, address, requested time for Scheduled, and — stated plainly — that the amount is held, not taken, until the barber accepts. Because time passes and config can change after selection in `P2-T05`, revalidate the draft against the current server-provided bounds before submission and surface the backend's field error without replacing it with a hard-coded limit.
+A review screen showing barber, service, price, address, requested time for Scheduled, and the current payment behaviour. In this Phase 2 slice, submitting sends a request without a card hold or charge. Explain that when card payments are enabled, QuickTrimr will hold the amount at submission and charge only after acceptance. P3-T06 switches the disclosure when it inserts the actual authorization step (`ADR-006`, `RULE-COPY-01`). Because time passes and config can change after selection in `P2-T05`, revalidate the draft against the current server-provided bounds before submission and surface the backend's field error without replacing it with a hard-coded limit.
 
 Submit, with the button disabled while in flight. `RULE-REQUEST-03` protects the server; this protects the client from seeing two requests.
 
 A pending state with a live countdown to expiry (`RULE-AVAIL-06`, `RULE-SCHED-02`). The countdown is **display only** — the server expires the request (`ADR-011`), and the screen re-checks rather than deciding.
 
-Terminal states rendered honestly: accepted, declined, expired, cancelled — each with a next action.
+Terminal states rendered honestly: accepted, declined, expired, cancelled — each with a next action. The client can reopen their latest request from discovery. The Available Now conflict opens the server-selected active request for that client.
+
+**Contract examples** — read-only authenticated client RPCs, scoped by verified JWT and stored role:
+
+- `get_booking_request_review(p_input)`: accepts the existing booking draft input, returns `{barberName, serviceName, priceCents, address, cancellation: {refundPct, lateWindowHours}, scheduledIssue, reviewToken}`. A stale Scheduled time returns its server-calculated field message as `scheduledIssue`; the draft is retained. Address details are the client's own saved address.
+- `get_client_booking_request(p_request_id, p_active_available_now)`: return `{id, bookingType, status, expiresAt, serverNow}` or null. The server looks up the caller's specified request, latest request when the ID is omitted, or the current active Available Now request when flagged. Foreign and missing IDs are indistinguishable.
+- `create-booking-request`: the review screen supplies an optional `reviewToken` on the existing contract. The server compares it against the actual request snapshot in the same transaction. A changed price, address or applicable cancellation term returns `409 review_changed` and rolls back creation. The token is a comparison only; price and terms remain server-derived.
 
 **Acceptance criteria**
 
 - [ ] The review screen shows barber, service, price, address, and time for Scheduled bookings.
 - [ ] A Scheduled draft is revalidated against the current server-provided bounds before submission; stale or newly invalid selections retain the draft and show the server's field error.
-- [ ] The screen states the amount is **held, not charged**, until acceptance (`RULE-COPY-01`, `ADR-006`).
+- [ ] The screen states that this submission sends a request without collecting payment, and explains the future **hold at submission and charge after acceptance** (`RULE-COPY-01`, `ADR-006`).
 - [ ] The screen states the request cannot be edited after submission (`RULE-REQUEST-04`).
-- [ ] The applicable cancellation terms are disclosed before submission (`RULE-CANCEL-07`), using server-provided terms consistent with the request-time snapshot; test both booking types without describing a hold as a refund.
+- [ ] The applicable cancellation terms are disclosed before submission (`RULE-CANCEL-07`), using server-provided terms consistent with the request-time snapshot; match the reviewed price and terms atomically and test both booking types without describing a hold as a refund.
 - [ ] The submit button is disabled while in flight; **a double tap produces one request.**
 - [ ] The pending state shows a countdown to expiry.
 - [ ] **The countdown does not expire the request** — it re-checks server state, and a client whose app was closed sees the correct terminal state on return.

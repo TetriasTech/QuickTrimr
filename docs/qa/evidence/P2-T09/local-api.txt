@@ -1,0 +1,4 @@
+PASS Auth/roles, other client address denial, malformed input, own review and configured terms for both types.
+PASS Changed scheduling bounds, terms, price and address. Stale submissions leave zero requests and creation audits.
+PASS Eight parallel submits, one winner; active/latest/ID reads and five server statuses; Scheduled submit matches the reviewed terms.
+PASS Local config restored. Synthetic fixture logins soft-deleted and supply archived.

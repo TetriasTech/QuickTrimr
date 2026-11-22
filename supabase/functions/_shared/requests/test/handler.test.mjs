@@ -92,6 +92,7 @@ test('request controller verifies identity/role, strips amounts, rejects malform
     'barber_unavailable',
     'duplicate_request_intent',
     'active_request_exists',
+    'review_changed',
   ]) {
     status = 409;
     raw = { message: error };

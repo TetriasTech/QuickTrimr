@@ -10,9 +10,14 @@ import {
   integerCentsSchema,
   nonEmptyStringSchema,
   postgresUuidSchema,
+  requestStatusSchema,
   timestampSchema,
 } from '../primitives.ts';
 import { requestObject } from '../request-object.ts';
+
+import { savedAddressSchema } from './client-addresses.ts';
+
+const reviewTokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
 
 export const createBookingRequestRequestSchema = requestObject({
   bookingType: bookingTypeSchema,
@@ -21,6 +26,7 @@ export const createBookingRequestRequestSchema = requestObject({
   clientAddressId: postgresUuidSchema,
   notes: z.string().optional(),
   scheduledFor: timestampSchema.optional(),
+  reviewToken: reviewTokenSchema.optional(),
 }).superRefine((value, context) => {
   if (
     value.bookingType === BOOKING_TYPE_VALUE.SCHEDULED &&
@@ -111,4 +117,30 @@ export const cancelBookingRequestResponseSchema = z.strictObject({
 });
 export type CancelBookingRequestResponse = z.infer<
   typeof cancelBookingRequestResponseSchema
+>;
+
+// Authenticated, owner-scoped read RPCs for the submission flow.
+export const bookingRequestReviewSchema = z.strictObject({
+  barberName: nonEmptyStringSchema,
+  serviceName: nonEmptyStringSchema,
+  priceCents: integerCentsSchema,
+  address: savedAddressSchema,
+  cancellation: z.strictObject({
+    refundPct: z.number().int().min(0).max(100),
+    lateWindowHours: z.number().int().positive().nullable(),
+  }),
+  scheduledIssue: nonEmptyStringSchema.nullable(),
+  reviewToken: reviewTokenSchema,
+});
+export type BookingRequestReview = z.infer<typeof bookingRequestReviewSchema>;
+
+export const clientBookingRequestSchema = z.strictObject({
+  id: postgresUuidSchema,
+  bookingType: bookingTypeSchema,
+  status: requestStatusSchema,
+  expiresAt: timestampSchema,
+  serverNow: timestampSchema,
+});
+export type ClientBookingRequestStatus = z.infer<
+  typeof clientBookingRequestSchema
 >;

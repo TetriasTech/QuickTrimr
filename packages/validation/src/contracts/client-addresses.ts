@@ -56,7 +56,7 @@ const postalFields = clientAddressFieldsSchema.pick({
 export const addressDirectoryCandidateSchema = postalFields.extend({
   directoryId: addressDirectoryIdSchema,
 });
-const savedAddressSchema = clientAddressFieldsSchema.extend({
+export const savedAddressSchema = clientAddressFieldsSchema.extend({
   id: postgresUuidSchema,
   archivedAt: timestampSchema.nullable(),
   createdAt: timestampSchema,

@@ -91,6 +91,7 @@ export function createBookingRequestHandler({
           'active_request_exists',
           'duplicate_request_intent',
           'barber_unavailable',
+          'review_changed',
         ].includes(failure.message)
       )
         return json({ error: failure.message }, 409);
