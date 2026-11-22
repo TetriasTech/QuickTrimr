@@ -56,6 +56,7 @@ import * as workers from './workers.ts';
 export * from './admin.ts';
 export * from './available-now.ts';
 export * from './barber-service.ts';
+export * from './barber-request-inbox.ts';
 export * from './booking-requests.ts';
 export * from './catalogue.ts';
 export * from './client-addresses.ts';

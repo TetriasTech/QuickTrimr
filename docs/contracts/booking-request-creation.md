@@ -31,6 +31,10 @@ functions may read it. It contains:
   private `address_location`, `client_snapshot` (`displayName`, `mobile`),
   `notes`, `barber_snapshot` (`displayName`, `publicAreaId`) and
   `service_snapshot` (`displayName`, `slug`), plus `created_at`.
+- Since P2-T10, nullable `distance_band` stores the coarse distance from the
+  request-time coverage origin to the saved destination. The write-time trigger
+  runs inside this transaction while the applicable sources are locked. Older
+  snapshots keep null. PostGIS and the existing configured bands are reused.
 
 Barber request inboxes must project only their allowed public fields; do not
 return these private snapshots wholesale. Address/contact disclosure still needs
