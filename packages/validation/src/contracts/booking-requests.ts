@@ -53,7 +53,7 @@ export const createBookingRequestResponseSchema = z.strictObject({
   status: z.literal(REQUEST_STATUS_VALUE.PENDING),
   bookingType: bookingTypeSchema,
   servicePriceCents: integerCentsSchema,
-  commissionPct: z.number().finite().nonnegative(),
+  commissionPct: z.number().int().min(0).max(100),
   grossCents: integerCentsSchema,
   commissionCents: integerCentsSchema,
   barberNetCents: integerCentsSchema,
