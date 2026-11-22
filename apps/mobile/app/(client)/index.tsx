@@ -61,6 +61,12 @@ export default function ClientRoute() {
           })
         }
         onManageAddresses={() => router.push('/addresses')}
+        onViewLatestRequest={() =>
+          router.push({
+            pathname: '/requests/[requestId]',
+            params: { requestId: 'latest' },
+          })
+        }
       />
     </>
   ) : null;

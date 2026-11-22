@@ -1011,6 +1011,7 @@ Request (decoded envelope only for Stripe):
 | 500 | `{"error":"internal_error"}` | Unexpected failure; safe error only, no internals or provider payload. |
 | 409 | `{"error":"active_request_exists"}` | Client already has an active pending Available Now request. |
 | 409 | `{"error":"duplicate_request_intent"}` | Duplicate submission must reuse the original request, not create another. |
+| 409 | `{"error":"review_changed"}` | The reviewed price, address or terms changed. Reload review before resubmitting. |
 | 409 | `{"error":"barber_unavailable"}` | Current onboarding, reliability, cooldown or availability state prevents this action. |
 
 ### create-or-sync-profile

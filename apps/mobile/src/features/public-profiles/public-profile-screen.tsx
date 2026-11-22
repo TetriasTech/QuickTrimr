@@ -35,6 +35,7 @@ export function PublicBarberProfileScreen({
   api,
   photoBaseUrl,
   onBack,
+  onReviewRequest,
   active = true,
 }: {
   userId: string;
@@ -43,6 +44,7 @@ export function PublicBarberProfileScreen({
   api: PublicProfileApi;
   photoBaseUrl: string;
   onBack: () => void;
+  onReviewRequest?: () => void;
   active?: boolean;
 }) {
   const { colors, typography } = useTheme();
@@ -231,6 +233,12 @@ export function PublicBarberProfileScreen({
                       Current price. Prices can change before you send a
                       request.
                     </Text>
+                    {onReviewRequest ? (
+                      <Button
+                        label="Review request"
+                        onPress={onReviewRequest}
+                      />
+                    ) : null}
                   </>
                 ) : (
                   <Text style={typography.body}>

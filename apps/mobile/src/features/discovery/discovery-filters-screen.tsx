@@ -54,12 +54,14 @@ function radiusIssue(radius: number, inputs: DiscoveryFilters) {
 export function DiscoveryFiltersScreen({
   userId,
   onManageAddresses,
+  onViewLatestRequest,
   onSelectBarber,
   photoBaseUrl,
 }: {
   userId: string;
   photoBaseUrl: string;
   onManageAddresses: () => void;
+  onViewLatestRequest?: () => void;
   onSelectBarber: (barberId: string, serviceCategoryId: string) => void;
 }) {
   const { colors, typography } = useTheme();
@@ -693,6 +695,13 @@ export function DiscoveryFiltersScreen({
               variant="ghost"
               onPress={onManageAddresses}
             />
+            {onViewLatestRequest ? (
+              <Button
+                label="Latest request"
+                variant="secondary"
+                onPress={onViewLatestRequest}
+              />
+            ) : null}
             <SignOutButton />
           </View>
         </>
