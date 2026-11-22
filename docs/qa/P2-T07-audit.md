@@ -25,6 +25,13 @@ registered it again. Expo's run-once plugin guard made the second entry harmless
 but removing it leaves one clear source. The static plugin and app-scoped keychain
 entitlement remain in place. Resolved config is checked before publication.
 
+Native QA exposed one further **Minor — F, fixture-process lifecycle**: the local
+`--hold` proof archived its fixtures correctly but retained its terminal input
+handle afterward. Pausing/unreferencing that input after the cleanup signal makes
+the process exit normally. A real local run wrote `cleanup` while deliberately
+keeping the parent input pipe open: API proof and cleanup passed, then exit 0
+occurred without closing the pipe. No production behavior changed.
+
 The Minor finding is fixed: unsafe projections suppress the orphaned map loader;
 local refresh failures suppress the empty claim. Interaction regressions pass.
 Re-audited the final correction and quiet-refresh change against A–F: no new code
@@ -33,6 +40,11 @@ public projection remains exact, no per-barber request or new external money cal
 exists, cursor fetches are explicit in map/area mode, and shared cards/schema/theme
 are reused. The scheduler is UI-only and cannot enforce a booking deadline.
 
-VERDICT: two Minor findings fixed; zero unresolved code findings. Required Android provider
-verification is tracked explicitly in the ticket QA report and PR, rather than
-being inferred from successful compilation.
+Final A–F review includes the fixture lifecycle correction and the actual Android
+provider screenshots. No further findings: Google tiles, denied-GPS fallback,
+public area marker, gestures and card selection all passed natively. Exact request
+cadence remains covered by deterministic interaction tests, not inferred from a
+screenshot.
+
+VERDICT: three Minor findings fixed; zero unresolved findings. Android provider
+verification is recorded in the ticket QA report and PR.

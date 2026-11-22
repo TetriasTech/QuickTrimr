@@ -153,3 +153,13 @@ Exit: 0
 pnpm check:client-env: Client environment boundary: PASS
 node scripts/jira/generate-indexes.mjs --check: 108 tickets, 218 KB IDs, 0 open TBC, OK
 Default pnpm build: failed in unchanged admin Turbopack CSS worker (port binding EPERM); webpack admin build and both mobile exports passed independently.
+
+Final native/fixture follow-up:
+$ node scripts/db/verify-discovery-map.mjs --hold (open-pipe driver documented in QA)
+Exit: 0
+PASS: real local map API proof, graceful fixture cleanup, process exited with input pipe still open.
+$ pnpm exec eslint scripts/db/verify-discovery-map.mjs --max-warnings 0
+Exit: 0
+$ node scripts/jira/generate-indexes.mjs --check
+108 tickets, 218 KB IDs, 0 open TBC, OK
+Android native provider, denied-GPS fallback, gestures/recenter and area-card flow: PASS (screenshots + android-native.json).

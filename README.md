@@ -64,6 +64,10 @@ signer with `apksigner verify --print-certs` before testing; package alone is in
 Do not broaden the key restrictions. iOS secure storage is scoped to this app's own
 keychain group, using the signing team's normal app-identifier prefix.
 
+For Android native builds, set `JAVA_HOME` to JDK 17 and `ANDROID_HOME` to the
+installed SDK. On this Mac, Android Studio's bundled JDK 25 fails the native CMake
+version checks; the JDK 17 build passes. JavaScript exports do not require Java.
+
 Maps show shared public suburb points and loaded matching counts. Panning keeps the
 selected service address and radius; it does not choose a new booking destination.
 

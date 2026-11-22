@@ -1,0 +1,45 @@
+{
+  "result": "PASS",
+  "date": "2026-11-22",
+  "environment": {
+    "device": "Disposable Pixel 7 emulator",
+    "androidApi": 35,
+    "architecture": "arm64-v8a",
+    "appId": "com.quicktrimr.dev",
+    "reactNativeMaps": "1.27.2",
+    "backend": "Local QuickTrimr only"
+  },
+  "method": "Android SDK adb UI navigation and screenshots, explicitly authorized by Andrew after computer control could not select the standalone emulator",
+  "checks": [
+    "Existing synthetic client signs in through the real native app",
+    "GPS permission declined; existing saved synthetic service address selected",
+    "Real Google tiles and Map loaded status observed",
+    "One Pearcedale public-area marker represents two loaded barbers; separate own-service-address marker",
+    "Physical pan and double-tap zoom preserve two loaded matches and the selected-address search; programmatic recenter restores both markers",
+    "Background refresh keeps the map visible without a refresh loader; exact cadence and request counts are proven by the scheduler interaction tests",
+    "Tapping the shared area marker opens only its existing barber cards in server order, showing A$45.50 and A$46.50"
+  ],
+  "diagnostics": {
+    "mapsAuthorizationFailure": false,
+    "nativeCrash": false
+  },
+  "evidence": [
+    "android-map.png",
+    "android-panned.png",
+    "android-area-cards.png",
+    "android-location-prompt.png",
+    "android-location-denied.png"
+  ],
+  "cleanup": {
+    "syntheticCategoryAndServices": "archived",
+    "syntheticSessions": "disabled",
+    "syntheticAuthLogins": "soft-deleted",
+    "publicSalDatasetAndAuditHistory": "preserved",
+    "temporaryUiDump": "removed",
+    "temporaryKeepAwakeProcess": "stopped",
+    "emulator": "shut down; development files preserved"
+  },
+  "limitations": [
+    "Native gesture cadence is not measured from screenshots; exact 1999/2000ms, coalescing and per-frame request suppression are covered by deterministic tests."
+  ]
+}

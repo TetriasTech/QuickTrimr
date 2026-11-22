@@ -177,6 +177,8 @@ try {
         resolve();
       });
     });
+    process.stdin.pause();
+    process.stdin.unref?.();
   }
 } finally {
   if (categoryId) {
