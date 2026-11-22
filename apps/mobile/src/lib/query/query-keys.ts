@@ -71,6 +71,8 @@ export const queryKeys = {
   },
   bookingRequests: {
     all: rootKeys.bookingRequests,
+    barberInbox: (userId: string) =>
+      [...rootKeys.bookingRequests, userId, 'inbox'] as const,
     detail: (requestId: string) =>
       [...rootKeys.bookingRequests, 'detail', requestId] as const,
     review: (userId: string, input: CreateBookingRequestRequest) =>

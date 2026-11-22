@@ -64,6 +64,15 @@ export const barberRequestInboxPageSchema = z.strictObject({
   nextCursor: barberInboxCursorSchema.nullable(),
 });
 
+export const barberRequestInboxWithJobSlotSchema =
+  barberRequestInboxPageSchema.extend({
+    hasActiveAvailableNowJob: z.boolean(),
+  });
+
+export type BarberRequestInboxWithJobSlot = z.infer<
+  typeof barberRequestInboxWithJobSlotSchema
+>;
+
 export type BarberRequestInboxInput = z.infer<
   typeof barberRequestInboxInputSchema
 >;

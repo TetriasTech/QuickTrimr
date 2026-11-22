@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 
+import { BOOKING_STATUS } from '../../packages/shared/src/index.ts';
 import {
   barberRequestInboxInputSchema,
   barberRequestInboxPageSchema,
+  barberRequestInboxWithJobSlotSchema,
   createBookingRequestResponseSchema,
 } from '../../packages/validation/src/index.ts';
 
@@ -36,6 +38,7 @@ const clientName = 'QA Sam R.';
 const mobile = '+61400000000';
 const initialPrice = 4503;
 const requestPath = '/rest/v1/rpc/list_barber_booking_requests';
+const jobSlotPath = '/rest/v1/rpc/get_barber_request_inbox_page';
 const post = (path, token, input) =>
   apiJson(stack, path, token, { method: 'POST', body: JSON.stringify(input) });
 const rawInbox = (token, input = {}) => post(requestPath, token, input);
@@ -119,6 +122,80 @@ try {
   const scheduledFor = new Date(Date.now() + 86_400_000).toISOString();
   const scheduledA = await submit('clientA', 'barberA', address, scheduledFor);
   const pendingB = await submit('clientB', 'barberB', addressB);
+
+  const withJobSlot = (token, input = {}) => post(jobSlotPath, token, input);
+  async function assertJobSlot(token, occupied) {
+    const result = await withJobSlot(token);
+    assert.equal(result.status, 200);
+    const {
+      hasActiveAvailableNowJob,
+      serverNow: _sampleTime,
+      ...page
+    } = barberRequestInboxWithJobSlotSchema.parse(result.body);
+    assert.equal(hasActiveAvailableNowJob, occupied);
+    const original = await inbox(token);
+    assertRawBody(
+      page,
+      {
+        requests: original.requests,
+        nextCursor: original.nextCursor,
+      },
+      'Job slot adds only a boolean to the existing projection',
+    );
+  }
+  await assertJobSlot(caller, false);
+
+  // Drive the actual RPC through all persisted booking statuses. Fixture-only
+  // writes do not represent acceptance or a production transition.
+  const job = randomUUID();
+  sql(`insert into public.bookings(
+    id, request_id, client_id, barber_id, booking_type, status, service_price_cents,
+    commission_pct_snapshot, gross_cents, commission_cents, barber_net_cents
+  ) values (${q(job)},${q(pendingA.id)},${q(users.clientA)},${q(users.barberA)},
+    'available_now','accepted_pending_payment',4503,20,4503,900,3603);`);
+  const occupying = new Set([
+    'accepted_pending_payment',
+    'paid_confirmed',
+    'on_the_way',
+    'arrived',
+    'completed_by_barber',
+    'completion_prompt_sent',
+  ]);
+  for (const status of BOOKING_STATUS) {
+    sql(`update public.bookings set status=${q(status)} where id=${q(job)};`);
+    await assertJobSlot(caller, occupying.has(status));
+  }
+  sql(`update public.bookings set status='accepted_pending_payment' where id=${q(job)};
+    update public.available_now_sessions set status='manually_disabled' where id=${q(sessionA)};`);
+  await assertJobSlot(caller, true);
+  await assertJobSlot(tokens.barberB, false);
+  sql(`update public.bookings set booking_type='scheduled' where id=${q(job)};
+    update public.available_now_sessions set status='active' where id=${q(sessionA)};`);
+  await assertJobSlot(caller, false);
+  sql(`update public.bookings set status='cancelled' where id=${q(job)};`);
+  for (const token of [
+    null,
+    tokens.admin,
+    tokens.clientA,
+    tokens.noProfile,
+    stack.SERVICE_ROLE_KEY,
+  ]) {
+    assert.ok([401, 403, 404].includes((await withJobSlot(token)).status));
+  }
+  assert.equal(
+    (await withJobSlot(caller, { p_barber_id: users.barberB })).status,
+    404,
+  );
+  const invalidCursor = await withJobSlot(caller, {
+    p_after_request_id: pendingA.id,
+  });
+  assert.equal(invalidCursor.status, 422);
+  assert.deepEqual(Object.keys(JSON.parse(invalidCursor.body.details)), [
+    'cursor',
+  ]);
+  console.log(
+    'PASS Job slot: all 15 statuses, session independence, Scheduled exclusion, owner and role denial, cursor validation, exact raw projection.',
+  );
 
   const first = await rawInbox(caller);
   assert.equal(first.status, 200);
@@ -290,6 +367,18 @@ try {
   assert.equal(normal.requests.length, 20);
   assert.equal(full.requests.length, 50);
   assert.ok(full.nextCursor);
+  assert.ok(normal.nextCursor);
+  const nextPageInput = {
+    p_after_request_id: normal.nextCursor.requestId,
+    p_after_expires_at: normal.nextCursor.expiresAt,
+  };
+  const nextWithSlot = await withJobSlot(caller, nextPageInput);
+  assert.equal(nextWithSlot.status, 200);
+  assertRawBody(
+    barberRequestInboxWithJobSlotSchema.parse(nextWithSlot.body).requests,
+    (await inbox(caller, nextPageInput)).requests,
+    'Job-slot page forwards the continuation fields',
+  );
   assertRawBody(
     normal.requests,
     full.requests.slice(0, 20),
@@ -387,6 +476,9 @@ try {
   );
 } finally {
   sql(`begin;
+    update public.bookings set status='cancelled' where request_id in (
+      select id from public.booking_requests where service_category_id=${q(category)}
+    ) and status<>'cancelled';
     update public.booking_requests set status='cancelled'
       where service_category_id=${q(category)} and status='pending';
     update public.available_now_sessions set status='manually_disabled'
