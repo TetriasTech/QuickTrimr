@@ -3583,8 +3583,8 @@ priority: High
 jiraKey: TRIMR-53
 dependsOn: [P0-T11, P2-T08]
 affects: [P2-T11, P2-T12, P2-T13]
-knowledgeBase: [ROLE-BARBER, RULE-DISCOVERY-04, ENUM-REQUEST-STATUS]
-blockedByTbc: []
+knowledgeBase: [ROLE-BARBER, RULE-BARBER-INBOX-01, ADR-008, CFG-BARBER-INBOX-PAGE-SIZE, CFG-DISCOVERY-DISTANCE-BANDS, ENUM-REQUEST-STATUS]
+blockedByTbc: [TBC-BARBER-INBOX-PREACCEPTANCE]
 labels: [quicktrimr, phase-2, backend, security]
 ```
 
@@ -3596,46 +3596,42 @@ Getting this wrong means every barber who receives a request learns an address, 
 
 **Scope**
 
-A query or function returning pending requests addressed to the authenticated barber.
+The read-only `list_barber_booking_requests` RPC returns only the authenticated barber's own unexpired pending requests. The server uses the snapshotted service name, price, client display name, suburb and distance band. Scheduled requests include their requested time. Older complete snapshots without a stored band return null for distance. Rating is null until a client rating source exists. Private access notes, contact information and precise location remain gated by `ROLE-BARBER`.
 
-Returns: request id, booking type, service category, price snapshot, distance from the barber, expiry, client display name and rating, scheduled time for Scheduled requests, and any access notes that do not identify the location.
+At request creation, derive and store the band in the same transaction from the checked coverage origin and saved destination. Order the read by expiry and request ID. Filter and index by barber and status, use the configured bounded page size, and return only the safe fields needed by the next page.
 
-**Does not return:** street address, unit number, phone number, email, or exact coordinates.
-
-Excludes expired, accepted, declined and cancelled requests, or marks them clearly.
-
-Filtered and indexed on barber id and status; ordered so the soonest expiry is most visible.
-
-RLS: a barber reads only requests addressed to them.
-
-**Contract example** — barber inbox response
+**Contract example** — `POST /rest/v1/rpc/list_barber_booking_requests`
 
 ```jsonc
-// 200 — note the absence of address and contact fields
+// request: {} lists the first page; { "p_request_id": "<uuid>" } checks an individual request.
+// Subsequent pages pass p_after_expires_at and p_after_request_id from nextCursor.
+// Optional p_limit is checked against CFG-BARBER-INBOX-PAGE-SIZE.
+// 200
 { "requests": [
     { "id": "d5e1...", "bookingType": "available_now",
       "serviceName": "Skin Fade", "priceCents": 4500,
-      "clientDisplayName": "Sam R.", "clientRating": 4.9,
-      "distanceKm": 3.2, "suburb": "Richmond",
+      "clientDisplayName": "Sam R.", "clientRating": null,
+      "distanceBand": "2-5km", "suburb": "Richmond", "scheduledFor": null,
       "expiresAt": "2026-08-05T04:16:22Z", "status": "pending" }
-  ] }
+  ], "serverNow": "2026-08-05T04:12:00Z", "nextCursor": null }
+// A foreign or missing request returns the same empty requests array and no cursor.
 ```
 
 **Acceptance criteria**
 
-- [ ] A barber sees pending requests addressed to them, with service, price, distance, suburb, client display name and expiry.
-- [ ] **The response contains no street address, unit, phone number, email or exact coordinate** — asserted field by field on the raw body.
-- [ ] **Barber A cannot read a request addressed to barber B** — verified by calling with B's request id as A.
-- [ ] Expired, accepted, declined and cancelled requests are excluded or clearly marked.
+- [ ] A barber sees own unexpired pending requests with service, snapshotted price, suburb, display name, saved distance band and expiry; Scheduled includes requested time.
+- [ ] **The raw response excludes street address, unit, postcode, phone, email, notes, exact coordinates and precise distance**, with null client rating.
+- [ ] **Barber A cannot read a request addressed to barber B**, including by direct request ID. Unauthenticated and non-barber callers are denied.
+- [ ] Expired, accepted, declined and cancelled requests are excluded, including elapsed pending requests.
 - [ ] The query is filtered and indexed; `EXPLAIN` shows an index scan on barber id and status.
-- [ ] Ordering surfaces the soonest expiry first.
-- [ ] A barber with no requests receives an empty array, not an error.
+- [ ] Ordering by earliest expiry and request ID is stable across bounded pages for unchanged data.
+- [ ] A barber with no requests receives an empty array and null cursor.
 
-**Tests** — raw response asserted for absence of every identifying field; cross-barber denial; `EXPLAIN` index assertion; ordering by expiry.
+**Tests** — assert raw projection and role/ownership denial; stable band after location and price changes; both types and historical null distance; active window boundaries; expiry ordering, continuation and limits; index scan plan.
 
 **Out of scope** — the inbox UI (`P2-T11`); accept and decline (`P2-T12`, `P2-T13`); post-acceptance detail (`P4-T02`).
 
-**Sync notes** — `P4-T02` shows the fuller detail after acceptance. The difference between the two responses **is** the privacy rule, so any field added here must be checked against `ROLE-BARBER`.
+**Sync notes** — `P2-T11` consumes this paged projection, with no numeric distance or synthetic rating. `P2-T12` and `P2-T13` receive the existing request ID and own their state and eligibility checks. `P4-T02` owns accepted-active details. The P2-T08 create response is unchanged; the private snapshot gains the approved band.
 
 ---
 
@@ -3651,7 +3647,7 @@ priority: High
 jiraKey: TRIMR-54
 dependsOn: [P0-T14, P2-T02, P2-T10]
 affects: [P2-T14]
-knowledgeBase: [RULE-AVAIL-05, RULE-AVAIL-06, RULE-SCHED-02, ENUM-REQUEST-STATUS]
+knowledgeBase: [RULE-AVAIL-05, RULE-AVAIL-06, RULE-SCHED-02, ENUM-REQUEST-STATUS, RULE-BARBER-INBOX-01]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
@@ -3664,7 +3660,7 @@ A barber decides in seconds, often mid-haircut. The screen has to make the decis
 
 **Scope**
 
-A list of pending requests with a card per request: service, price, distance, suburb, client name and rating, scheduled time where relevant, and a prominent countdown.
+A list of pending requests with a card per request: service, price, distance band when recorded, suburb, client display name, rating when available, scheduled time where relevant, and a prominent countdown.
 
 Available Now and Scheduled visually distinct — they have different urgencies and different expiry scales.
 
@@ -3677,7 +3673,7 @@ Empty state distinguishing "you're not Available Now" — with a link to the tog
 **Acceptance criteria**
 
 - [ ] Pending Available Now and Scheduled requests are listed and visually distinguished.
-- [ ] Each card shows service, price, distance, suburb, client name and rating.
+- [ ] Each card shows service, price, suburb, client display name, and the distance band and rating when available.
 - [ ] A countdown to expiry is prominent on each card.
 - [ ] **When a barber holds an active Available Now job, other Available Now requests show as unacceptable with the reason** (`RULE-AVAIL-05`) rather than a failing accept button.
 - [ ] An expired request cannot be actioned and updates in place.
@@ -3690,7 +3686,7 @@ Empty state distinguishing "you're not Available Now" — with a link to the tog
 
 **Out of scope** — accept and decline actions (`P2-T14`); the query (`P2-T10`).
 
-**Sync notes** — `P2-T14` adds the action buttons to these cards.
+**Sync notes** — Page through the approved P2-T10 projection using its continuation cursor. Refresh starts with the first page. Use honest absence states for a null band or rating. `P2-T14` adds the action buttons to these cards.
 
 ---
 
