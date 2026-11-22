@@ -20,6 +20,8 @@ create index booking_requests_active_client_idx on public.booking_requests(clien
  where status='pending';
 create index booking_requests_active_intent_idx on public.booking_requests(client_id,intent_key,expires_at)
  where status='pending';
+create index booking_requests_service_category_idx on public.booking_requests(service_category_id);
+create index booking_requests_barber_service_idx on public.booking_requests(barber_service_id);
 
 create table private.booking_request_snapshots(
  request_id uuid primary key references public.booking_requests(id) on delete restrict,
@@ -42,6 +44,7 @@ create table private.booking_request_snapshots(
  check(commission_cents=floor(service_price_cents::numeric*commission_pct_snapshot/100))
 );
 alter table private.booking_request_snapshots enable row level security;
+create index booking_request_snapshots_address_idx on private.booking_request_snapshots(client_address_id);
 revoke all on private.booking_request_snapshots from public,anon,authenticated,service_role;
 create trigger reject_append_only_mutation before update or delete on private.booking_request_snapshots
  for each row execute function private.reject_append_only_mutation();

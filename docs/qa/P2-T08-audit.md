@@ -22,6 +22,12 @@ gate immediately after loading the barber.
 and INCOMPLETE during cleanup. Only successful normal completion writes PASS.
 No account, address, note, credential or provider payload is included in that file.
 
+**Minor — B, new foreign-key indexes (fixed).** The new category, barber-service
+and private address references initially lacked leading-column indexes. Added
+all three to preserve the core schema's FK indexing convention and avoid scans
+for future parent-reference checks. Local catalog verification confirms all new
+foreign keys have a non-partial leading index.
+
 Final review checked:
 
 - A: verified JWT/stored role, server-only RPC, per-verb API denial, private
@@ -39,5 +45,5 @@ Final review checked:
   and current-state denial, preserved historical snapshots and fixture cleanup.
   No submission UI, booking creation, payment wiring or expiry worker added.
 
-VERDICT: two findings — zero Critical, one Major fixed, one Minor fixed.
+VERDICT: three findings — zero Critical, one Major fixed, two Minor fixed.
 Final A–F review: no unresolved findings. Human review and merge remain required.
