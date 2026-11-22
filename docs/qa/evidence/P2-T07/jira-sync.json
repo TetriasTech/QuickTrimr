@@ -1,0 +1,14 @@
+{
+  "result": "PASS",
+  "project": "TRIMR — QuickTrimr",
+  "updated": ["TRIMR-48", "TRIMR-50"],
+  "unchangedOtherPhase2Issues": 13,
+  "dependency": {
+    "ticket": "TRIMR-50",
+    "relation": "is blocked by",
+    "prerequisite": "TRIMR-49",
+    "prerequisiteStatus": "Done"
+  },
+  "ticketStatus": "In Progress",
+  "owner": "Andrew"
+}

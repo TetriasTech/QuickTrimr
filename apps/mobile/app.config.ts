@@ -17,7 +17,6 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     icon: '../../packages/ui/assets/brand/app-icon.png',
     plugins: [
       ...(config.plugins ?? []),
-      'expo-secure-store',
       [
         'react-native-maps',
         {

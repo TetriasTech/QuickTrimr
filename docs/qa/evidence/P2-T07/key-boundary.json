@@ -12,5 +12,11 @@
   "secretValuesSaved": false,
   "nativeKeysMatchPlatformClientVariables": true,
   "developmentIdentity": "com.quicktrimr.dev",
-  "androidApkCertificateSha1": "9A:61:54:2C:0B:02:25:D5:27:86:23:38:20:CA:FC:D0:62:51:04:96"
+  "androidApkCertificateSha1": "9A:61:54:2C:0B:02:25:D5:27:86:23:38:20:CA:FC:D0:62:51:04:96",
+  "resolvedConfig": {
+    "secureStorePluginCount": 1,
+    "googleMapsPluginCount": 1,
+    "ownKeychainGroup": true,
+    "developmentIdentityUnchanged": true
+  }
 }

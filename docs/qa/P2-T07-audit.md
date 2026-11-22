@@ -19,6 +19,12 @@ evidence remains a separate completion gate until recorded in the ticket QA repo
 
 ## Final disposition
 
+A follow-up review found one additional **Minor — D, duplicate plugin entry**:
+SecureStore was already registered in `app.json`; the dynamic config redundantly
+registered it again. Expo's run-once plugin guard made the second entry harmless,
+but removing it leaves one clear source. The static plugin and app-scoped keychain
+entitlement remain in place. Resolved config is checked before publication.
+
 The Minor finding is fixed: unsafe projections suppress the orphaned map loader;
 local refresh failures suppress the empty claim. Interaction regressions pass.
 Re-audited the final correction and quiet-refresh change against A–F: no new code
@@ -27,6 +33,6 @@ public projection remains exact, no per-barber request or new external money cal
 exists, cursor fetches are explicit in map/area mode, and shared cards/schema/theme
 are reused. The scheduler is UI-only and cannot enforce a booking deadline.
 
-VERDICT: one Minor fixed; zero unresolved code findings. Required Android provider
+VERDICT: two Minor findings fixed; zero unresolved code findings. Required Android provider
 verification is tracked explicitly in the ticket QA report and PR, rather than
 being inferred from successful compilation.
