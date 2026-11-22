@@ -129,3 +129,6 @@ verify_jwt = true
 
 [functions.get-discovery-filters]
 verify_jwt = true
+
+[functions.create-booking-request]
+verify_jwt = true

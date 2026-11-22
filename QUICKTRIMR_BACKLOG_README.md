@@ -3413,7 +3413,7 @@ priority: Highest
 jiraKey: TRIMR-51
 dependsOn: [P0-D01, P0-D02, P0-D03, P0-D04, P0-D08, P0-T07, P0-T10, P1-T04, P1-T05, P1-T11, P2-T01, P2-T03]
 affects: [P2-T09, P2-T10, P2-T12, P2-T13, P2-T15, P3-T01, P3-T06, P4-T01]
-knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS, RULE-SERVICE-06]
+knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-REQUEST-01, RULE-REQUEST-02, RULE-REQUEST-03, RULE-REQUEST-04, RULE-AVAIL-04, RULE-SCHED-01, RULE-SCHED-03, RULE-SCHED-04, RULE-PAY-11, RULE-CANCEL-07, RULE-SERVICE-05, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-TYPE, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-SCHED-MIN-LEAD-MIN, CFG-SCHED-MAX-HORIZON-DAYS, CFG-COMMISSION-PCT, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE, CFG-LATE-CANCEL-WINDOW-HOURS, RULE-SERVICE-06, RULE-ADDRESS-02, RULE-DISCOVERY-02, RULE-DISCOVERY-03, RULE-ONBOARD-04, ADR-008]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend, database]
 ```
@@ -3431,6 +3431,8 @@ The centre of the product. Everything downstream reads what this writes.
 `create-booking-request` Edge Function.
 
 Validate: authenticated client with a complete profile, an owned and unarchived address, an eligible barber (`RULE-ONBOARD-04`), an active barber service for the category, and a price within `RULE-SERVICE-05` bounds.
+
+Re-check coverage against the owned saved address under `RULE-ADDRESS-02`: Available Now uses the current active, unelapsed source session location/radius; Scheduled uses the configured service-area centre/radius (`RULE-DISCOVERY-02`, `RULE-DISCOVERY-03`). Use PostGIS on the server, never a body point or stale search result. Coverage failure returns `409 barber_unavailable`.
 
 Use the shared read-side eligibility helper from `P2-T01` to enforce `RULE-RELY-06` on direct requests: suspension blocks both types; a current cooldown blocks Available Now only; restricted outside a cooldown remains bookable. Re-check server-owned state rather than trusting a stale search result. Reuse `409 barber_unavailable` without disclosing private reliability history to the client.
 
@@ -3494,7 +3496,7 @@ Audit log (`ADR-013`).
 - [ ] Scheduled validation applies only the global bounds at launch; it does not invent a barber calendar, working hours, service duration or overlap check.
 - [ ] A barber failing `RULE-ONBOARD-04`, or with no active price for the category, returns `409 barber_unavailable`.
 - [ ] Direct requests enforce `RULE-RELY-06` even after an earlier successful search; test both types, every level, cooldown boundaries, and forged client standing/deadline fields. Denial creates no request or payment side effect.
-- [ ] An address belonging to another client, or archived, is rejected.
+- [ ] An address belonging to another client, or archived, is rejected. Both types re-check their own current coverage source against that saved address; out-of-coverage and unavailable sessions return `409 barber_unavailable`.
 - [ ] Expiry is set from config; **no literal 5 or 2 appears in the code.**
 - [ ] **A double-submit creates exactly one request** — tested with real parallel calls.
 - [ ] An audit log is written.
@@ -3504,7 +3506,7 @@ Audit log (`ADR-013`).
 
 **Out of scope** — payment authorisation (`P3-T01`, wired by `P3-T06`); the submission UI (`P2-T09`); notifications (`P6-T02`); acceptance (`P2-T12`).
 
-**Sync notes** — eight tickets read what this writes. The snapshot fields in particular are read by every payment, earning, refund and admin surface — changing their shape reaches all of Phase 3.
+**Sync notes** — eight tickets read what this writes. The response contract remains unchanged. `public.booking_requests` stores the category/service references, requested Scheduled time, server expiry and source session. Immutable `private.booking_request_snapshots`, keyed by `request_id`, stores typed integer-cent money and cancellation policy plus private address/location, client contact, notes, barber public details and service-name snapshots. These are never granted to the existing pre-acceptance barber row policy. Future owning handlers must access the private snapshot through authorized server functions and preserve the accepted-active disclosure rule; use the request reference when copying/reading booking history, never re-read current pricing/config or grant the private table to mobile. No booking or payment row exists before acceptance in this slice, so creation appends a safe `booking_request.created` audit, not a fictitious booking-history row. Server-derived intent hashes normalize Scheduled instants; the client profile lock serializes pending checks/inserts across target barbers. Matching active submissions return the existing documented 409 conflict; elapsed deadlines do not block new requests, while `P2-T15` retains terminal transitions and outcome receipts. `docs/contracts/booking-request-creation.md` records the field/lock contract for all eight consumers. Coverage wording/citations were synchronized to existing upstream rules; no new policy or decision was introduced. Generated sections remain managed on main.
 
 ---
 

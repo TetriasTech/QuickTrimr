@@ -1,0 +1,21 @@
+{
+  "result": "PASS",
+  "checks": [
+    {
+      "indexed": true,
+      "constraint": "booking_requests_service_category_id_fkey"
+    },
+    {
+      "indexed": true,
+      "constraint": "booking_requests_barber_service_id_fkey"
+    },
+    {
+      "indexed": true,
+      "constraint": "booking_request_snapshots_request_id_fkey"
+    },
+    {
+      "indexed": true,
+      "constraint": "booking_request_snapshots_client_address_id_fkey"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "result": "PASS",
+  "environment": "local QuickTrimr only",
+  "checks": [
+    "Real JWT auth, every unpermitted role, field validation and direct RPC denial",
+    "Available Now snapshots: integer cents, uneven-cent rounding, ignored forged amounts and current source session",
+    "Private snapshot API denial for all roles/verbs; raw barber response, cross-user RLS, direct-write denial and append-only audit",
+    "Scheduled snapshots, canonical-time duplicate intent and distinct nearby requested times without an invented overlap/calendar rule",
+    "Historical price/address/cancellation snapshots survive edits; new requests use changed server config and price",
+    "Foreign/archived/missing addresses, incomplete client and out-of-bounds scheduled times rejected",
+    "Successful discovery followed by suspension cannot create a request in either type; denial has no request side effect",
+    "Direct request eligibility covers both types, all levels and exact cooldown boundaries; forged standing/deadline/session rejected",
+    "Real parallel double-submit: five runs × eight calls per type; exactly one request/snapshot/audit winner",
+    "Five parallel cross-barber batches preserve the client-wide one-active-Available-Now invariant",
+    "Server source-session selection follows replacement; earlier request provenance remains unchanged",
+    "Five real parallel Connect-refresh/request races: no deadlocks or partial writes; committed loss of eligibility blocks new requests",
+    "SQL/domain parity: inclusive scheduling boundaries, integer rounding, configured per-type expiry; zero payment side effects",
+    "Archived category unavailable; no unarchive path used by fixture cleanup"
+  ],
+  "parallel": {
+    "runsPerType": 5,
+    "callsPerRun": 8
+  },
+  "cleanup": "Synthetic fixtures archived; logins soft-deleted; config restored; immutable history preserved"
+}
