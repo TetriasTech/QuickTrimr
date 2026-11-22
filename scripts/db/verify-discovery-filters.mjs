@@ -1,4 +1,4 @@
-// P2-T05: local-only real JWT/config/address isolation proof; no provider calls.
+// P2-T05/P2-T07: local-only JWT/config/address isolation; no provider calls.
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -26,6 +26,7 @@ const configKeys = [
   'scheduled_min_lead_minutes',
   'scheduled_max_horizon_days',
   'discovery_radius_km',
+  'discovery_map_refresh_ms',
 ];
 const old = JSON.parse(
   queryLocal(
@@ -63,11 +64,13 @@ try {
   getDiscoveryFiltersResponseSchema.parse(base.body);
   assert.deepEqual(Object.keys(base.body).sort(), [
     'address',
+    'map',
     'radiusKm',
     'scheduling',
     'serverNow',
   ]);
   assert.equal(base.body.address, null);
+  assert.deepEqual(base.body.map, { refreshIntervalMs: 2000 });
   assert.ok(
     Date.parse(base.body.serverNow) >= start &&
       Date.parse(base.body.serverNow) <= end,
@@ -137,7 +140,20 @@ try {
   queryLocal(
     `update private.platform_config set value='480' where key='scheduled_min_lead_minutes';update private.platform_config set value='7' where key='scheduled_max_horizon_days';update private.platform_config set value='{"min":3,"max":12}' where key='discovery_radius_km';`,
   );
+  queryLocal(
+    "update private.platform_config set value='3500' where key='discovery_map_refresh_ms';",
+  );
   const changed = await read(tokens.clientA);
+  assert.deepEqual(changed.body.map, { refreshIntervalMs: 3500 });
+  for (const invalid of ['null', '0', '-1']) {
+    queryLocal(
+      `update private.platform_config set value='${invalid}' where key='discovery_map_refresh_ms';`,
+    );
+    assert.equal((await read(tokens.clientA)).status, 500);
+  }
+  queryLocal(
+    "update private.platform_config set value='3500' where key='discovery_map_refresh_ms';",
+  );
   assert.deepEqual(changed.body.scheduling, {
     minimumLeadMinutes: 480,
     maximumHorizonDays: 7,
@@ -171,15 +187,16 @@ const evidence = {
   checks: [
     'Real Auth/invalid JWT and all wrong stored roles rejected before data',
     'Owner-only selected address point; identical foreign/missing/archived/unresolved-legacy rejection; forged identity ignored',
-    'Strict public scheduling/radius projection, live server timestamp and no unrelated config',
+    'Strict public scheduling/radius/map projection, live server timestamp and no unrelated config',
+    'Map cadence reads 2000 from platform config, changes to 3500 immediately, and null/zero/negative values fail closed',
     'Direct RPC denied to mobile roles; service RPC rechecks stored client role',
     'Live config changes immediately apply; invalid/missing config fails closed with generic error',
     'Owned synthetic addresses archived, Auth fixtures soft-deleted; original config restored; no database reset',
   ],
 };
-mkdirSync('docs/qa/evidence/P2-T05', { recursive: true });
+mkdirSync('docs/qa/evidence/P2-T07', { recursive: true });
 writeFileSync(
-  'docs/qa/evidence/P2-T05/api.json',
+  'docs/qa/evidence/P2-T07/api.json',
   JSON.stringify(evidence, null, 2) + '\n',
 );
 console.log(JSON.stringify(evidence, null, 2));

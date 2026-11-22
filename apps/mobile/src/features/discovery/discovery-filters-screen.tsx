@@ -37,6 +37,7 @@ import { queryKeys } from '@/lib/query/query-keys';
 import { useBookingDraftStore } from '@/stores/booking-draft-store';
 
 import { discoveryApi } from './discovery-api';
+import { DiscoveryMapScreen } from './discovery-map-screen';
 import { DiscoveryResultsList } from './discovery-results-list';
 
 import type { BookingDraftValues } from '@/stores/booking-draft-store';
@@ -85,6 +86,8 @@ export function DiscoveryFiltersScreen({
     null,
   );
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const [areaId, setAreaId] = useState<string | null>(null);
   const [picker, setPicker] = useState<'date' | 'time' | null>(null);
   const form = useForm<{ radius: string }>({
     resolver: zodResolver(discoveryRadiusFormSchema),
@@ -146,6 +149,7 @@ export function DiscoveryFiltersScreen({
     !scheduleIssue
   );
   function change(values: Partial<BookingDraftValues>) {
+    setAreaId(null);
     cache
       .invalidateQueries({
         queryKey: queryKeys.discovery.all,
@@ -297,6 +301,49 @@ export function DiscoveryFiltersScreen({
     search.error instanceof EdgeFunctionError
       ? search.error.response.fields
       : undefined;
+  const serviceName =
+    categories.find((c) => c.id === draft.selectedServiceCategoryId)
+      ?.displayName ?? '';
+  const searchError =
+    search.fetchStatus === 'paused'
+      ? 'You’re offline. Reconnect and refresh these results.'
+      : search.error
+        ? fieldError
+          ? Object.values(fieldError).join(' ')
+          : 'Could not update nearby search. Your filters are kept; refresh to restart results.'
+        : null;
+  const loadMore = () => {
+    if (!restarting.current && search.hasNextPage && !search.isFetching)
+      search.fetchNextPage({ cancelRefetch: false }).catch(() => undefined);
+  };
+  if (view === 'map' && !filtersOpen && complete && data.address)
+    return (
+      <DiscoveryMapScreen
+        key={JSON.stringify(filterKey)}
+        point={data.address.point}
+        results={results}
+        refreshIntervalMs={data.map.refreshIntervalMs}
+        serviceName={serviceName}
+        loading={search.isPending && search.fetchStatus !== 'paused'}
+        refreshing={
+          isRestarting || (search.isRefetching && !search.isFetchingNextPage)
+        }
+        error={searchError}
+        hasNextPage={!!search.hasNextPage}
+        fetchingNextPage={search.isFetchingNextPage}
+        onRefresh={restart}
+        onMore={loadMore}
+        onSelectArea={(id) => {
+          setAreaId(id);
+          setView('list');
+        }}
+        onList={() => {
+          setAreaId(null);
+          setView('list');
+        }}
+        onFilters={() => setFiltersOpen(true)}
+      />
+    );
   const header =
     filtersOpen || !complete ? (
       <View style={{ gap: spacing.lg }}>
@@ -585,6 +632,30 @@ export function DiscoveryFiltersScreen({
             ? 'Available Now'
             : `Requested ${new Date(draft.scheduledFor!).toLocaleString()}`}
         </Text>
+        {areaId ? (
+          <Text style={typography.subhead}>
+            Showing loaded matches in{' '}
+            {results.find((r) => r.approximateArea.id === areaId)
+              ?.approximateArea.label ?? 'the selected area'}
+            .
+          </Text>
+        ) : null}
+        <Button
+          label={areaId ? 'Back to map' : 'View map'}
+          variant="secondary"
+          onPress={() => {
+            setAreaId(null);
+            setView('map');
+          }}
+        />
+        {areaId ? (
+          <Button
+            label="Show all loaded results"
+            variant="ghost"
+            size="small"
+            onPress={() => setAreaId(null)}
+          />
+        ) : null}
         <Button
           label="Change filters"
           size="small"
@@ -626,7 +697,17 @@ export function DiscoveryFiltersScreen({
           </View>
         </>
       }
-      results={results}
+      results={
+        areaId
+          ? results.filter((r) => r.approximateArea.id === areaId)
+          : results
+      }
+      autoLoadMore={areaId === null}
+      emptyMessage={
+        areaId
+          ? 'No loaded matches remain in this area. Return to the map, refresh or load more results.'
+          : undefined
+      }
       serviceName={
         categories.find((c) => c.id === draft.selectedServiceCategoryId)
           ?.displayName ?? ''
@@ -641,20 +722,9 @@ export function DiscoveryFiltersScreen({
       fetchingNextPage={search.isFetchingNextPage}
       continuationError={search.isFetchNextPageError}
       hasNextPage={complete && !!search.hasNextPage}
-      error={
-        search.fetchStatus === 'paused'
-          ? 'You’re offline. Reconnect and refresh these results.'
-          : search.error
-            ? fieldError
-              ? Object.values(fieldError).join(' ')
-              : 'Could not update nearby search. Your filters are kept; refresh to restart results.'
-            : null
-      }
+      error={searchError}
       onRefresh={refresh}
-      onMore={() => {
-        if (!restarting.current && search.hasNextPage && !search.isFetching)
-          search.fetchNextPage({ cancelRefetch: false }).catch(() => undefined);
-      }}
+      onMore={loadMore}
       onSelect={selectBarber}
       onWidenRadius={() => {
         form.setValue('radius', '');

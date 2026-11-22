@@ -1344,9 +1344,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P2-T05. Caller: **user**. Roles: client.
 
-Rules: `ADR-003`, `RULE-SCHED-04`, `RULE-DISCOVERY-06`.
+Rules: `ADR-003`, `RULE-SCHED-04`, `RULE-DISCOVERY-06`, `RULE-DISCOVERY-07`.
 
-Verified client only; public scheduling/discovery bounds and server time. Optional own active address resolves to label/point; unknown, foreign and archived IDs get the same field-level rejection. No unrelated configuration or address/contact data.
+Verified client only; public scheduling/discovery bounds, map refresh cadence and server time. Optional own active address resolves to label/point; unknown, foreign and archived IDs get the same field-level rejection. No unrelated configuration or address/contact data.
 
 Shared request schema: `getDiscoveryFiltersRequestSchema`.
 Shared response schema: `getDiscoveryFiltersResponseSchema`.
@@ -1362,6 +1362,9 @@ Request (decoded envelope only for Stripe):
 
 ```json
 {
+  "map": {
+    "refreshIntervalMs": 2000
+  },
   "serverNow": "2026-11-02T00:00:00Z",
   "scheduling": {
     "minimumLeadMinutes": 240,

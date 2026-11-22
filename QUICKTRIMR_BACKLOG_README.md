@@ -3245,6 +3245,7 @@ Invalid combinations are prevented rather than submitted: no service selected, n
 // 200; only scheduling/discovery policy and the owner's selected address point
 { "serverNow": "2026-11-21T00:00:00Z",
   "scheduling": { "minimumLeadMinutes": 240, "maximumHorizonDays": 30 },
+  "map": { "refreshIntervalMs": 2000 },
   "radiusKm": { "min": 1, "max": 50 },
   "address": { "id": "66666666-6666-4666-8666-666666666666", "label": "Home",
     "point": { "lat": -37.82, "lng": 145.00 } } }
@@ -3334,10 +3335,10 @@ owner: Andrew
 phase: 2
 priority: Medium
 jiraKey: TRIMR-50
-dependsOn: [P0-D06, P0-T20, P2-T04, P2-T05]
+dependsOn: [P0-D06, P0-T20, P2-T04, P2-T05, P2-T06]
 affects: []
-knowledgeBase: [ADR-004, ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-DISCOVERY-06]
-blockedByTbc: []
+knowledgeBase: [ADR-004, ADR-008, RULE-OPS-GOOGLE-DEV-DEFERRAL, RULE-DISCOVERY-04, RULE-DISCOVERY-05, RULE-DISCOVERY-06, RULE-DISCOVERY-07, CFG-DISCOVERY-MAP-REFRESH-MS]
+blockedByTbc: [TBC-DISCOVERY-MAP-POLICY]
 labels: [quicktrimr, phase-2, mobile, maps, security]
 ```
 
@@ -3353,10 +3354,26 @@ The map communicates supply by approximate area instead.
 
 Google Maps renders the client's service location and one shared cluster for each approximate area
 returned by `P2-T04`. The cluster uses the public SAL representative point and shows the number of
-matching barbers. It is not calculated from barber positions, and no individual barber marker or
+loaded matching barbers, explicitly labelled **loaded matches** rather than a total. It is not calculated from barber positions, and no individual barber marker or
 jitter is used.
 
 Selecting an area cluster opens the matching `P2-T06` barber cards for that area.
+
+**Readiness clarification (2026-11-22)** — Andrew approved Option A in
+`RULE-DISCOVERY-07`. Group the loaded, deduplicated pages by server-returned SAL ID;
+load more only on user request using the existing opaque cursor. Selecting an area
+shows only its loaded cards, in server order. Camera movement keeps the selected
+service-address point and radius. Refresh starts are separated by the server-backed
+`CFG-DISCOVERY-MAP-REFRESH-MS` (2,000 ms), after completed user gestures, with one
+coalesced trailing refresh. Programmatic camera fitting does not trigger a search.
+`P2-T06` is an explicit, closed dependency because this ticket reuses its cards.
+The map requires no fresh GPS permission; the selected saved address is its centre
+and fallback when permission is denied. The existing `get-discovery-filters`
+response adds public `map: { refreshIntervalMs: 2000 }`; this remains Query data.
+The search response and its opaque cursor remain unchanged. Example map projection
+from two loaded records in one SAL: `{ areaId: "sal:2021:example", label: "Richmond",
+mapPoint: { lat: -37.82, lng: 145.00 }, loadedCount: 2 }`. Its point comes exclusively
+from those records' identical public SAL points, never barber coordinates.
 
 Refetch throttled on pan and zoom. An unthrottled map fires a search on every frame of a drag, which is a cost problem and a rate-limit problem.
 
@@ -3366,16 +3383,17 @@ Uses the matching platform-restricted **client** Google key verified in `P0-T20`
 
 **Acceptance criteria**
 
-- [ ] The map renders the client's service location and one cluster per approximate area containing matching barbers.
+- [ ] The map renders the client's service location and one cluster per approximate area containing loaded matching barbers; counts say loaded matches and user-requested pagination updates them without duplicate counting.
 - [ ] **No individual barber marker is rendered.** Every cluster uses the shared public SAL representative point from `P2-T04`, never a point derived from barber positions.
 - [ ] No jitter is generated or accepted anywhere in the map data path.
 - [ ] Selecting a cluster opens the matching barber cards for that area.
-- [ ] Pan and zoom refetches are throttled; a drag does not fire a search per frame.
+- [ ] Pan and zoom refresh only after user gestures complete, with the configured minimum start interval and one coalesced trailing refresh; a drag/programmatic fit does not fire a search per frame or change the service-address search origin.
+- [ ] Background map refresh is quiet: existing map/matches remain visible without refresh spinners; initial loading, pagination progress and errors remain explicit.
 - [ ] A denied location permission centres on the selected address rather than failing.
 - [ ] Only the bundle-restricted client key is used; no server key appears in the bundle.
 - [ ] Loading, error and empty states exist, including a map with no results.
 
-**Tests** — two barbers in one SAL produce one cluster at the shared public point; raw map data contains no barber coordinate or jitter; selecting a cluster shows only its matching cards; throttling asserted by counting requests during a simulated drag; permission-denied fallback.
+**Tests** — two barbers in one SAL produce one cluster at the shared public point; raw map data contains no barber coordinate or jitter; loaded-page counts deduplicate IDs and load no unseen pages automatically; selecting a cluster shows only its matching cards; request counts during continuous/completed gestures and exactly before/at the configured throttle boundary; coalesced trailing refresh, cleanup/cancellation and programmatic-fit suppression; permission-denied saved-address fallback; real Google Maps in the correctly restricted native builds.
 
 **Out of scope** — live tracking, which `ADR-004` forbids; on-the-way ETA (`P4-T06`); submission (`P2-T09`).
 

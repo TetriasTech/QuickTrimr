@@ -1,4 +1,6 @@
 export const sizes = {
+  mapInitialZoom: 12,
+  mapMinHeight: 240,
   iconMedium: 24,
   controlSmall: 44,
   controlMedium: 52,

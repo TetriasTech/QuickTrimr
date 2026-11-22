@@ -6,6 +6,7 @@ const id = '11111111-1111-4111-8111-111111111111';
 const state = {
   serverNow: '2026-11-21T00:00:00Z',
   scheduling: { minimumLeadMinutes: 240, maximumHorizonDays: 30 },
+  map: { refreshIntervalMs: 2000 },
   radiusKm: { min: 1, max: 50 },
   address: null,
 };

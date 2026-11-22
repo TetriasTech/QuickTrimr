@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "bundlesScanned": [
+    "dist/ios/_expo/static/js/ios/entry-d4abf1ee997f1ba28ffe0b41da1acdc4.hbc",
+    "dist/android/_expo/static/js/android/entry-9e4a817d4d9264cd194563e0343841f6.hbc"
+  ],
+  "availableServerSecretsChecked": [
+    "STRIPE_SECRET_KEY",
+    "GOOGLE_MAPS_SERVER_API_KEY",
+    "DISCOVERY_CURSOR_KEY"
+  ],
+  "secretValuesSaved": false,
+  "nativeKeysMatchPlatformClientVariables": true,
+  "developmentIdentity": "com.quicktrimr.dev",
+  "androidApkCertificateSha1": "9A:61:54:2C:0B:02:25:D5:27:86:23:38:20:CA:FC:D0:62:51:04:96",
+  "resolvedConfig": {
+    "secureStorePluginCount": 1,
+    "googleMapsPluginCount": 1,
+    "ownKeychainGroup": true,
+    "developmentIdentityUnchanged": true
+  }
+}
