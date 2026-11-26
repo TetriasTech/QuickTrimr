@@ -379,6 +379,19 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
 
+  supabase/functions/accept-booking-request:
+    dependencies:
+      '@quicktrimr/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@quicktrimr/validation':
+        specifier: workspace:*
+        version: link:../../../packages/validation
+    devDependencies:
+      '@types/deno':
+        specifier: 2.7.0
+        version: 2.7.0
+
   supabase/functions/archive-barber-service:
     dependencies:
       '@quicktrimr/shared':

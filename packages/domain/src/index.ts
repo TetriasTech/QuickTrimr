@@ -32,3 +32,4 @@ export {
 } from './scheduling.ts';
 export { discoveryMapAreas, type DiscoveryMapArea } from './discovery-map.ts';
 export { requestSnapshot, type RequestPolicy } from './request-snapshot.ts';
+export { requestDeadlineReached } from './request-deadline.ts';

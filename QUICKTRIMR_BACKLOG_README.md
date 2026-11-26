@@ -3701,9 +3701,9 @@ phase: 2
 priority: Highest
 jiraKey: TRIMR-55
 dependsOn: [P0-D04, P0-T07, P2-T01, P2-T03, P2-T08, P2-T10, P2-T11]
-affects: [P2-T14, P3-T02, P3-T06, P4-T01, P4-T02]
-knowledgeBase: [ADR-010, ADR-013, RULE-REQUEST-05, RULE-AVAIL-05, RULE-AVAIL-07, RULE-AVAIL-09, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
-blockedByTbc: [TBC-AVAIL-ACTIVE-JOB-STATUS]
+affects: [P2-T14, P3-T02, P3-T06, P4-T01, P4-T02, P6-T02]
+knowledgeBase: [ADR-009, ADR-010, ADR-013, RULE-REQUEST-05, RULE-AVAIL-05, RULE-AVAIL-07, RULE-AVAIL-09, RULE-RELY-06, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
+blockedByTbc: [TBC-AVAIL-ACTIVE-JOB-STATUS, TBC-AVAIL-ACCEPTANCE-BULK-CLOSURE]
 labels: [quicktrimr, phase-2, backend, security]
 ```
 
@@ -3723,9 +3723,9 @@ Re-check current server-owned restrictions under `RULE-RELY-06` with the shared 
 
 Concurrency: a conditional update that transitions `pending → accepted` only if it is still `pending`, and for an Available Now request use `private.has_active_available_now_job(barber_id)` from `P2-T11` to check the slot under `RULE-AVAIL-09`. Serialize that check on the barber profile lock before creating the booking, in the same transaction as the conditional request update. Keep external calls outside these locks (`RULE-PAY-09`).
 
-On success: create the booking at `accepted_pending_payment`, write `booking_status_history` (`ADR-010`), invoke `private.record_available_now_request_outcome(request_id, 'accepted')` from `P2-T03` inside that same transaction to make the current active Available Now session `busy`, and resolve the barber's other pending Available Now requests (`RULE-AVAIL-07`). Bulk closure of those other requests does not invoke a miss/response outcome hook.
+On success, create one booking at `accepted_pending_payment` and its service line using the immutable `P2-T08` request snapshot (`ADR-009`). Write the initial `booking_status_history` entry (`ADR-010`). For Available Now, invoke `private.record_available_now_request_outcome(request_id, 'accepted')` from `P2-T03` inside that transaction to make the current active session `busy`. Close the barber's other pending Available Now requests as `expired` at or after their deadline or `declined` before it (`RULE-AVAIL-07`). Bulk closure does not invoke a miss/response outcome hook. Scheduled acceptance leaves other requests and the Available Now session alone.
 
-Audit log (`ADR-013`).
+Append an audit entry for the acceptance and each request closed because of it (`ADR-013`). The affected clients read their own terminal requests through the existing client status projection.
 
 **Contract example** — `accept-booking-request`
 
@@ -3752,7 +3752,7 @@ Audit log (`ADR-013`).
 
 **Acceptance criteria**
 
-- [ ] A valid acceptance creates a booking at `accepted_pending_payment` and marks the request `accepted`.
+- [ ] A valid acceptance creates a booking at `accepted_pending_payment`, copies the request's saved money to the booking and its service line, and marks the request `accepted`.
 - [ ] **Under real parallel acceptance attempts on one request, exactly one succeeds** and the rest receive `409 request_not_pending`. Tested with genuine concurrency and repeated runs, not sequential calls.
 - [ ] **A barber holding an active Available Now job cannot accept a second** — tested under parallel attempts on two different requests.
 - [ ] An expired request cannot be accepted; expiry is evaluated on the server clock.
@@ -3760,7 +3760,7 @@ Audit log (`ADR-013`).
 - [ ] A request addressed to another barber returns 403.
 - [ ] `booking_status_history` records the transition with actor and reason.
 - [ ] The Available Now session transitions to `busy` through `P2-T03`, not by writing the status directly.
-- [ ] The barber's other pending Available Now requests are resolved (`RULE-AVAIL-07`) and remain visible to their clients as terminal states.
+- [ ] Available Now acceptance closes other pending Available Now requests as `expired` or `declined` at their deadline boundary (`RULE-AVAIL-07`) without outcome receipts. Their clients see the terminal states. Scheduled acceptance leaves the queue open.
 - [ ] **No Stripe call is made** and no lock is held across an external call.
 - [ ] An audit log is written.
 
@@ -3768,7 +3768,7 @@ Audit log (`ADR-013`).
 
 **Out of scope** — payment capture (`P3-T02`, wired by `P3-T06`); the accept UI (`P2-T14`); notifications (`P6-T02`).
 
-**Sync notes** — `P3-T06` extends this into capture. The `accepted_pending_payment` status is the seam between them, and admin (`P5-T04`) must be able to see a booking stuck in it.
+**Sync notes** — `P3-T06` extends this into capture and releases authorisations for requests closed by another acceptance. Bulk-closure audit entries identify the accepted request and the closed request for reconciliation. The `accepted_pending_payment` status is the seam between these tickets, and admin (`P5-T04`) must be able to see a booking stuck in it. `P6-T02` delivers notifications for the closed requests.
 
 ---
 
@@ -3845,7 +3845,7 @@ Audit log.
 
 **Out of scope** — authorisation cancellation (`P3-T06`); the decline UI (`P2-T14`); reliability consequences, which decline does not incur.
 
-**Sync notes** — `P3-T06` adds authorisation cancellation to this path.
+**Sync notes** — `P3-T06` adds authorisation cancellation to this path. Use `P2-T12`'s barber-profile-first lock order before locking or updating the request.
 
 ---
 
@@ -3978,7 +3978,7 @@ a code change; peak-load latency, independent heartbeat/overdue alerts and worke
 **Out of scope** — authorisation cancellation (`P3-T06`); auto-completion, a different workflow (`P4-T11`).
 
 **Sync notes** — this is one of seven scheduled-work consumers of `ADR-011`, not a separate
-engine. The race-test correction follows the existing conditional transition and
+engine. Follow `P2-T12`'s barber-profile-first lock order for expiry transitions. The race-test correction follows the existing conditional transition and
 `RULE-REQUEST-05`; it does not permit acceptance of expired requests. `P3-T06` adds durable,
 idempotent authorisation release and provider reconciliation to this path.
 
@@ -4378,7 +4378,7 @@ priority: Highest
 jiraKey: null
 dependsOn: [P2-T08, P2-T09, P2-T12, P2-T13, P2-T15, P3-T01, P3-T02]
 affects: [P4-T01, P4-T02, P5-T04]
-knowledgeBase: [ADR-006, ADR-010, RULE-PAY-02, RULE-PAY-03, RULE-PAY-05, RULE-REQUEST-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS]
+knowledgeBase: [ADR-006, ADR-010, RULE-AVAIL-07, RULE-PAY-02, RULE-PAY-03, RULE-PAY-05, RULE-REQUEST-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe]
 ```
@@ -4406,7 +4406,7 @@ Acceptance retains its concurrency guarantees from `P2-T12` and still holds **no
 
 Capture failure keeps the booking at `accepted_pending_payment` (`RULE-PAY-05`), notifies both parties, and offers a defined recovery.
 
-Authorisation cancellation on decline and expiry is idempotent — an already-cancelled authorisation is not an error.
+Authorisation cancellation on decline and expiry is idempotent — an already-cancelled authorisation is not an error. Include the `RULE-AVAIL-07` requests closed in bulk by `P2-T12`, even when the accept request is retried or the caller disconnects after commit.
 
 `P2-T09` gains a payment-method step before submission, and `P2-T14` gains a capture-failure outcome.
 
@@ -6669,7 +6669,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D05, P0-D07, P2-T08, P2-T12, P3-T06, P3-T11, P4-T11, P6-T01]
 affects: []
-knowledgeBase: [ADR-011, RULE-NOTIF-01, RULE-NOTIF-02, RULE-NOTIF-03, RULE-NOTIF-04, RULE-COPY-01, RULE-EARN-04, RULE-EARN-07]
+knowledgeBase: [ADR-011, RULE-AVAIL-07, RULE-NOTIF-01, RULE-NOTIF-02, RULE-NOTIF-03, RULE-NOTIF-04, RULE-COPY-01, RULE-EARN-04, RULE-EARN-07]
 blockedByTbc: []
 labels: [quicktrimr, phase-6, backend, notifications]
 ```
@@ -6720,7 +6720,7 @@ Copy compliant with `RULE-COPY-01` — nothing implying a charge that is only a 
 
 **Out of scope** — token registration (`P6-T01`); notification preferences; SMS and email.
 
-**Sync notes** — six tickets trigger notifications through this helper. A new lifecycle event needs a case here or it is silent. The incoming-request push refreshes the addressed barber's `P2-T11` inbox from the first page when that screen is open.
+**Sync notes** — six tickets trigger notifications through this helper. Include client notifications for requests that `P2-T12` closes under `RULE-AVAIL-07`. The incoming-request push refreshes the addressed barber's `P2-T11` inbox from the first page when that screen is open.
 
 ---
 
