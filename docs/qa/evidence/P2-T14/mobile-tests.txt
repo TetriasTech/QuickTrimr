@@ -1,0 +1,25 @@
+PASS test/barber-inbox.test.tsx
+  ✓ shows both request types and safe card details with an occupied-slot reason for Available Now only
+  ✓ marks expiry in place at the displayed deadline and conceals the request details
+  ✓ loads the continuation and starts at page one on route focus and app foreground
+  ✓ distinguishes the loaded empty state when session is active=true
+  ✓ distinguishes the loaded empty state when session is active=false
+  ✓ shows initial loading, reports the request error and retries
+  ✓ accept requires confirmation, sends once, refreshes the inbox and opens the returned booking
+  ✓ declines once even through a network wait and refreshes the first page
+  ✓ explains the server conflict request_not_pending and reloads
+  ✓ explains the server conflict active_job_exists and reloads
+  ✓ reports a 401 failure and reloads without repeating the action
+  ✓ reports a 403 failure and reloads without repeating the action
+  ✓ reports a 422 failure and reloads without repeating the action
+  ✓ reports a 500 failure and reloads without repeating the action
+  ✓ refreshes standing after a conflict and preserves decline for limited
+  ✓ refreshes standing after a conflict and preserves decline for suspended
+  ✓ refreshes standing after a conflict and preserves decline for restricted
+  ✓ does not submit when the request expires while the native confirmation is open
+  ✓ checks the persisted booking status, retries errors and handles an unavailable booking
+
+Test Suites: 1 passed, 1 total
+Tests:       19 passed, 19 total
+Snapshots:   0 total
+Ran all test suites matching /test\/barber-inbox.test.tsx/i.

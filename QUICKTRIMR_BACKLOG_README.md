@@ -3861,14 +3861,14 @@ priority: High
 jiraKey: TRIMR-57
 dependsOn: [P2-T11, P2-T12, P2-T13]
 affects: [P4-T02]
-knowledgeBase: [RULE-REQUEST-05, RULE-AVAIL-05, RULE-RELY-06, RULE-COPY-01, ENUM-REQUEST-STATUS]
+knowledgeBase: [ROLE-BARBER, RULE-REQUEST-05, RULE-REQUEST-07, RULE-AVAIL-05, RULE-RELY-06, RULE-COPY-01, ENUM-REQUEST-STATUS, ENUM-BOOKING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, mobile]
 ```
 
 **Context**
 
-Two buttons over a genuinely concurrent backend. The screen's job is to make losing a race feel like information rather than a failure: "another barber took this" and "this expired while you were deciding" are normal outcomes of `RULE-REQUEST-05`, not errors.
+Two buttons over a genuinely concurrent backend. A request can expire or be resolved from another session while a barber is deciding. Report the server's conflict without guessing which event occurred.
 
 **Scope**
 
@@ -3880,7 +3880,7 @@ Every backend outcome mapped to a specific message: `409 request_not_pending` re
 
 For `409 barber_unavailable`, refresh the barber's own standing and show the applicable cooldown or suspension explanation from server truth (`RULE-RELY-06`). Do not claim that restricted always means banned, or offer a client timer as a way to lift the restriction. Decline remains available when otherwise valid.
 
-On success the list refreshes and the accepted booking is reachable.
+Refresh the inbox after either successful action. Use the acceptance response's booking ID to open the barber's booking status. Read the ID and status from the existing owner-scoped booking policy (`ROLE-BARBER`). The booking details and their privacy checks remain in `P4-T02`.
 
 Copy must not imply the client has been charged (`RULE-COPY-01`) — at this point nothing has been captured.
 
@@ -3900,7 +3900,7 @@ Copy must not imply the client has been charged (`RULE-COPY-01`) — at this poi
 
 **Out of scope** — the functions (`P2-T12`, `P2-T13`); booking detail (`P4-T02`).
 
-**Sync notes** — `P3-T06` introduces a capture-failure outcome that this screen must also render.
+**Sync notes** — `P2-T13` permits omitting the optional reason. `P3-T06` introduces a capture-failure outcome that this screen must also render. `P4-T02` extends the barber booking route from the status handoff to the authorized details.
 
 ---
 

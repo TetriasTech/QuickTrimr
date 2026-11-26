@@ -1,0 +1,1 @@
+Native actions verified on the database: one pending-payment booking, second request declined, zero payment rows.

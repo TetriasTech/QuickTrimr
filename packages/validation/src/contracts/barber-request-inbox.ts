@@ -2,6 +2,7 @@ import { BOOKING_TYPE_VALUE, REQUEST_STATUS_VALUE } from '@quicktrimr/shared';
 import { z } from 'zod';
 
 import {
+  bookingStatusSchema,
   bookingTypeSchema,
   integerCentsSchema,
   nonEmptyStringSchema,
@@ -10,6 +11,11 @@ import {
 } from '../primitives.ts';
 
 import { distanceBandSchema } from './discovery.ts';
+
+export const barberBookingStatusSchema = z.strictObject({
+  id: postgresUuidSchema,
+  status: bookingStatusSchema,
+});
 
 export const barberRequestInboxInputSchema = z
   .strictObject({
