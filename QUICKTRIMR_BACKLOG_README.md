@@ -3916,7 +3916,7 @@ priority: High
 jiraKey: TRIMR-58
 dependsOn: [P0-D07, P2-T03, P2-T08]
 affects: [P3-T06, P4-T01]
-knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-06, RULE-SCHED-02, RULE-REQUEST-05, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS]
+knowledgeBase: [ADR-011, ADR-013, RULE-AVAIL-06, RULE-SCHED-02, RULE-REQUEST-05, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS, CFG-AVAIL-EXPIRY-MIN, CFG-SCHED-EXPIRY-HOURS, CFG-REQUEST-EXPIRY-WORKER-OPERATIONS, RULE-OPS-REQUEST-EXPIRY-VERIFICATION]
 blockedByTbc: []
 labels: [quicktrimr, phase-2, backend]
 ```
@@ -3936,6 +3936,8 @@ persisted deadlines from `CFG-AVAIL-EXPIRY-MIN` and `CFG-SCHED-EXPIRY-HOURS`. Ow
 versioned schedule, protected handler, safe run evidence and operational configuration in this
 slice. Prove sub-minute scheduling lateness under a stated peak workload without changing the
 business expiry deadline; no recurring cron row per request or mobile-supplied clock.
+Use the approved worker settings in `CFG-REQUEST-EXPIRY-WORKER-OPERATIONS` and
+verify under `RULE-OPS-REQUEST-EXPIRY-VERIFICATION`.
 
 Transition `pending → expired` **conditionally**, so a request accepted a second before the job fires is not overwritten. The schedule is a hint; the database is the truth (`ADR-011`).
 
@@ -3955,6 +3957,22 @@ heartbeat. Reuse the original operation identity. `P3-T06` integrates durable au
 release; this ticket must expose the recoverable expiry outcome without making a Stripe call.
 
 Audit log per expiry.
+
+**Contract example** — `expire-booking-request`, using the existing shared server-only contract:
+
+```jsonc
+// request
+{ "requestId": "d5e1..." }
+
+// 200 — due and pending
+{ "requestId": "d5e1...", "applied": true, "status": "expired" }
+
+// 200 — later delivery after a committed acceptance
+{ "requestId": "d5e1...", "applied": false, "status": "accepted" }
+
+// 403 — caller lacks server authorization
+{ "error": "forbidden" }
+```
 
 **Acceptance criteria**
 

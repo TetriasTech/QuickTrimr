@@ -1,0 +1,13 @@
+{
+  "failed": 0,
+  "audited": 1000,
+  "receipts": 500,
+  "historical": 100000,
+  "maximumBatch": 500,
+  "latestSeconds": 10.527902,
+  "uniqueRequests": 1000,
+  "earliestSeconds": 0.458942,
+  "scheduler": "pg_cron",
+  "index": "booking_requests_due_idx",
+  "fixture": "local schema-only clone"
+}
