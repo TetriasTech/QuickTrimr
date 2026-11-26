@@ -367,8 +367,8 @@ export const CONTRACT_DETAILS = {
   'decline-booking-request': user(
     'P2-T13',
     [b],
-    ['RULE-REQUEST-05', 'RULE-REQUEST-06'],
-    'Target barber only; reason optional, request must still be pending. P3-T06 later cancels its hold.',
+    ['RULE-REQUEST-05', 'RULE-REQUEST-06', 'RULE-REQUEST-07'],
+    'Only the addressed barber can decline a pending, unexpired request. The optional reason must be too_far, unavailable, service_unavailable or other. Only the internal audit records the code. P3-T06 adds hold cancellation.',
     [pending],
   ),
   'cancel-booking-request': user(

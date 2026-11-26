@@ -135,3 +135,6 @@ verify_jwt = true
 
 [functions.accept-booking-request]
 verify_jwt = true
+
+[functions.decline-booking-request]
+verify_jwt = true

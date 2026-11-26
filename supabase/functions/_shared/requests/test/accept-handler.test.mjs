@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createAcceptBookingRequestHandler } from '../accept-handler.ts';
+import { createBookingRequestActionHandler } from '../action-handler.ts';
 
 const userId = '91f09000-0000-4000-8000-000000000001';
 const requestId = '91f09000-0000-4000-8000-000000000002';
@@ -18,7 +18,7 @@ test('acceptance verifies the stored role, sends only the verified identity and 
   const logs = [];
   let role = 'barber';
   let rpcResult = () => Response.json(success);
-  const handler = createAcceptBookingRequestHandler({
+  const handler = createBookingRequestActionHandler('accept', {
     supabaseUrl: 'http://127.0.0.1:55321',
     anonKey: 'anon-fixture',
     serviceRoleKey: 'server-fixture',
