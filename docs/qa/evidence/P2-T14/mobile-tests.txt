@@ -9,6 +9,10 @@ PASS test/barber-inbox.test.tsx
   ✓ declines once even through a network wait and refreshes the first page
   ✓ explains the server conflict request_not_pending and reloads
   ✓ explains the server conflict active_job_exists and reloads
+  ✓ reports a 401 failure and reloads without repeating the action
+  ✓ reports a 403 failure and reloads without repeating the action
+  ✓ reports a 422 failure and reloads without repeating the action
+  ✓ reports a 500 failure and reloads without repeating the action
   ✓ refreshes standing after a conflict and preserves decline for limited
   ✓ refreshes standing after a conflict and preserves decline for suspended
   ✓ refreshes standing after a conflict and preserves decline for restricted
@@ -16,6 +20,6 @@ PASS test/barber-inbox.test.tsx
   ✓ checks the persisted booking status, retries errors and handles an unavailable booking
 
 Test Suites: 1 passed, 1 total
-Tests:       15 passed, 15 total
+Tests:       19 passed, 19 total
 Snapshots:   0 total
 Ran all test suites matching /test\/barber-inbox.test.tsx/i.

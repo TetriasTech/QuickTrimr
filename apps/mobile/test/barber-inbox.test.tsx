@@ -444,6 +444,34 @@ test.each([
   } else expect(screen.queryByText('Skin Fade')).toBeNull();
 });
 
+test.each([
+  [401, 'unauthorized', 'Sign in again to respond to booking requests.'],
+  [403, 'forbidden', 'You don’t have access to respond to this request.'],
+  [
+    422,
+    'validation_failed',
+    'This response couldn’t be sent. Try again from the refreshed list.',
+  ],
+  [
+    500,
+    'internal_error',
+    'Could not verify the response. Check the refreshed requests before trying again.',
+  ],
+] as const)(
+  'reports a %s failure and reloads without repeating the action',
+  async (status, error, message) => {
+    const api = mockApi();
+    api.decline.mockRejectedValueOnce(new EdgeFunctionError(status, { error }));
+    await mount(api);
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Decline Beard Trim' }),
+    );
+    expect(await screen.findByText(message)).toBeOnTheScreen();
+    expect(api.decline).toHaveBeenCalledTimes(1);
+    expect(api.read).toHaveBeenCalledTimes(2);
+  },
+);
+
 const reliabilityCases = [
   {
     level: 'limited',

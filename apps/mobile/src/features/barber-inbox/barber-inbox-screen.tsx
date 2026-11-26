@@ -358,10 +358,8 @@ export function BarberInboxScreen({
       }
       resolvedId = id;
     } catch (error) {
-      const conflict =
-        error instanceof EdgeFunctionError && error.status === 409
-          ? error.response.error
-          : null;
+      const failure = error instanceof EdgeFunctionError ? error : null;
+      const conflict = failure?.status === 409 ? failure.response.error : null;
       if (conflict === 'request_not_pending') {
         resolvedId = item.request.id;
         setFeedback({ message: 'This request is no longer available.' });
@@ -374,6 +372,19 @@ export function BarberInboxScreen({
         setFeedback({ message: 'This request couldn’t be accepted.' });
         if (showStanding) availability.refetch().catch(() => undefined);
         else setShowStanding(true);
+      } else if (failure?.status === 401) {
+        setFeedback({
+          message: 'Sign in again to respond to booking requests.',
+        });
+      } else if (failure?.status === 403) {
+        setFeedback({
+          message: 'You don’t have access to respond to this request.',
+        });
+      } else if (failure?.status === 422) {
+        setFeedback({
+          message:
+            'This response couldn’t be sent. Try again from the refreshed list.',
+        });
       } else {
         setFeedback({
           message:
