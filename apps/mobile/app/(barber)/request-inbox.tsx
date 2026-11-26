@@ -1,5 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
 import { useIsFocused } from 'expo-router/react-navigation';
+import { useMemo } from 'react';
 
 import { barberInboxApi } from '@/features/barber-inbox/barber-inbox-api';
 import { BarberInboxScreen } from '@/features/barber-inbox/barber-inbox-screen';
@@ -9,6 +10,10 @@ export default function BarberInboxRoute() {
   const { supabase, userId } = useMobileSession();
   const router = useRouter();
   const focused = useIsFocused();
+  const api = useMemo(
+    () => barberInboxApi(supabase, userId ?? ''),
+    [supabase, userId],
+  );
   return (
     <>
       <Stack.Screen
@@ -21,10 +26,16 @@ export default function BarberInboxRoute() {
       {userId ? (
         <BarberInboxScreen
           key={userId}
-          api={barberInboxApi(supabase, userId)}
+          api={api}
           userId={userId}
           focused={focused}
           onAvailability={() => router.push('/available-now')}
+          onBooking={(bookingId) =>
+            router.push({
+              pathname: '/(barber)/bookings/[bookingId]',
+              params: { bookingId },
+            })
+          }
         />
       ) : null}
     </>

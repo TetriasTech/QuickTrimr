@@ -12,8 +12,11 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
+import { BarberBookingStatusScreen } from '../src/features/barber-inbox/barber-booking-status-screen';
 import { BarberInboxScreen } from '../src/features/barber-inbox/barber-inbox-screen';
+import { EdgeFunctionError } from '../src/lib/api/invoke-edge-function';
 
 import type { BarberInboxApi } from '../src/features/barber-inbox/barber-inbox-api';
 import type {
@@ -22,6 +25,7 @@ import type {
 } from '@quicktrimr/validation';
 
 const userId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const bookingId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const serverNow = '2026-11-23T00:00:00Z';
 const request = {
   id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
@@ -84,6 +88,26 @@ function mockApi(first = page()) {
         Parameters<BarberInboxApi['readAvailability']>
       >()
       .mockResolvedValue(availability),
+    accept: jest
+      .fn<ReturnType<BarberInboxApi['accept']>, [string]>()
+      .mockImplementation(async (requestId) => ({
+        requestId,
+        bookingId,
+        requestStatus: 'accepted',
+        bookingStatus: 'accepted_pending_payment',
+      })),
+    decline: jest
+      .fn<ReturnType<BarberInboxApi['decline']>, [string]>()
+      .mockImplementation(async (requestId) => ({
+        requestId,
+        status: 'declined',
+      })),
+    readBookingStatus: jest
+      .fn<
+        ReturnType<BarberInboxApi['readBookingStatus']>,
+        Parameters<BarberInboxApi['readBookingStatus']>
+      >()
+      .mockResolvedValue({ id: bookingId, status: 'accepted_pending_payment' }),
   };
 }
 
@@ -92,6 +116,7 @@ async function mount(api: BarberInboxApi) {
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
   const onAvailability = jest.fn();
+  const onBooking = jest.fn();
   const view = (focused: boolean) => (
     <QueryClientProvider client={cache}>
       <BarberInboxScreen
@@ -99,11 +124,12 @@ async function mount(api: BarberInboxApi) {
         focused={focused}
         userId={userId}
         onAvailability={onAvailability}
+        onBooking={onBooking}
       />
     </QueryClientProvider>
   );
   const rendered = await render(view(true));
-  return { rendered, view, onAvailability };
+  return { rendered, view, onAvailability, onBooking };
 }
 
 beforeEach(() => {
@@ -112,6 +138,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   await cleanup();
+  jest.restoreAllMocks();
   jest.useRealTimers();
   focusManager.setFocused(undefined);
 });
@@ -142,7 +169,15 @@ test('shows both request types and safe card details with an occupied-slot reaso
   expect(screen.getByText(/November 2026/)).toBeOnTheScreen();
   expect(screen.getAllByLabelText(/Time to respond /)).toHaveLength(2);
   expect(screen.getByText(/This request can’t be accepted/)).toBeOnTheScreen();
-  expect(screen.queryByRole('button', { name: /accept|decline/i })).toBeNull();
+  expect(
+    screen.getByRole('button', { name: 'Accept Skin Fade' }),
+  ).toBeDisabled();
+  expect(
+    screen.getByRole('button', { name: 'Decline Skin Fade' }),
+  ).toBeEnabled();
+  expect(
+    screen.getByRole('button', { name: 'Accept Beard Trim' }),
+  ).toBeEnabled();
   expect(api.readAvailability).not.toHaveBeenCalled();
   for (const privateValue of Object.values(privateFields)) {
     expect(
@@ -272,4 +307,270 @@ test('shows initial loading, reports the request error and retries', async () =>
   ).toBeOnTheScreen();
   await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
   expect(await screen.findByText('Skin Fade')).toBeOnTheScreen();
+});
+
+function alertSpy() {
+  return jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+}
+
+async function confirm(alert: ReturnType<typeof alertSpy>) {
+  await act(async () => {
+    alert.mock.calls
+      .at(-1)?.[2]
+      ?.find(({ text }) => text === 'Accept request')
+      ?.onPress?.();
+  });
+}
+
+test('accept requires confirmation, sends once, refreshes the inbox and opens the returned booking', async () => {
+  const alert = alertSpy();
+  const api = mockApi();
+  let settle!: (value: Awaited<ReturnType<BarberInboxApi['accept']>>) => void;
+  api.accept.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+  );
+  const { onBooking } = await mount(api);
+  const accept = await screen.findByRole('button', {
+    name: 'Accept Skin Fade',
+  });
+  await fireEvent.press(accept);
+  expect(alert.mock.lastCall?.[0]).toEqual('Accept this request?');
+  expect(api.accept).not.toHaveBeenCalled();
+  await act(async () => alert.mock.lastCall?.[2]?.[0]?.onPress?.());
+  expect(api.accept).not.toHaveBeenCalled();
+  await fireEvent.press(accept);
+  const submit = alert.mock.lastCall?.[2]?.[1]?.onPress;
+  expect(submit).toBeDefined();
+  await act(async () => {
+    submit?.();
+    submit?.();
+  });
+  expect(api.accept).toHaveBeenCalledTimes(1);
+  expect(api.accept).toHaveBeenCalledWith(request.id);
+  expect(
+    screen.getByRole('button', { name: 'Accept Skin Fade' }),
+  ).toBeDisabled();
+  expect(
+    screen.getByRole('button', { name: 'Decline Skin Fade' }),
+  ).toBeDisabled();
+  api.read.mockResolvedValue(
+    page({ requests: [scheduled], hasActiveAvailableNowJob: true }),
+  );
+  await act(async () =>
+    settle({
+      requestId: request.id,
+      bookingId,
+      requestStatus: 'accepted',
+      bookingStatus: 'accepted_pending_payment',
+    }),
+  );
+  expect(
+    await screen.findByText('Request accepted. Payment pending.'),
+  ).toBeOnTheScreen();
+  expect(screen.queryByText('Skin Fade')).toBeNull();
+  expect(api.read).toHaveBeenCalledTimes(2);
+  await fireEvent.press(
+    screen.getByRole('button', { name: 'View booking status' }),
+  );
+  expect(onBooking).toHaveBeenCalledWith(bookingId);
+});
+
+test('declines once even through a network wait and refreshes the first page', async () => {
+  const alert = alertSpy();
+  const api = mockApi();
+  let settle!: (value: Awaited<ReturnType<BarberInboxApi['decline']>>) => void;
+  api.decline.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+  );
+  await mount(api);
+  const decline = await screen.findByRole('button', {
+    name: 'Decline Beard Trim',
+  });
+  await fireEvent.press(decline);
+  await fireEvent.press(decline);
+  expect(alert).not.toHaveBeenCalled();
+  expect(api.decline).toHaveBeenCalledTimes(1);
+  expect(api.decline).toHaveBeenCalledWith(scheduled.id);
+  expect(
+    screen.getByRole('button', { name: 'Accept Beard Trim' }),
+  ).toBeDisabled();
+  expect(decline).toBeDisabled();
+  api.read.mockResolvedValue(page({ requests: [request] }));
+  await act(async () =>
+    settle({ requestId: scheduled.id, status: 'declined' }),
+  );
+  expect(await screen.findByText('Request declined.')).toBeOnTheScreen();
+  expect(screen.queryByText('Beard Trim')).toBeNull();
+  expect(api.read.mock.calls.map(([cursor]) => cursor)).toEqual([null, null]);
+});
+
+test.each([
+  ['request_not_pending', 'This request is no longer available.'],
+  [
+    'active_job_exists',
+    'Finish your current Available Now job before accepting another.',
+  ],
+])('explains the server conflict %s and reloads', async (code, message) => {
+  const alert = alertSpy();
+  const api = mockApi();
+  api.accept.mockRejectedValueOnce(new EdgeFunctionError(409, { error: code }));
+  await mount(api);
+  await fireEvent.press(
+    await screen.findByRole('button', { name: 'Accept Skin Fade' }),
+  );
+  api.read.mockResolvedValue(
+    page(
+      code === 'active_job_exists'
+        ? { hasActiveAvailableNowJob: true }
+        : { requests: [scheduled] },
+    ),
+  );
+  await confirm(alert);
+  expect(await screen.findByText(message)).toBeOnTheScreen();
+  expect(api.read).toHaveBeenCalledTimes(2);
+  if (code === 'active_job_exists') {
+    expect(
+      screen.getByRole('button', { name: 'Accept Skin Fade' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Decline Skin Fade' }),
+    ).toBeEnabled();
+  } else expect(screen.queryByText('Skin Fade')).toBeNull();
+});
+
+const reliabilityCases = [
+  {
+    level: 'limited',
+    allowed: false,
+    suspended: false,
+    message: /Available Now is paused until/,
+  },
+  {
+    level: 'suspended',
+    allowed: false,
+    suspended: true,
+    message: /Human reinstatement is required/,
+  },
+  {
+    level: 'restricted',
+    allowed: true,
+    suspended: false,
+    message: /You can use Available Now/,
+  },
+] as const;
+
+test.each(reliabilityCases)(
+  'refreshes standing after a conflict and preserves decline for $level',
+  async ({ level, allowed, suspended, message }) => {
+    const alert = alertSpy();
+    const api = mockApi();
+    api.accept.mockRejectedValueOnce(
+      new EdgeFunctionError(409, { error: 'barber_unavailable' }),
+    );
+    api.readAvailability.mockResolvedValue({
+      ...availability,
+      reliability: {
+        ...availability.reliability,
+        level,
+        availableNowAllowed: allowed,
+        requiresHumanReinstatement: suspended,
+        cooldownUntil: level === 'limited' ? scheduled.expiresAt : null,
+      },
+    });
+    await mount(api);
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Accept Skin Fade' }),
+    );
+    await confirm(alert);
+    expect(await screen.findByText(message)).toBeOnTheScreen();
+    expect(api.readAvailability).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Decline Skin Fade' }),
+      ).toBeEnabled(),
+    );
+    if (allowed)
+      expect(
+        screen.getByRole('button', { name: 'Accept Skin Fade' }),
+      ).toBeEnabled();
+    else
+      expect(
+        screen.getByRole('button', { name: 'Accept Skin Fade' }),
+      ).toBeDisabled();
+    if (suspended)
+      expect(
+        screen.getByRole('button', { name: 'Accept Beard Trim' }),
+      ).toBeDisabled();
+    else
+      expect(
+        screen.getByRole('button', { name: 'Accept Beard Trim' }),
+      ).toBeEnabled();
+  },
+);
+
+test('does not submit when the request expires while the native confirmation is open', async () => {
+  const alert = alertSpy();
+  const api = mockApi(
+    page({ requests: [{ ...request, expiresAt: '2026-11-23T00:00:02Z' }] }),
+  );
+  await mount(api);
+  await fireEvent.press(
+    await screen.findByRole('button', { name: 'Accept Skin Fade' }),
+  );
+  await act(async () => {
+    jest.advanceTimersByTime(2100);
+  });
+  await confirm(alert);
+  expect(api.accept).not.toHaveBeenCalled();
+  expect(screen.getByText('Request expired')).toBeOnTheScreen();
+  expect(
+    screen.queryByRole('button', { name: 'Decline Skin Fade' }),
+  ).toBeNull();
+});
+
+test('checks the persisted booking status, retries errors and handles an unavailable booking', async () => {
+  const api = mockApi();
+  let reject!: (error: Error) => void;
+  api.readBookingStatus.mockResolvedValueOnce(null).mockImplementationOnce(
+    () =>
+      new Promise((_resolve, fail) => {
+        reject = fail;
+      }),
+  );
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
+  const view = (id: string) => (
+    <QueryClientProvider client={cache}>
+      <BarberBookingStatusScreen
+        read={api.readBookingStatus}
+        bookingId={id}
+        focused
+        userId={userId}
+        onInbox={jest.fn()}
+      />
+    </QueryClientProvider>
+  );
+  const status = await render(view(request.id));
+  expect(
+    await screen.findByText('This booking is unavailable.'),
+  ).toBeOnTheScreen();
+  await status.rerender(view(bookingId));
+  expect(screen.getByText('Checking booking status…')).toBeOnTheScreen();
+  await act(async () => reject(new Error('Synthetic connection error')));
+  expect(
+    await screen.findByText('Could not check the booking status.'),
+  ).toBeOnTheScreen();
+  await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+  expect(await screen.findByText('Payment pending')).toBeOnTheScreen();
+  expect(
+    screen.getByText(/Wait for booking confirmation before travelling/),
+  ).toBeOnTheScreen();
+  expect(screen.queryByText(/client was charged|payment received/i)).toBeNull();
 });

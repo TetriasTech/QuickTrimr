@@ -63,6 +63,8 @@ export const queryKeys = {
   },
   bookings: {
     all: rootKeys.bookings,
+    barberStatus: (userId: string, bookingId: string) =>
+      [...rootKeys.bookings, userId, 'barber-status', bookingId] as const,
     lists: () => [...rootKeys.bookings, 'list'] as const,
     detail: (bookingId: string) =>
       [...rootKeys.bookings, 'detail', bookingId] as const,
