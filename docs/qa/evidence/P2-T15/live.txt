@@ -1,0 +1,9 @@
+Final API and exact-deadline race recheck:
+PASS Exact deadline boundary, early/undated no-op, all mobile worker/RPC/operational table denials and field validation.
+PASS Five parallel expiry calls committed one Available Now miss, one receipt and one audit, with no booking or payment.
+PASS Six real accept/expiry lock races covered both commit orders. Each accepted request crossed its deadline before the waiting expiry resumed and stayed accepted.
+
+Recovery, monitoring and retention from the complete local run against the same worker:
+PASS An interrupted primary claim rolled back. Real reconciliation recovered it with primary paused; the owner saw expired on the first read afterwards.
+PASS A separate process delivered failed-run, overdue, stopped-scheduler and recovery notifications to the local receiver.
+PASS Operational retention removed a stale run while the immutable expiry audit and receipt remained.
