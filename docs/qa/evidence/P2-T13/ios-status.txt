@@ -1,0 +1,18 @@
+iPhone 17 simulator / iOS 26.5. Local QuickTrimr with disposable profiles.
+Filtered accessibility output for the same synthetic Scheduled request.
+
+Before the addressed barber called the decline endpoint:
+7 heading Description: Request status
+30 heading Description: Waiting for a reply
+31 text Description: Time left to respond
+33 button Description: Check status
+
+The barber committed the decline through the running local Edge Function.
+On the same client screen, tapping Check status returned:
+6 back button Description: Find a barber
+8 heading Description: Request declined
+9 text Description: This barber declined your request. You can choose another barber.
+10 button Description: Find another barber
+
+The simulator's password-save sheet overlaid the screen captures.
+The accessibility output preserves the observed app elements.

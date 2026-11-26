@@ -4,7 +4,12 @@ import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 
 import { requestDeadlineReached } from '../../packages/domain/src/index.ts';
-import { acceptBookingRequestResponseSchema } from '../../packages/validation/src/index.ts';
+import { REQUEST_DECLINE_REASONS } from '../../packages/shared/src/index.ts';
+import {
+  acceptBookingRequestResponseSchema,
+  clientBookingRequestSchema,
+  declineBookingRequestResponseSchema,
+} from '../../packages/validation/src/index.ts';
 
 import { apiJson, assertRawBody, makeUsers } from './api-test-helpers.mjs';
 import { sqlValue as q } from './core-fixtures.mjs';
@@ -12,7 +17,10 @@ import { localStatus } from './local-api.mjs';
 import { projectId } from './local.mjs';
 import { queryLocal as sql } from './verify.mjs';
 
-assert.equal(process.argv.length, 2);
+const args = process.argv.slice(2);
+assert.ok(
+  args.length === 0 || (args.length === 1 && args[0] === '--with-decline'),
+);
 const stack = localStatus();
 const { users, tokens } = await makeUsers(stack, {
   additional: ['admin', 'noProfile'],
@@ -31,6 +39,8 @@ const edge = (name, token, input) =>
   post('/functions/v1/' + name, token, input);
 const accept = (id, token = tokens.barberA, fields = {}) =>
   edge('accept-booking-request', token, { requestId: id, ...fields });
+const decline = (id, reason, token = tokens.barberA) =>
+  edge('decline-booking-request', token, { requestId: id, reason });
 const read = (statement) => JSON.parse(sql(statement));
 const pass = (message) => console.log(`PASS ${message}`);
 const expectedWinner = (requestId, bookingId) => ({
@@ -74,8 +84,9 @@ async function clientRequest(client, id) {
     { p_request_id: id },
   );
   assert.equal(result.status, 200);
-  assert.equal(result.body?.id, id);
-  return result.body.status;
+  const request = clientBookingRequestSchema.parse(result.body);
+  assert.equal(request.id, id);
+  return request.status;
 }
 function snapshotEffects(id) {
   return read(`select jsonb_build_object(
@@ -88,7 +99,7 @@ function snapshotEffects(id) {
     'receipt',(select count(*) from private.available_now_request_receipts where request_id=r.id)
   ) from public.booking_requests r where r.id=${q(id)}`);
 }
-function assertNoAcceptance(id, request = 'pending') {
+function assertNoAcceptance(id, request = 'pending', receipt = 0) {
   assertRawBody(
     snapshotEffects(id),
     {
@@ -98,7 +109,7 @@ function assertNoAcceptance(id, request = 'pending') {
       lineItems: 0,
       payments: 0,
       acceptAudit: 0,
-      receipt: 0,
+      receipt,
     },
     'No acceptance effects',
   );
@@ -239,6 +250,273 @@ async function race(ids) {
     await gate.finish();
   }
   return calls;
+}
+
+function requestDeclineAudit(id) {
+  return read(`select coalesce(jsonb_agg(jsonb_build_object('actor',actor_id,'role',actor_role,
+    'before',previous_value,'after',new_value,'reason',reason,'metadata',metadata)), '[]') from public.audit_logs
+    where entity_type='booking_requests' and entity_id=${q(id)} and action='booking_request.declined'`);
+}
+function assertDeclined(result, requestId, bookingType, reason) {
+  assert.equal(result.status, 200, 'Valid decline did not succeed.');
+  declineBookingRequestResponseSchema.parse(result.body);
+  assertRawBody(
+    result.body,
+    { requestId, status: 'declined' },
+    'Raw decline body',
+  );
+  assertNoAcceptance(
+    requestId,
+    'declined',
+    bookingType === 'available_now' ? 1 : 0,
+  );
+  assertRawBody(
+    requestDeclineAudit(requestId),
+    [
+      {
+        actor: users.barberA,
+        role: 'barber',
+        before: { status: 'pending' },
+        after: { status: 'declined' },
+        reason: 'Barber declined the booking request.',
+        metadata: { bookingType, ...(reason ? { declineReason: reason } : {}) },
+      },
+    ],
+    'One internal decline audit',
+  );
+}
+async function orderedActions(id, first, following) {
+  const gate = transaction(
+    `select 1 from public.booking_requests where id=${q(id)} for update`,
+  );
+  const call = (operation) =>
+    operation === 'accept' ? accept(id) : decline(id, 'too_far');
+  let lead;
+  let follower;
+  try {
+    const gatePid = await gate.ready();
+    lead = call(first);
+    const leadPid = await blockedBy(gatePid, first + '_booking_request');
+    follower = call(following);
+    await blockedBy(leadPid, following + '_booking_request');
+  } finally {
+    await gate.finish();
+  }
+  return Promise.all([lead, follower]);
+}
+
+async function verifyDecline(scheduled, bulkClosed) {
+  setStanding('good_standing');
+  sql(`update public.booking_requests set status='cancelled'
+    where service_category_id=${q(category)} and booking_type='available_now' and status='pending';`);
+  const session = randomUUID();
+  sql(`insert into public.available_now_sessions(id,barber_id,location,status,location_source,radius_km,available_until,consecutive_misses)
+    values(${q(session)},${barber},${point},'active','gps',12,clock_timestamp()+interval '6 hours',1);`);
+  const immediate = await submit('available_now');
+
+  assert.equal((await decline(immediate, undefined, null)).status, 401);
+  for (const token of [
+    tokens.clientA,
+    tokens.admin,
+    tokens.noProfile,
+    tokens.barberB,
+  ]) {
+    assertError(await decline(immediate, undefined, token), 403, 'forbidden');
+  }
+  assertError(await decline(randomUUID()), 403, 'forbidden');
+  for (const [result, field] of [
+    [await decline('invalid'), 'requestId'],
+    [await decline(immediate, 'unsupported_reason'), 'reason'],
+    [await decline(immediate, ''), 'reason'],
+  ]) {
+    assert.equal(result.status, 422);
+    assert.ok(result.body.fields[field]);
+  }
+  const direct = (token, reason) =>
+    post('/rest/v1/rpc/decline_booking_request', token, {
+      p_barber_id: users.barberA,
+      p_request_id: immediate,
+      p_reason: reason,
+    });
+  assert.equal((await direct(tokens.barberA, 'too_far')).status, 403);
+  assert.equal(
+    (await direct(stack.SERVICE_ROLE_KEY, 'unsupported_reason')).status,
+    422,
+  );
+  assertNoAcceptance(immediate);
+  assertRawBody(
+    requestDeclineAudit(immediate),
+    [],
+    'Invalid actions leave no decline audit',
+  );
+  pass(
+    'Decline verified JWT, stored role, ownership, field errors, direct RPC denial and a database reason-code guard.',
+  );
+
+  // A restriction disallows new acceptance and still permits a voluntary reply.
+  setStanding('suspended');
+  assertDeclined(
+    await decline(immediate, 'too_far'),
+    immediate,
+    'available_now',
+    'too_far',
+  );
+  assert.equal(await clientRequest('clientA', immediate), 'declined');
+  assert.equal(
+    sql(`select level from public.barber_reliability_state where id=${barber}`),
+    'suspended',
+  );
+  assert.equal(
+    sql(`select s.status||':'||s.consecutive_misses||':'||r.outcome
+    from public.available_now_sessions s join private.available_now_request_receipts r on r.session_id=s.id
+    where s.id=${q(session)} and r.request_id=${q(immediate)}`),
+    'active:0:declined',
+  );
+  assert.equal(
+    sql(
+      `select count(*) from public.audit_logs where entity_id=${q(session)} and action='available_now.responded'`,
+    ),
+    '1',
+  );
+  const hiddenAudit = await apiJson(
+    stack,
+    '/rest/v1/audit_logs?select=metadata&entity_id=eq.' + immediate,
+    tokens.clientA,
+  );
+  assert.equal(hiddenAudit.status, 200);
+  assertRawBody(
+    hiddenAudit.body,
+    [],
+    'Client cannot read the internal decline audit',
+  );
+  pass(
+    'Available Now decline reset its source misses through one response receipt. The client sees only the declined state. Suspension state is preserved.',
+  );
+
+  sql(
+    `update public.available_now_sessions set consecutive_misses=1 where id=${q(session)};`,
+  );
+  for (const reason of [undefined, ...REQUEST_DECLINE_REASONS]) {
+    const id = cloneRequest(scheduled);
+    assertDeclined(await decline(id, reason), id, 'scheduled', reason);
+    assert.equal(await clientRequest('clientA', id), 'declined');
+  }
+  assert.equal(
+    sql(
+      `select status||':'||consecutive_misses from public.available_now_sessions where id=${q(session)}`,
+    ),
+    'active:1',
+  );
+  assertError(await decline(bulkClosed, 'too_far'), 409, 'request_not_pending');
+  assertRawBody(
+    requestDeclineAudit(bulkClosed),
+    [],
+    'Bulk closure retained its original audit and had no response',
+  );
+  pass(
+    'The four codes and omitted reason round-tripped to the internal audit. Scheduled declines did not affect availability. Bulk closure could not be declined again.',
+  );
+
+  const expired = cloneRequest(
+    scheduled,
+    "clock_timestamp() - interval '1 second'",
+  );
+  const undated = cloneRequest(scheduled, 'null');
+  for (const id of [expired, undated]) {
+    assertError(await decline(id), 409, 'request_not_pending');
+    assertNoAcceptance(id);
+    assertRawBody(requestDeclineAudit(id), [], 'Ineligible decline is inert');
+  }
+  for (const state of ['accepted', 'declined', 'expired', 'cancelled']) {
+    const id = cloneRequest(scheduled, undefined, state);
+    assertError(await decline(id), 409, 'request_not_pending');
+    assertNoAcceptance(id, state);
+    assertRawBody(requestDeclineAudit(id), [], 'Terminal decline is inert');
+  }
+  const lockingExpiry = cloneRequest(
+    scheduled,
+    "clock_timestamp()+interval '3 seconds'",
+  );
+  const gate = transaction(
+    `select 1 from public.booking_requests where id=${q(lockingExpiry)} for update`,
+  );
+  let delayed;
+  try {
+    const pid = await gate.ready();
+    delayed = decline(lockingExpiry);
+    await blockedBy(pid, 'decline_booking_request');
+    assert.equal(
+      sql(
+        `select expires_at > clock_timestamp() from public.booking_requests where id=${q(lockingExpiry)}`,
+      ),
+      't',
+    );
+    await until(
+      () =>
+        sql(
+          `select expires_at <= clock_timestamp() from public.booking_requests where id=${q(lockingExpiry)}`,
+        ) === 't',
+      'Decline fixture did not expire while blocked.',
+    );
+  } finally {
+    await gate.finish();
+  }
+  assertError(await delayed, 409, 'request_not_pending');
+  assertRawBody(
+    requestDeclineAudit(lockingExpiry),
+    [],
+    'Deadline crossed while waiting rolled back',
+  );
+  assertNoAcceptance(lockingExpiry);
+  pass(
+    'Expired, terminal, undated, and lock-delayed declines returned the exact conflict envelope with no effects.',
+  );
+
+  const broken = randomUUID();
+  sql(`insert into public.booking_requests(id,client_id,barber_id,booking_type,status,service_category_id,expires_at)
+    values(${q(broken)},${q(users.clientA)},${barber},'available_now','pending',${q(category)},clock_timestamp()+interval '5 minutes')`);
+  assertError(await decline(broken, 'too_far'), 500, 'internal_error');
+  assertNoAcceptance(broken);
+  assertRawBody(
+    requestDeclineAudit(broken),
+    [],
+    'Failed session hook rolled back request and audit',
+  );
+  sql(
+    `update public.booking_requests set status='cancelled' where id=${q(broken)};`,
+  );
+  pass(
+    'A fixture session-hook failure rolled back the request update and produced only a safe error.',
+  );
+
+  setStanding('good_standing');
+  for (const template of [scheduled, immediate, scheduled]) {
+    const bookingType = template === scheduled ? 'scheduled' : 'available_now';
+    for (const [first, following] of [
+      ['accept', 'decline'],
+      ['decline', 'accept'],
+      ['decline', 'decline'],
+    ]) {
+      const id = cloneRequest(template);
+      const [winner, loser] = await orderedActions(id, first, following);
+      assertError(loser, 409, 'request_not_pending');
+      if (first === 'accept') {
+        assertAccepted(winner, id);
+        assertOneAcceptance(id, bookingType === 'available_now' ? 1 : 0);
+        assertRawBody(
+          requestDeclineAudit(id),
+          [],
+          'Losing decline had no audit',
+        );
+        releaseFixtureJobs();
+      } else {
+        assertDeclined(winner, id, bookingType, 'too_far');
+      }
+    }
+  }
+  pass(
+    'Six accept–decline races in both lock orders and three duplicate-decline races. The first writer won, the loser received 409, and booking, audit and session effects applied once.',
+  );
 }
 
 try {
@@ -606,6 +884,7 @@ try {
   pass(
     'Existing booking RLS denies a foreign barber. No payment row exists under any success or rejection. The controller transport test allows only Auth, profile and the local acceptance RPC.',
   );
+  if (args.includes('--with-decline')) await verifyDecline(scheduled, other);
 } finally {
   releaseFixtureJobs();
   sql(`begin;

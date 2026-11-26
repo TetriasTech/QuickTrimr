@@ -230,6 +230,7 @@ export const CONTRACT_EXAMPLES = {
     [
       ['requestId', 'not-a-uuid'],
       ['reason', ''],
+      ['reason', 'unrecognised_reason'],
       ['requestId', OMIT_FIELD],
     ],
     { requestId: REQUEST_ID, status: requestDeclined },

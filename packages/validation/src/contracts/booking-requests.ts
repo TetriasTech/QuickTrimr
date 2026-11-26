@@ -1,6 +1,7 @@
 import {
   BOOKING_STATUS_VALUE,
   BOOKING_TYPE_VALUE,
+  REQUEST_DECLINE_REASONS,
   REQUEST_STATUS_VALUE,
 } from '@quicktrimr/shared';
 import { z } from 'zod';
@@ -89,7 +90,7 @@ export type AcceptBookingRequestResponse = z.infer<
 
 export const declineBookingRequestRequestSchema = requestObject({
   requestId: postgresUuidSchema,
-  reason: nonEmptyStringSchema.optional(),
+  reason: z.enum(REQUEST_DECLINE_REASONS).optional(),
 });
 export type DeclineBookingRequestRequest = z.infer<
   typeof declineBookingRequestRequestSchema

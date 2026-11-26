@@ -3782,10 +3782,10 @@ owner: Andrew
 phase: 2
 priority: High
 jiraKey: TRIMR-56
-dependsOn: [P2-T08, P2-T10]
+dependsOn: [P2-T03, P2-T08, P2-T10, P2-T12]
 affects: [P2-T14, P2-T15, P3-T06]
-knowledgeBase: [ADR-013, RULE-REQUEST-06, RULE-AVAIL-03, ENUM-REQUEST-STATUS]
-blockedByTbc: []
+knowledgeBase: [ADR-013, RULE-REQUEST-05, RULE-REQUEST-06, RULE-REQUEST-07, RULE-AVAIL-03, ENUM-REQUEST-STATUS]
+blockedByTbc: [TBC-REQUEST-DECLINE-REASON]
 labels: [quicktrimr, phase-2, backend]
 ```
 
@@ -3801,7 +3801,7 @@ Like `P2-T12`, it stops short of Stripe. `RULE-REQUEST-06` cancels the authorisa
 
 Validate authenticated barber, request addressed to them, still `pending`, not expired.
 
-Transition `pending → declined` conditionally, so a decline racing an acceptance loses cleanly.
+Transition `pending → declined` conditionally under the same lock order as `P2-T12`. The earlier valid transition determines the outcome. The other action returns `409 request_not_pending`.
 
 Reset the consecutive-miss counter via `P2-T03` — a decline is a response, not a miss.
 
@@ -3809,7 +3809,7 @@ Use `private.record_available_now_request_outcome(request_id,'declined')` in the
 transaction as the conditional request transition. The source-session receipt makes
 duplicate delivery idempotent. Do not call it for requests bulk-closed by another acceptance.
 
-An optional decline reason, for later insight into why requests are refused.
+The optional reason is `too_far`, `unavailable`, `service_unavailable` or `other` under `RULE-REQUEST-07`. A supplied code is recorded in the internal decline audit. Unsupported values receive a `reason` field error. Clients see the declined status.
 
 Audit log.
 
@@ -3832,20 +3832,20 @@ Audit log.
 **Acceptance criteria**
 
 - [ ] A barber can decline a pending request addressed to them.
-- [ ] **A decline racing an acceptance loses cleanly** — the request ends `accepted`, the decline returns `409`, and no booking is corrupted.
+- [ ] **The first valid transition wins an accept–decline race.** If acceptance wins, the request stays `accepted` with one booking and decline returns `409`. If decline wins, the request stays `declined`, there is no booking, and acceptance returns `409`.
 - [ ] An expired or already-resolved request returns `409 request_not_pending` in the shared error envelope; read permitted current state separately rather than adding a status property to the error.
 - [ ] A request addressed to another barber returns 403.
 - [ ] **Declining resets the consecutive-miss counter** (`RULE-AVAIL-03`).
-- [ ] An optional reason is stored when supplied.
+- [ ] Each allowed reason code is recorded when supplied, omission succeeds, and unsupported values return a field-level `422`. Clients cannot read the audit code.
 - [ ] The client sees the declined state on their pending screen.
 - [ ] An audit log is written.
 - [ ] No Stripe call is made.
 
-**Tests** — parallel accept and decline on one request, repeated, asserting a consistent single outcome; miss-counter reset; cross-barber 403; expired request rejected.
+**Tests** — real simultaneous accept and decline in both lock orders, repeated; duplicate declines; miss-counter reset on the original Available Now session; Scheduled and bulk closures preserve their distinct outcomes; cross-barber 403; deadline and reason validation; raw client status and audit denial.
 
 **Out of scope** — authorisation cancellation (`P3-T06`); the decline UI (`P2-T14`); reliability consequences, which decline does not incur.
 
-**Sync notes** — `P3-T06` adds authorisation cancellation to this path. Use `P2-T12`'s barber-profile-first lock order before locking or updating the request.
+**Sync notes** — `P3-T06` adds authorisation cancellation to this path. Use `P2-T12`'s barber-profile-first lock order before locking or updating the request. `P2-T14` may omit the reason when calling this endpoint.
 
 ---
 

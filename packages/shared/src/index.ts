@@ -49,5 +49,6 @@ export type { VerificationStatus } from './enums/verification-status.ts';
 export { toIntegerCents } from './integer-cents.ts';
 export type { IntegerCents } from './integer-cents.ts';
 export { LOCATION_SOURCE, LOCATION_SOURCE_VALUE } from './location-source.ts';
+export { REQUEST_DECLINE_REASONS } from './request-decline-reason.ts';
 export type { LocationSource } from './location-source.ts';
 export { assertPostgresEnumValuesMatch } from './postgres-enum-parity.ts';

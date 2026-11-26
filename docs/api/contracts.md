@@ -1270,9 +1270,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P2-T13. Caller: **user**. Roles: barber.
 
-Rules: `RULE-REQUEST-05`, `RULE-REQUEST-06`.
+Rules: `RULE-REQUEST-05`, `RULE-REQUEST-06`, `RULE-REQUEST-07`.
 
-Target barber only; reason optional, request must still be pending. P3-T06 later cancels its hold.
+Only the addressed barber can decline a pending, unexpired request. The optional reason must be too_far, unavailable, service_unavailable or other. Only the internal audit records the code. P3-T06 adds hold cancellation.
 
 Shared request schema: `declineBookingRequestRequestSchema`.
 Shared response schema: `declineBookingRequestResponseSchema`.
