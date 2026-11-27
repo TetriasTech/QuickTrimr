@@ -247,7 +247,7 @@ export const FOUNDATION_CONTRACT_EXAMPLES = {
     },
   ),
   'create-payment-authorisation': example(
-    { bookingRequestId: ID, paymentMethodId: 'pm_synthetic_example' },
+    { bookingRequestId: ID, operation: 'verify' },
     {
       paymentId: ID,
       status: paymentStatusSchema.enum.authorised,

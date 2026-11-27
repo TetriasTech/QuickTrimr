@@ -572,6 +572,8 @@ Decision confirmed by Andrew for `P0-D08`: four hours' lead time leaves preparat
 
 - `RULE-PAY-01` — The amount is calculated server-side from the booking's own price snapshot. A client-supplied amount is ignored, never trusted.
 - `RULE-PAY-02` — Payment is authorised at request time with a **manual-capture** PaymentIntent (`ADR-006`).
+
+- `RULE-PAY-14` — Andrew approved Option A on 2026-11-27 for payment authorisation in the QuickTrimr Stripe sandbox. Collect the card through Stripe's mobile SDK for each booking request, including any 3D Secure challenge. Use one request-bound manual-capture PaymentIntent with the saved integer-cent gross and a server-derived creation key. Give its client secret only to the authenticated owning client to use with the SDK. Keep it out of storage, logs, URLs and analytics. Confirm the authorisation by reading the provider's state and actual hold deadline. An SDK success alone does not establish a hold. After a confirmed decline, the client may retry with a different card on the same intent before the original request deadline. After a disconnect or unknown result, reconcile the existing operation with Stripe before attempting again. Keep the deadline unchanged. When reconciliation finds a late or unusable hold, cancel it without capture and confirm the provider outcome. Persist incomplete release work so the same operation can be retried. Booking submission and terminal request lifecycle wiring remain in `P3-T06` and verified webhook routing in `P3-T03`.
 - `RULE-PAY-03` — Payment is captured when — and only when — a valid acceptance succeeds. A booking becomes confirmed only after the capture succeeds.
 - `RULE-PAY-04` — **Capture is idempotent.** A duplicate call charges once. The idempotency key is deterministic and server-derived; a client-supplied key can be varied and defeats the guard.
 - `RULE-PAY-05` — A failed capture leaves the booking and request in a defined, recoverable state, and both parties are told. It never leaves a booking confirmed with no money.
@@ -1084,6 +1086,7 @@ Config stored in the database lives in a platform config table, is updatable onl
 
 | ID | Question | Blocks | Decided by |
 |---|---|---|---|
+| `TBC-REQUEST-PAYMENT-AUTHORISATION-FLOW` | **RESOLVED → `RULE-PAY-14`** — Andrew approved Option A on 2026-11-27. | `P3-T01` integration and sandbox evidence, consumed by `P3-T02`, `P3-T03`, `P3-T06` and `P3-T07`. | Andrew |
 | `TBC-REQUEST-EXPIRY-WORKER-OPERATIONS` | **RESOLVED → `CFG-REQUEST-EXPIRY-WORKER-OPERATIONS`** — Andrew approved Option A on 2026-11-26. | `P2-T15` worker implementation and capacity, recovery and alert acceptance | Andrew |
 | `TBC-REQUEST-EXPIRY-VERIFICATION` | **RESOLVED → `RULE-OPS-REQUEST-EXPIRY-VERIFICATION`** — Andrew approved Option A on 2026-11-26. | `P2-T15` local scheduler, independent heartbeat and overdue alert evidence | Andrew |
 | `TBC-REQUEST-DECLINE-REASON` | **RESOLVED → `RULE-REQUEST-07`** — Andrew approved Option A on 2026-11-26. The optional reason is one of four codes, stored in the internal audit record. Clients see the status. | `P2-T13` decline contract and `P2-T14` consumer | Andrew |

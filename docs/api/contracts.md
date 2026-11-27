@@ -1057,9 +1057,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P3-T01. Caller: **user**. Roles: client.
 
-Rules: `ADR-006`, `RULE-PAY-01`, `RULE-PAY-02`, `RULE-PAY-04`.
+Rules: `ADR-006`, `RULE-PAY-01`, `RULE-PAY-02`, `RULE-PAY-04`, `RULE-PAY-14`.
 
-Own request and payment method only. SDK collects card data; server authorizes the request snapshot with manual capture, no surcharge. Authorisation expiry in the example is synthetic, not a guaranteed provider lifetime. SCA/SDK recovery is implemented and evidenced by P3-T01, not these error fixtures.
+Owner only. Prepare returns the request-bound intent client secret with Cache-Control: no-store. The SDK collects card details and handles authentication. Verify reads Stripe before recording authorisation and uses the provider deadline. The amount always comes from the immutable snapshot.
 
 Shared request schema: `createPaymentAuthorisationRequestSchema`.
 Shared response schema: `createPaymentAuthorisationResponseSchema`.
@@ -1070,7 +1070,7 @@ Request (decoded envelope only for Stripe):
 ```json
 {
   "bookingRequestId": "11111111-1111-4111-8111-111111111111",
-  "paymentMethodId": "pm_synthetic_example"
+  "operation": "verify"
 }
 ```
 
@@ -1094,7 +1094,9 @@ Request (decoded envelope only for Stripe):
 | 402 | `{"error":"card_declined"}` | Provider declines the authorization. |
 | 402 | `{"error":"insufficient_funds"}` | Insufficient funds; distinct safe error, not an arbitrary raw decline payload. |
 | 402 | `{"error":"authentication_required"}` | Customer authentication is required through the owning SDK flow; never log a client secret. |
-| 409 | `{"error":"already_authorised"}` | Existing authorization must be reused/reconciled. |
+| 409 | `{"error":"request_not_pending"}` | The request can no longer be authorised. |
+| 409 | `{"error":"payment_method_required"}` | The SDK must collect or verify the card. |
+| 409 | `{"error":"authorisation_window_unavailable"}` | The original hold could not cover the request. |
 | 502 | `{"error":"stripe_unavailable"}` | Provider unavailable; do not report a money effect as successful. Reconcile unknown outcomes before retrying. |
 
 ### create-refund

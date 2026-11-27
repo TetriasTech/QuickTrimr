@@ -386,8 +386,8 @@ export const CONTRACT_DETAILS = {
   'create-payment-authorisation': user(
     'P3-T01',
     [c],
-    ['ADR-006', 'RULE-PAY-01', 'RULE-PAY-02', 'RULE-PAY-04'],
-    'Own request and payment method only. SDK collects card data; server authorizes the request snapshot with manual capture, no surcharge. Authorisation expiry in the example is synthetic, not a guaranteed provider lifetime. SCA/SDK recovery is implemented and evidenced by P3-T01, not these error fixtures.',
+    ['ADR-006', 'RULE-PAY-01', 'RULE-PAY-02', 'RULE-PAY-04', 'RULE-PAY-14'],
+    'Owner only. Prepare returns the request-bound intent client secret with Cache-Control: no-store. The SDK collects card details and handles authentication. Verify reads Stripe before recording authorisation and uses the provider deadline. The amount always comes from the immutable snapshot.',
     [
       error(402, 'card_declined', 'Provider declines the authorization.'),
       error(
@@ -402,8 +402,18 @@ export const CONTRACT_DETAILS = {
       ),
       error(
         409,
-        'already_authorised',
-        'Existing authorization must be reused/reconciled.',
+        'request_not_pending',
+        'The request can no longer be authorised.',
+      ),
+      error(
+        409,
+        'payment_method_required',
+        'The SDK must collect or verify the card.',
+      ),
+      error(
+        409,
+        'authorisation_window_unavailable',
+        'The original hold could not cover the request.',
       ),
       unavailable,
     ],

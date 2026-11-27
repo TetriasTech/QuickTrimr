@@ -1,0 +1,11 @@
+Local Edge Function: scanned 106 lines
+  server secret or signing key: 0 matches
+  PaymentIntent client secret: 0 matches
+  synthetic full card number: 0 matches
+  full Stripe payment/charge payload marker: 0 matches
+Local iPhone Metro: scanned 2531 lines
+  server secret or signing key: 0 matches
+  PaymentIntent client secret: 0 matches
+  synthetic full card number: 0 matches
+  full Stripe payment/charge payload marker: 0 matches
+Scan prints counts only. The SDK-generated callback stays out of application routes.

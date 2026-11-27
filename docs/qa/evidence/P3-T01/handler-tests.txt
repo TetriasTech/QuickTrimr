@@ -1,0 +1,16 @@
+✔ owner prepares one manual intent, ignores forged amount, key and identity and binds before returning the SDK secret (19.68775ms)
+✔ provider verification records the exact expiry and omits the SDK credential from the authorised response (2.751458ms)
+✔ unusable holds persist the release before Stripe, then record the provider-confirmed cancellation (2.26575ms)
+✔ verification reports authentication_required safely and retains the same intent for the client (0.551375ms)
+✔ verification reports card_declined safely and retains the same intent for the client (0.391708ms)
+✔ verification reports insufficient_funds safely and retains the same intent for the client (0.436625ms)
+✔ anonymous, non-client, foreign requests and malformed body cannot access Stripe or a client secret (0.683833ms)
+✔ an uncertain Stripe result preserves the prepared state and emits only a safe error code (0.183375ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 185.750334
