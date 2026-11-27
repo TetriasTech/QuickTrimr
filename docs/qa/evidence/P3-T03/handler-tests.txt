@@ -1,0 +1,16 @@
+✔ sweep forwards caller authentication and bounds provider fan-out until outcomes commit (4.589958ms)
+✔ signed thin events project only ID/type/account into refresh and acknowledge after commit (4.786416ms)
+✔ missing, stale and tampered signatures write nothing before JSON parsing (1.153834ms)
+✔ authenticated invalid bodies, foreign legacy account IDs and live-mode data fail closed (1.698958ms)
+✔ legacy snapshot is a refresh hint and unrecognised events are safely acknowledged (0.725333ms)
+✔ duplicate acknowledgement and failure response preserve the durable handler contract (0.84525ms)
+✔ financial routes save only the verified identity before acknowledging (1.511416ms)
+✔ financial receipts are required for acknowledgement and bound to event kind and account (0.966625ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 131.718958

@@ -2035,9 +2035,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P1-T09 / P3-T03. Caller: **stripe**. Roles: no user role; authenticated internal service or verified provider only.
 
-Rules: `RULE-PAY-07`, `RULE-PAY-06`, `RULE-PAY-10`.
+Rules: `RULE-PAY-07`, `RULE-PAY-06`, `RULE-PAY-10`, `RULE-PAY-16`.
 
-Provider ingress. Verify Stripe-Signature against ORIGINAL RAW BYTES before JSON decoding, validation or any write. Snapshot account.updated and Accounts v2 account/capability/requirements/closure notifications trigger a fresh provider read under a DB-owned account lease. Commit event ID, status and safe audit together. Duplicates and irrelevant events acknowledge 200. A busy lease or failed required effect returns processing_failed for Stripe to retry. Decoded fixtures are unsigned and cannot authenticate anything. Personal provider fields and raw payloads are never persisted or logged.
+Provider ingress. Verify Stripe-Signature against ORIGINAL RAW BYTES before JSON decoding or any write. Financial events acknowledge only after the minimal receipt commits; an authenticated background sweep reconciles current provider objects. Snapshot account.updated and Accounts v2 account, capability, requirements and closure events retain their verified refresh path. Duplicate and unrecognised events acknowledge 200. A required receipt or Connect refresh failure returns processing_failed. Personal provider fields and raw payloads are never persisted or logged.
 
 Shared request schema: `stripeWebhookRequestSchema`.
 Shared response schema: `stripeWebhookResponseSchema`.
@@ -2070,6 +2070,7 @@ Request (decoded envelope only for Stripe):
 | --- | --- | --- |
 | 400 | `{"error":"invalid_signature"}` | Missing or invalid provider signature; no event parsing or data write. |
 | 400 | `{"error":"invalid_event"}` | Verified event cannot be decoded safely. |
+| 403 | `{"error":"sandbox_events_only"}` | Live provider events are excluded from this build. |
 | 500 | `{"error":"processing_failed"}` | Verified event processing failed; no false acknowledgement of a required durable effect. |
 
 ### update-available-now-session

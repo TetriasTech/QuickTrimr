@@ -4,6 +4,9 @@ import { z } from 'zod';
 
 import { json } from '../_shared/responses/json.mts';
 
+import { financialEventType, financialReference } from './financial-events.ts';
+
+import type { createFinancialWorker } from './financial-worker.ts';
 import type { ConnectRefresher } from '../_shared/stripe/refresh.ts';
 
 // Accounts v2 capabilities/requirements are separate thin events.
@@ -24,11 +27,15 @@ const eventEnvelope = stripeWebhookRequestSchema.extend({
 type Options = {
   secrets: readonly string[];
   refresh: ConnectRefresher;
-  log?: Pick<Console, 'error'>;
+  platformId: string;
+  financial: ReturnType<typeof createFinancialWorker>;
+  log?: Pick<Console, 'error'> & Partial<Pick<Console, 'info'>>;
 };
 export function createStripeWebhookHandler({
   secrets,
   refresh,
+  platformId,
+  financial,
   log = console,
 }: Options) {
   if (!secrets.length || secrets.some((secret) => !secret.startsWith('whsec_')))
@@ -40,6 +47,8 @@ export function createStripeWebhookHandler({
     telemetry: false,
   });
   return async (request: Request) => {
+    if (new URL(request.url).pathname.endsWith('/stripe-webhook/sweep'))
+      return financial.sweep(request);
     if (request.method !== 'POST')
       return json({ error: 'method_not_allowed' }, 405, { Allow: 'POST' });
     const signature = request.headers.get('stripe-signature');
@@ -106,8 +115,28 @@ export function createStripeWebhookHandler({
     if (!decoded.success) return json({ error: 'invalid_event' }, 400);
     const event = decoded.data;
     if (event.livemode) return json({ error: 'sandbox_events_only' }, 403);
-    if (!connectEventTypes.some((type) => type === event.type))
+    const financialType = financialEventType.safeParse(event.type);
+    if (financialType.success) {
+      const reference = financialReference(
+        { ...event, type: financialType.data },
+        platformId,
+      );
+      if (!reference) return json({ error: 'invalid_event' }, 400);
+      try {
+        const duplicate = await financial.enqueue(reference);
+        return json(
+          duplicate ? { received: true, duplicate: true } : { received: true },
+          200,
+        );
+      } catch {
+        log.error('stripe_webhook.receipt_failed', event.type, event.id);
+        return json({ error: 'processing_failed' }, 500);
+      }
+    }
+    if (!connectEventTypes.some((type) => type === event.type)) {
+      log.info?.('stripe_webhook.ignored', event.type, event.id);
       return json({ received: true }, 200);
+    }
     const snapshot = z
       .object({
         object: z.object({ id: z.string(), object: z.literal('account') }),

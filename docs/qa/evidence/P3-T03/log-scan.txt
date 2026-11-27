@@ -1,0 +1,12 @@
+Local webhook log scan, 28 November 2026 (Australia/Sydney)
+Sources: local Edge service log, Edge container log, both sandbox verifier runs.
+Only counts were recorded.
+Active Stripe test API credential: 0
+Local webhook signing secret: 0
+Local Supabase service JWT: 0
+Stripe PaymentIntent or SetupIntent client secret: 0
+Stripe API and webhook secret patterns: 0
+Synthetic card numbers: 0
+Full Stripe financial object markers: 0
+Synthetic private payload field: 0
+PASS
