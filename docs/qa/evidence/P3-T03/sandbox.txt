@@ -1,0 +1,22 @@
+Local Stripe webhook verifier, 28 November 2026 (Australia/Sydney)
+Run 1 — PASS
+PASS Missing and tampered signatures write nothing. Worker, replay and private rows deny participant and foreign users. Transfer events are ignored.
+PASS 100 concurrent signed acknowledgements with processing paused, p99 90 ms. Receipts committed before response; a worker claim was bounded to 20 jobs and four concurrent reconciliations.
+PASS Three simultaneous deliveries reconciled one Stripe capture. Late payment-failed and success deliveries read the current intent. History, audit and notice counts stayed at one.
+PASS A canceled Stripe authorisation reconciled without booking confirmation.
+PASS A pending refund stayed queued until Stripe confirmed 503 mapped cents. An unmatched 700-cent refund created a review hold and denied queueing without changing the booking.
+PASS A genuine Stripe sandbox bank dispute created a review hold and preserved booking and payment history.
+PASS Payout mapper rejected the wrong account. Mapped paid then late failed reconciled with append-only effects. Stale paid did not re-credit an earning. Provider boundary simulated for P3-T11.
+PASS Backoff was 1, 5, 15 and 60 minutes. The fifth failure entered review. Replay kept attempts, overlapping sweeps were denied, and an expired lease was recovered.
+PASS Versioned 10-second pg_cron and pg_net executed the protected local Edge sweep and updated the heartbeat.
+
+Run 2 — PASS
+PASS Missing and tampered signatures write nothing. Worker, replay and private rows deny participant and foreign users. Transfer events are ignored.
+PASS 100 concurrent signed acknowledgements with processing paused, p99 81 ms. Receipts committed before response; a worker claim was bounded to 20 jobs and four concurrent reconciliations.
+PASS Three simultaneous deliveries reconciled one Stripe capture. Late payment-failed and success deliveries read the current intent. History, audit and notice counts stayed at one.
+PASS A canceled Stripe authorisation reconciled without booking confirmation.
+PASS A pending refund stayed queued until Stripe confirmed 503 mapped cents. An unmatched 700-cent refund created a review hold and denied queueing without changing the booking.
+PASS A genuine Stripe sandbox bank dispute created a review hold and preserved booking and payment history.
+PASS Payout mapper rejected the wrong account. Mapped paid then late failed reconciled with append-only effects. Stale paid did not re-credit an earning. Provider boundary simulated for P3-T11.
+PASS Backoff was 1, 5, 15 and 60 minutes. The fifth failure entered review. Replay kept attempts, overlapping sweeps were denied, and an expired lease was recovered.
+PASS Versioned 10-second pg_cron and pg_net executed the protected local Edge sweep and updated the heartbeat.

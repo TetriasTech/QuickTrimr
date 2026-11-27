@@ -4206,9 +4206,9 @@ owner: Andrew
 phase: 3
 priority: Highest
 jiraKey: TRIMR-62
-dependsOn: [P0-D05, P0-T18, P1-T09, P3-T01]
-affects: [P3-T04, P3-T07, P3-T11, P5-T09]
-knowledgeBase: [ADR-013, RULE-PAY-06, RULE-PAY-07, RULE-PAY-10, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, ENUM-PAYMENT-STATUS]
+dependsOn: [P0-D05, P0-T18, P1-T09, P3-T01, P3-T02]
+affects: [P3-T04, P3-T07, P3-T10, P3-T11, P5-T09]
+knowledgeBase: [ADR-011, ADR-013, RULE-PAY-06, RULE-PAY-07, RULE-PAY-10, RULE-PAY-16, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, ENUM-PAYMENT-STATUS, CFG-STRIPE-WEBHOOK-WORKER]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -4235,9 +4235,13 @@ Deduplicate on the Stripe event id, persisted. A replayed event is a no-op.
 
 Fast acknowledgement, with slow work deferred — a handler that exceeds Stripe's timeout triggers a retry storm.
 
+Save only the verified event identity, type and resource references before acknowledging financial events. Reconcile current Stripe state under `RULE-PAY-16`. Use the bounded worker, retry and benchmark settings in `CFG-STRIPE-WEBHOOK-WORKER`.
+
 Unrecognised event types acknowledged and logged, never errored: a 500 on an event QuickTrimr does not care about causes Stripe to retry it indefinitely.
 
 Safe logging: event type and id only (`RULE-PAY-10`).
+
+**Contract example** — reuse the signed request and acknowledgement examples in `P1-T09`. A valid payment event receives `200 { "received": true }` once its receipt is durable. A replay of that event receives `200 { "received": true, "duplicate": true }`. A missing or invalid signature receives `400 { "error": "invalid_signature" }`.
 
 **Acceptance criteria**
 
@@ -4247,7 +4251,7 @@ Safe logging: event type and id only (`RULE-PAY-10`).
 - [ ] **A replayed event id produces exactly one effect** — verified by delivering the same event three times and asserting identical state.
 - [ ] Handlers are order-independent — a `succeeded` arriving after a local capture reconciles instead of double-applying.
 - [ ] An unrecognised event type is acknowledged with 200 and logged, not errored.
-- [ ] The endpoint acknowledges within Stripe's timeout under load.
+- [ ] The warmed endpoint meets the approved p99 acknowledgement target under 100 simultaneous signed deliveries while reconciliation is paused.
 - [ ] No full payload, card detail or secret is logged.
 - [ ] Events that change state write audit logs.
 - [ ] Handler failures are logged with enough detail to replay, without leaking data.
@@ -4256,7 +4260,7 @@ Safe logging: event type and id only (`RULE-PAY-10`).
 
 **Out of scope** — Connect account events (`P1-T09`); refund initiation (`P3-T07`); payout processing (`P3-T11`).
 
-**Sync notes** — four tickets depend on events routed here. Adding an event type means adding an idempotent handler, never a new endpoint.
+**Sync notes** — `P3-T04` and `P3-T10` preserve financial review holds. `P3-T07` binds approved refund operations to Stripe refund IDs for reconciliation. `P3-T11` populates the account-scoped payout mapping and checks holds before moving funds. `P5-T09` surfaces provider review records. Adding an event type means adding an idempotent handler, never a new Stripe endpoint.
 
 ---
 
@@ -4272,7 +4276,7 @@ priority: High
 jiraKey: TRIMR-63
 dependsOn: [P0-D02, P0-D03, P0-T10, P3-T02, P3-T03]
 affects: [P3-T05, P3-T07, P3-T10, P4-T09, P4-T11, P5-T09]
-knowledgeBase: [ADR-009, ADR-013, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-CANCEL-07, RULE-PAY-08, RULE-PAY-11, ENUM-EARNING-STATUS, CFG-COMMISSION-PCT]
+knowledgeBase: [ADR-009, ADR-013, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-CANCEL-07, RULE-PAY-08, RULE-PAY-11, RULE-PAY-16, ENUM-EARNING-STATUS, CFG-COMMISSION-PCT]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, database]
 ```
@@ -4471,7 +4475,7 @@ priority: Highest
 jiraKey: TRIMR-66
 dependsOn: [P0-D02, P0-D03, P0-D04, P3-T02, P3-T03, P3-T04, P3-T06]
 affects: [P3-T08, P3-T09, P3-T12, P5-T07, P5-T09]
-knowledgeBase: [ADR-009, ADR-013, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-PAY-11, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-RELY-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE]
+knowledgeBase: [ADR-009, ADR-013, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-PAY-11, RULE-PAY-16, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-RELY-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -4688,7 +4692,7 @@ priority: Medium
 jiraKey: TRIMR-69
 dependsOn: [P0-D02, P0-D03, P0-D05, P3-T04, P3-T07]
 affects: [P3-T11, P5-T10]
-knowledgeBase: [ADR-009, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-CANCEL-07, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE, CFG-PAYOUT-MIN-CENTS]
+knowledgeBase: [ADR-009, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-CANCEL-07, RULE-PAY-16, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE, CFG-PAYOUT-MIN-CENTS]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, database]
 ```
@@ -4716,6 +4720,8 @@ Idempotent batch creation — running the job twice for one period produces one 
 Only eligible `available` earnings with no open dispute may be queued. Include the adjusted inconvenience earning released after cancellation/refund success (`RULE-EARN-02`, `RULE-CANCEL-07`) even though its booking is cancelled. Do not require fake completion, include reversed full-refund earnings, or queue an amount while its cancellation refund is pending/failed. Existing eligible admin-resolution outcomes remain supported. Apply `RULE-EARN-07`'s normal cut-off and minimum; this exception does not decide payout cadence.
 
 If bank/account eligibility prevents queueing an otherwise available balance, retain that balance without a fake queued/paid state and persist the block reason/action for `P3-T11`'s notification and status projections. An unqueued account hold must not disappear merely because no batch item exists.
+
+Filter out earnings with a `P3-T03` financial review hold under `RULE-PAY-16`. Preserve the database's hold check when earnings are queued and store the earning-to-item links for reconciliation.
 
 Audit log per batch and per item.
 
@@ -4753,7 +4759,7 @@ priority: Medium
 jiraKey: TRIMR-70
 dependsOn: [P0-D05, P0-D07, P0-T18, P1-T07, P3-T03, P3-T10]
 affects: [P3-T05, P5-T10, P6-T02]
-knowledgeBase: [ADR-011, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-PAY-04, RULE-PAY-06, RULE-PAY-09, RULE-ONBOARD-04, RULE-NOTIF-01, RULE-NOTIF-03, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
+knowledgeBase: [ADR-011, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-PAY-04, RULE-PAY-06, RULE-PAY-09, RULE-PAY-16, RULE-ONBOARD-04, RULE-NOTIF-01, RULE-NOTIF-03, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -4783,6 +4789,8 @@ Confirmed temporary failures, including insufficient settled funds, retry the or
 **Per-item, not per-batch, transactionality.** One barber's failure must not roll back or re-attempt another's completed transfer or payout. No database lock spans either external call. A batch is `paid` only when all items are successfully paid, not merely terminal. Failure/cancellation and later corrections must remain visible.
 
 Integrate the account-scoped asynchronous payout routes in `P3-T03`, retaining the payout-to-item/earning mapping and durable deduplication. Produce durable payout/balance-change notification events for the barber and action-required/uncertainty alerts for admin; `P6-T02` integrates shared delivery without making financial success depend on push success. Expose the live own-barber projection to `P3-T05` and admin-only detail to `P5-T10`, with API-level denial tests and no bank details or secrets. No separate integration ticket.
+
+Use the stored payout and earning links from `P3-T03`. Recheck `RULE-PAY-16` review holds before provider calls, including for earnings already queued when the webhook arrived.
 
 Include `P3-T10`'s unqueued bank/account holds in those alerts and projections, not only attempted payments. After correction, queue still-available earnings under the normal next-run cut-off; only already-queued obligations resume an existing item. Test that an account blocked before its first batch is visible/notified and cannot silently strand an available balance.
 
@@ -6345,7 +6353,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D02, P0-T17, P1-T02, P3-T03, P3-T04]
 affects: [P5-T10]
-knowledgeBase: [ADR-009, ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, RULE-PAY-08, RULE-PAY-10, RULE-PAY-11, RULE-CANCEL-07, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS]
+knowledgeBase: [ADR-009, ROLE-ADMIN, RULE-ADMIN-01, RULE-ADMIN-04, RULE-PAY-08, RULE-PAY-10, RULE-PAY-11, RULE-PAY-16, RULE-CANCEL-07, ENUM-PAYMENT-STATUS, ENUM-EARNING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-5, admin, security]
 ```

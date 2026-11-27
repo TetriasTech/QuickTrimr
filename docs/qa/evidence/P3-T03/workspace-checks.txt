@@ -1,0 +1,9 @@
+QuickTrimr workspace checks, 28 November 2026 (Australia/Sydney)
+PASS pnpm typecheck — all workspaces
+PASS pnpm lint — all workspaces and scripts, zero warnings
+PASS pnpm test — 555 passing tests including 8 webhook tests
+PASS pnpm format:check — all matched files
+PASS pnpm check:client-env — server-only environment boundary
+PASS node scripts/api/contracts.mjs --check — 52 documented functions, no drift
+PASS node scripts/jira/generate-indexes.mjs --check — 108 tickets, 0 open TBCs
+PASS git diff --check
