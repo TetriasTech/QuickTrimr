@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import Stripe from 'stripe';
+
 import { createCaptureHandler } from '../handler.ts';
+import { captureErrorOutcome } from '../stripe.ts';
 
 const paymentId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const requestId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -199,4 +202,19 @@ test('worker permission is verified before exposing validation or Stripe calls',
   assert.equal(invalid.status, 422);
   assert.ok((await invalid.json()).fields.paymentId);
   assert.deepEqual(io.providerCalls, []);
+});
+
+test('Stripe capture expiry codes remain distinct from declines and uncertain responses', () => {
+  for (const code of [
+    'charge_expired_for_capture',
+    'capture_charge_authorization_expired',
+  ]) {
+    const expired = new Stripe.errors.StripeInvalidRequestError({ code });
+    assert.deepEqual(captureErrorOutcome(expired), { status: 'expired' });
+  }
+  const declined = new Stripe.errors.StripeCardError({ code: 'card_declined' });
+  assert.deepEqual(captureErrorOutcome(declined), { status: 'failed' });
+  assert.deepEqual(captureErrorOutcome(new Error('timeout')), {
+    status: 'unknown',
+  });
 });

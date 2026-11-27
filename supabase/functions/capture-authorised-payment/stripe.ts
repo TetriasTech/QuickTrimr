@@ -77,6 +77,19 @@ function project(
 
 const expand = ['latest_charge.balance_transaction'];
 
+export function captureErrorOutcome(error: unknown) {
+  // Stripe errors may contain the entire PaymentIntent and secrets.
+  if (
+    error instanceof Stripe.errors.StripeError &&
+    (error.code === 'charge_expired_for_capture' ||
+      error.code === 'capture_charge_authorization_expired')
+  )
+    return { status: 'expired' as const };
+  if (error instanceof Stripe.errors.StripeCardError)
+    return { status: 'failed' as const };
+  return { status: 'unknown' as const };
+}
+
 export function createCaptureProvider(key: string, sandboxAccount: string) {
   const { stripe, verifyPlatform } = createSandboxStripe(key, sandboxAccount);
   return {
@@ -102,15 +115,7 @@ export function createCaptureProvider(key: string, sandboxAccount: string) {
           attempt,
         );
       } catch (error) {
-        // Provider errors can contain the entire PaymentIntent and secrets.
-        if (
-          error instanceof Stripe.errors.StripeError &&
-          error.code === 'charge_expired'
-        )
-          return { status: 'expired' as const };
-        if (error instanceof Stripe.errors.StripeCardError)
-          return { status: 'failed' as const };
-        return { status: 'unknown' as const };
+        return captureErrorOutcome(error);
       }
     },
   };
