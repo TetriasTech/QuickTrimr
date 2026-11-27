@@ -357,6 +357,8 @@ Ownership is vertical (`ADR-012`). One named owner per ticket.
 
 - `RULE-DEV-PHASE2-OWNERSHIP` — On 2026-11-20 Andrew instructed that all Phase 2 tickets be created in Jira and assigned to him. Andrew is the sole named owner and Jira assignee for all 15 Phase 2 tickets (`P2-T01`–`P2-T15`), including request acceptance and expiry, and the Phase 2 Jira epic. This supersedes the default division of work for Phase 2 only. Delivery, security and readiness requirements and dependency ordering are unchanged; creating tickets does not start them or close their dependencies. Other phases retain their recorded ownership, including the existing Phase 1 handover.
 
+- `RULE-DEV-PHASE3-OWNERSHIP` — On 2026-11-26 Andrew requested creation and assignment of all Phase 3 work. Andrew is the sole named owner and Jira assignee for all 12 Phase 3 tickets (`P3-T01`–`P3-T12`) and the Phase 3 Jira epic. The handover covers payments, earnings, cancellations, payouts and reliability. The existing delivery, security, readiness and dependency requirements apply to each ticket.
+
 ### 6.2 Shared foundations
 
 Shared constants, enums, Zod schemas and UI primitives are built **first**, in Phase 0, because both engineers build against them. They still have one owner each; they are just sequenced early.

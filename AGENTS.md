@@ -137,6 +137,10 @@ Stripe Connect work (`RULE-DEV-PHASE1-OWNERSHIP`). Other phases keep their recor
 and its Jira epic (`RULE-DEV-PHASE2-OWNERSHIP`). This is a Phase 2 exception to the default split;
 other phases retain their recorded ownership, including the Phase 1 handover above.
 
+**Phase 3 handover:** Andrew owns all 12 Phase 3 tickets and their Jira epic
+(`RULE-DEV-PHASE3-OWNERSHIP`), including payments, earnings, cancellations,
+payouts and reliability.
+
 ## Commands
 
 ```bash
