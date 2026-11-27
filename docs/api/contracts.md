@@ -926,7 +926,7 @@ Owner ticket: P3-T04. Caller: **server**. Roles: no user role; authenticated int
 
 Rules: `RULE-EARN-01`, `RULE-PAY-11`, `RULE-CANCEL-07`.
 
-Internal service only after the owning workflow has authorized the action. Derive amount, operation identity and deterministic idempotency key from persisted snapshots/work; never trust body amounts. No lock across Stripe. Unknown provider outcomes require reconciliation, not a fresh operation. One earning per booking, initially pending after capture. Replay returns the full current record; never create a second entitlement or reapply current pricing.
+Create one pending earning in the verified capture transaction. A service replay by booking ID returns the full current record. Copy the booking snapshots and keep Stripe processing fees with QuickTrimr.
 
 Shared request schema: `createBarberEarningRequestSchema`.
 Shared response schema: `createBarberEarningResponseSchema`.
@@ -960,6 +960,7 @@ Request (decoded envelope only for Stripe):
 | 422 | `{"error":"validation_failed","fields":{"_request":"Invalid request or server-side business validation"}}` | Malformed input or server-side business validation failed; fields identifies invalid inputs. |
 | 404 | `{"error":"not_found"}` | Requested entity is missing or not accessible; never expose another user’s record. |
 | 500 | `{"error":"internal_error"}` | Unexpected internal failure; persist/reconcile recoverable work, never blind retry unknown money effects. |
+| 401 | `{"error":"unauthorized"}` | Missing internal credential. |
 | 409 | `{"error":"invalid_status_transition"}` | Current server-owned state does not permit the requested action. |
 
 ### create-booking-request
@@ -1811,7 +1812,7 @@ Owner ticket: P3-T04. Caller: **server**. Roles: no user role; authenticated int
 
 Rules: `RULE-EARN-02`, `RULE-EARN-03`.
 
-Internal authenticated worker/service only, never a mobile/admin mutation endpoint. Recheck authoritative state and server-derived deadlines at execution; early/stale/duplicate work must not overwrite newer state. Applied=false reports a no-op, not a failed effect. Persist history/audit and recover dropped work; fixtures prove none of that enforcement. Require eligible completion, successful cancellation/refund exception, or eligible admin resolution. Never release during an open dispute; cancelled is not completed.
+Release a pending earning using persisted completion, verified cancellation refund, or an eligible admin resolution. Record the first availability time and append an audit entry. A retry returns the existing status with applied=false.
 
 Shared request schema: `releaseBarberEarningRequestSchema`.
 Shared response schema: `releaseBarberEarningResponseSchema`.
@@ -1842,6 +1843,7 @@ Request (decoded envelope only for Stripe):
 | 422 | `{"error":"validation_failed","fields":{"_request":"Invalid request or server-side business validation"}}` | Malformed input or server-side business validation failed; fields identifies invalid inputs. |
 | 404 | `{"error":"not_found"}` | Requested entity is missing or not accessible; never expose another user’s record. |
 | 500 | `{"error":"internal_error"}` | Unexpected internal failure; persist/reconcile recoverable work, never blind retry unknown money effects. |
+| 401 | `{"error":"unauthorized"}` | Missing internal credential. |
 | 409 | `{"error":"dispute_open"}` | An open dispute prevents earning release. |
 | 409 | `{"error":"invalid_status_transition"}` | Current server-owned state does not permit the requested action. |
 

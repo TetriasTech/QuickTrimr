@@ -1,0 +1,16 @@
+{
+  "name": "@quicktrimr/function-create-barber-earning",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "dependencies": {
+    "@quicktrimr/validation": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/deno": "2.7.0"
+  }
+}

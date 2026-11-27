@@ -1,0 +1,10 @@
+Local verification log scan
+Sources: local Edge runtime and both verification scripts.
+Exact Stripe test credential: 0
+Exact local service JWT: 0
+Stripe API and webhook credentials: 0
+Stripe client secret: 0
+Full test card number: 0
+Raw Stripe payload object: 0
+Synthetic address or phone fixture: 0
+PASS

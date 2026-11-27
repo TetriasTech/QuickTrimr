@@ -1,0 +1,22 @@
+Running QuickTrimr Edge Functions and local Supabase
+Command: node scripts/db/verify-barber-earnings.mjs
+
+Run 1
+PASS Two rounds of eight concurrent capture commits and eight create replays produced one pending earning, one capture history row and one creation audit per booking. Unique index denied a direct duplicate.
+PASS Capture-pending state created no earning. Saved commission differed from current config. Gross less commission equalled barber net in integer cents with no deduction for the recorded Stripe fee.
+PASS The two running Edge Functions and their RPCs deny participant, foreign barber and admin mutations. Missing credentials, invalid UUID, extra amount, unknown entity and owning-barber-only raw row access passed.
+PASS Acceptance and barber-only completion denied release. Completed booking released once under eight parallel calls, preserving the first server availability timestamp and one audit record.
+PASS An open or under-review dispute returned 409 dispute_open and kept the earning pending, even when the booking fixture said completed.
+PASS Late Scheduled and Available Now cancellation fixtures rejected pending/failed refund mappings and the old service net. Verified adjusted cents released once with zero commission and no fake completion.
+PASS Admin barber-paid used the normal split and a verified partial service refund used proportional commission. Operational-only and full-refund outcomes had no release.
+PASS Existing Stripe financial-review hold still blocked payout queueing for the released earning.
+
+Run 2
+PASS Two rounds of eight concurrent capture commits and eight create replays produced one pending earning, one capture history row and one creation audit per booking. Unique index denied a direct duplicate.
+PASS Capture-pending state created no earning. Saved commission differed from current config. Gross less commission equalled barber net in integer cents with no deduction for the recorded Stripe fee.
+PASS The two running Edge Functions and their RPCs deny participant, foreign barber and admin mutations. Missing credentials, invalid UUID, extra amount, unknown entity and owning-barber-only raw row access passed.
+PASS Acceptance and barber-only completion denied release. Completed booking released once under eight parallel calls, preserving the first server availability timestamp and one audit record.
+PASS An open or under-review dispute returned 409 dispute_open and kept the earning pending, even when the booking fixture said completed.
+PASS Late Scheduled and Available Now cancellation fixtures rejected pending/failed refund mappings and the old service net. Verified adjusted cents released once with zero commission and no fake completion.
+PASS Admin barber-paid used the normal split and a verified partial service refund used proportional commission. Operational-only and full-refund outcomes had no release.
+PASS Existing Stripe financial-review hold still blocked payout queueing for the released earning.

@@ -11,6 +11,7 @@ export function createWorkerRpcHandler<Input>({
   responseSchema,
   readId,
   failureEvent,
+  conflicts = [],
   fetcher = fetch,
   log = console,
 }: {
@@ -22,6 +23,7 @@ export function createWorkerRpcHandler<Input>({
   responseSchema: z.ZodType;
   readId: (input: Input) => string;
   failureEvent: string;
+  conflicts?: readonly string[];
   fetcher?: typeof fetch;
   log?: Pick<Console, 'error'>;
 }) {
@@ -64,6 +66,11 @@ export function createWorkerRpcHandler<Input>({
         return json({ error: 'validation_failed', fields }, 422);
       }
       if (response.status === 404) return json({ error: 'not_found' }, 404);
+      if (response.status === 409 && conflicts.length) {
+        const { message } = (await response.json()) as { message?: string };
+        if (typeof message === 'string' && conflicts.includes(message))
+          return json({ error: message }, 409);
+      }
       if (!response.ok) throw new Error('Worker transition failed');
       return json(responseSchema.parse(await response.json()), 200);
     } catch {

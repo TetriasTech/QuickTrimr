@@ -4301,7 +4301,7 @@ Idempotent on booking id — a repeated call returns the existing earning.
 
 `release-barber-earning` moving `pending → available` only after a server-verified eligible outcome: completion (`P4-T09`, `P4-T11`), the cancellation/refund-success exception (`P3-T07`, `RULE-CANCEL-07`), or an already-specified eligible admin dispute resolution (`P5-T07`). Refuse while a dispute is open. The cancellation caller must supply no trusted client assertion: verify persisted cancellation/refund state and the adjusted earning; never release the original service net as well. `P3-T07` owns the cancellation integration, not this ticket.
 
-Audit log on creation and on every status change.
+Audit log on creation and release. Persist the server time of the transition to `available` for the payout cut-off in `P3-T10`.
 
 **Contract example** — `create-barber-earning`
 
@@ -4335,7 +4335,7 @@ Audit log on creation and on every status change.
 
 **Out of scope** — the earnings screen (`P3-T05`); payout batching (`P3-T10`); completion triggers (`P4-T09`, `P4-T11`).
 
-**Sync notes** — the tickets in `affects` read or adjust this row, including `P3-T07`'s cancellation path. Preserve request-time snapshots separately from adjustments, and keep `P0-D02` service rounding distinct from `P0-D03` cancellation rounding.
+**Sync notes** — the tickets in `affects` read or adjust this row. `P3-T07` records the approved cancellation on the provider refund mapping and persists its adjusted earning before calling release. Completion and dispute writers lock the booking before changing release evidence. `P3-T10` uses the server-recorded `available_at` and retains the `RULE-PAY-16` payout hold. Preserve request-time snapshots separately from adjustments, and keep `P0-D02` service rounding distinct from `P0-D03` cancellation rounding.
 
 ---
 
@@ -4505,7 +4505,7 @@ Pure functions in `packages/domain` taking the booking snapshot, the actor, the 
 
 Refunds are idempotent on a server-derived key. A double-tapped cancel refunds once.
 
-Earnings adjusted: `reversed` on a full refund, otherwise adjust the existing earning to the inconvenience amount and make it available through `P3-T04` only after cancellation/refund success and with no open dispute (`RULE-EARN-02`). Pending or failed refunds cannot release it. Preserve the cancelled booking status and original snapshots; never create a second service entitlement or fake completion. A retry cannot apply either refund or earning adjustment twice.
+Earnings adjusted: `reversed` on a full refund, otherwise adjust the existing earning to the inconvenience amount and make it available through `P3-T04` only after cancellation/refund success and with no open dispute (`RULE-EARN-02`). Mark the approved cancellation's Stripe refund mapping with `is_cancellation`. Pending or failed refunds cannot release the earning. Preserve the cancelled booking status and original snapshots; never create a second service entitlement or fake completion. A retry cannot apply either refund or earning adjustment twice.
 
 Barber cancellation raises a reliability event via `P3-T12` only where `RULE-CANCEL-04` applies; an outside-window Scheduled cancellation remains penalty-free (`RULE-CANCEL-02`).
 
