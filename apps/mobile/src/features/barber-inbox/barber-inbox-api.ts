@@ -66,12 +66,8 @@ export function barberInboxApi(supabase: SupabaseClient, userId: string) {
     async readBookingStatus(bookingId: string, signal: AbortSignal) {
       await verifySession(signal);
       const result = await supabase
-        .from('bookings')
-        .select('id,status')
-        .eq('id', bookingId)
-        .eq('barber_id', userId)
-        .abortSignal(signal)
-        .maybeSingle();
+        .rpc('get_barber_booking_status', { p_booking_id: bookingId })
+        .abortSignal(signal);
       if (result.error) throw result.error;
       await verifySession(signal);
       return barberBookingStatusSchema.nullable().parse(result.data);

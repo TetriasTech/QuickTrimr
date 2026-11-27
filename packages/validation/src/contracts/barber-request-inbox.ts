@@ -11,10 +11,12 @@ import {
 } from '../primitives.ts';
 
 import { distanceBandSchema } from './discovery.ts';
+import { paymentCaptureNoticeSchema } from './payments.ts';
 
 export const barberBookingStatusSchema = z.strictObject({
   id: postgresUuidSchema,
   status: bookingStatusSchema,
+  captureNotice: paymentCaptureNoticeSchema.optional(),
 });
 
 export const barberRequestInboxInputSchema = z

@@ -746,9 +746,9 @@ Request (decoded envelope only for Stripe):
 
 Owner ticket: P3-T02. Caller: **server**. Roles: no user role; authenticated internal service or verified provider only.
 
-Rules: `RULE-PAY-03`, `RULE-PAY-04`, `RULE-PAY-05`, `RULE-PAY-09`.
+Rules: `RULE-PAY-03`, `RULE-PAY-04`, `RULE-PAY-05`, `RULE-PAY-09`, `RULE-PAY-15`.
 
-Internal service only after the owning workflow has authorized the action. Derive amount, operation identity and deterministic idempotency key from persisted snapshots/work; never trust body amounts. No lock across Stripe. Unknown provider outcomes require reconciliation, not a fresh operation. Capture only after valid acceptance; failure keeps accepted_pending_payment. A successful duplicate returns the same captured record with idempotent=true.
+Internal service only after the owning workflow has authorized the action. Derive amount, operation identity and deterministic idempotency key from persisted snapshots/work; never trust body amounts. No lock across Stripe. Unknown provider outcomes require reconciliation, not a fresh operation. Capture only after valid acceptance. A verified outcome writes one in-app notice for both booking participants. Uncertain outcomes remain pending and are reconciled against Stripe. A successful duplicate returns the same captured record with idempotent=true.
 
 Shared request schema: `captureAuthorisedPaymentRequestSchema`.
 Shared response schema: `captureAuthorisedPaymentResponseSchema`.

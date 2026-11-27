@@ -1,0 +1,16 @@
+✔ uses server-derived identity and full integer cents and returns one safe response on replay (4.885333ms)
+✔ an uncertain capture is reconciled using the original intent without a second capture (0.709542ms)
+✔ an unresolved provider response preserves the pending state and does not expose Stripe details (0.378291ms)
+✔ the exact authorisation boundary does not make a provider capture (0.254833ms)
+✔ a previously successful Stripe capture can be confirmed after the local hold deadline (0.27025ms)
+✔ confirmed capture rejection and provider expiry remain distinct on replay (0.686875ms)
+✔ worker permission is verified before exposing validation or Stripe calls (0.514708ms)
+✔ Stripe capture expiry codes remain distinct from declines and uncertain responses (0.119584ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 198.927458

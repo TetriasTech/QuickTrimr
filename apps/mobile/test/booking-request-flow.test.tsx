@@ -341,3 +341,43 @@ test('review distinguishes loading, retryable errors and an unavailable service'
   await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
   expect(await screen.findByText('Skin Fade')).toBeOnTheScreen();
 });
+
+test.each([
+  ['captured', 'Payment was received for this booking.'],
+  [
+    'capture_failed',
+    'Payment could not be collected. Your booking is awaiting payment confirmation.',
+  ],
+] as const)(
+  'shows the client notice after the server records %s',
+  async (captureNotice, message) => {
+    const api = apiMock();
+    const accepted = {
+      id,
+      bookingType: 'scheduled',
+      status: 'accepted',
+      expiresAt: end,
+      serverNow: now,
+    } as const;
+    api.status
+      .mockResolvedValueOnce(accepted)
+      .mockResolvedValue({ ...accepted, captureNotice });
+    await render(
+      <BookingRequestStatusScreen
+        api={api}
+        userId={id}
+        requestId={id}
+        activeAvailableNow={false}
+        focused
+        onDiscovery={jest.fn()}
+        onResolvedId={jest.fn()}
+      />,
+      { wrapper: wrap() },
+    );
+    expect(await screen.findByText('Request accepted')).toBeOnTheScreen();
+    expect(screen.queryByText(message)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Check status' }));
+    expect(await screen.findByText(message)).toBeOnTheScreen();
+    expect(api.submit).not.toHaveBeenCalled();
+  },
+);

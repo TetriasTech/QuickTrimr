@@ -4122,8 +4122,8 @@ phase: 3
 priority: Highest
 jiraKey: TRIMR-61
 dependsOn: [P0-D02, P2-T12, P3-T01]
-affects: [P3-T04, P3-T06, P5-T04, P5-T09]
-knowledgeBase: [ADR-006, ADR-009, ADR-010, ADR-013, RULE-PAY-03, RULE-PAY-04, RULE-PAY-05, RULE-PAY-06, RULE-PAY-09, RULE-PAY-11, RULE-PAY-13, ENUM-PAYMENT-STATUS, ENUM-BOOKING-STATUS]
+affects: [P3-T04, P3-T06, P5-T04, P5-T09, P6-T02]
+knowledgeBase: [ADR-006, ADR-009, ADR-010, ADR-011, ADR-013, RULE-PAY-03, RULE-PAY-04, RULE-PAY-05, RULE-PAY-06, RULE-PAY-09, RULE-PAY-11, RULE-PAY-12, RULE-PAY-13, RULE-PAY-15, RULE-NOTIF-02, RULE-COPY-01, ENUM-PAYMENT-STATUS, ENUM-BOOKING-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -4150,7 +4150,7 @@ On failure: `payments` to `capture_failed`, booking **stays** `accepted_pending_
 
 On an **expired authorisation**, a distinct error, because the recovery is different: the client must re-authorise, not retry.
 
-Sequence so that no lock is held across the Stripe call: read state, release, call Stripe, then apply the result conditionally.
+Sequence so that no lock is held across the Stripe call: persist a pending operation and release, call Stripe, then apply the result conditionally. Reconcile uncertain responses against Stripe before retrying the same operation. Keep the approved QuickTrimr sandbox boundary.
 
 Stripe is the source of truth (`RULE-PAY-06`). The webhook in `P3-T03` reconciles anything this path misses. `RULE-PAY-11`'s processing fee is a QuickTrimr cost, not a barber-net deduction; reconcile against actual Stripe-reported processing fees, never the KB's illustrative fee.
 
@@ -4184,7 +4184,7 @@ Stripe is the source of truth (`RULE-PAY-06`). The webhook in `P3-T03` reconcile
 - [ ] **A failed capture leaves the booking at `accepted_pending_payment`** and the payment at `capture_failed` — never a confirmed booking with no money. Proven by a simulated provider capture error (`RULE-PAY-13`), not an authorisation decline, refund failure or dispute.
 - [ ] An expired authorisation returns `409 authorisation_expired`, distinct from a decline.
 - [ ] **No database lock is held across the Stripe call** — demonstrated by the code path and by a load test that does not exhaust connections.
-- [ ] Both parties are notified on success and on failure.
+- [ ] Both parties can see a durable in-app notice for success and confirmed failure on their existing status screens. Other users cannot read the event; concurrent duplicate responses write it once (`RULE-PAY-15`).
 - [ ] Amounts are integer cents and match the authorised amount.
 - [ ] An audit log is written for success and for failure.
 
@@ -4192,7 +4192,7 @@ Stripe is the source of truth (`RULE-PAY-06`). The webhook in `P3-T03` reconcile
 
 **Out of scope** — wiring capture into acceptance (`P3-T06`); the webhook (`P3-T03`); earnings (`P3-T04`).
 
-**Sync notes** — `P3-T06` calls this from the acceptance path. `P3-T04` creates the earning from a successful capture. `P5-T04` must surface bookings stuck at `accepted_pending_payment`, because that is where a capture failure leaves them.
+**Sync notes** — `P3-T06` calls this from the acceptance path. `P3-T04` creates the earning from a successful capture. `P5-T04` must surface bookings stuck at `accepted_pending_payment`, because that is where a capture failure leaves them. `P6-T02` reuses the persisted capture outcome event for push delivery.
 
 ---
 
@@ -4406,7 +4406,7 @@ priority: Highest
 jiraKey: TRIMR-65
 dependsOn: [P2-T08, P2-T09, P2-T12, P2-T13, P2-T15, P3-T01, P3-T02]
 affects: [P4-T01, P4-T02, P5-T04]
-knowledgeBase: [ADR-006, ADR-010, RULE-AVAIL-07, RULE-PAY-02, RULE-PAY-03, RULE-PAY-05, RULE-REQUEST-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS]
+knowledgeBase: [ADR-006, ADR-010, RULE-AVAIL-07, RULE-PAY-02, RULE-PAY-03, RULE-PAY-05, RULE-PAY-15, RULE-REQUEST-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe]
 ```
@@ -6697,7 +6697,7 @@ priority: High
 jiraKey: null
 dependsOn: [P0-D05, P0-D07, P2-T08, P2-T12, P3-T06, P3-T11, P4-T11, P6-T01]
 affects: []
-knowledgeBase: [ADR-011, RULE-AVAIL-07, RULE-NOTIF-01, RULE-NOTIF-02, RULE-NOTIF-03, RULE-NOTIF-04, RULE-COPY-01, RULE-EARN-04, RULE-EARN-07]
+knowledgeBase: [ADR-011, RULE-AVAIL-07, RULE-NOTIF-01, RULE-NOTIF-02, RULE-NOTIF-03, RULE-NOTIF-04, RULE-COPY-01, RULE-EARN-04, RULE-EARN-07, RULE-PAY-15]
 blockedByTbc: []
 labels: [quicktrimr, phase-6, backend, notifications]
 ```
@@ -6715,6 +6715,8 @@ Notifications carry QuickTrimr's state changes to people who are not looking at 
 A shared notification helper used by every triggering ticket, covering every event in `RULE-NOTIF-01`.
 
 Integrate `P3-T11`'s durable payout/balance-change events and action-required/uncertain-outcome alerts for barber/admin (`RULE-EARN-07`). Payment success means bank-payout confirmation, not transfer funding. Processing dates and arrival estimates are labelled distinctly; holds require corrective guidance, not an unconditional next-run promise. Do not add bank details to payloads, and keep the in-app/admin state available when push is denied or fails.
+
+Reuse the durable capture outcome events from `P3-T02` for client and barber push delivery under `RULE-PAY-15`.
 
 Payloads carrying an identifier and minimal display text, with detail fetched in-app on open.
 
