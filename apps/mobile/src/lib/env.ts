@@ -61,3 +61,12 @@ export const mobileEnv = {
     );
   },
 } as const;
+
+export function readStripeSandboxPublishableKey(): string | undefined {
+  try {
+    const key = mobileEnv.stripePublishableKey;
+    return /^pk_test_[A-Za-z0-9]+$/.test(key) ? key : undefined;
+  } catch {
+    return undefined;
+  }
+}

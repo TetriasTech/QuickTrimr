@@ -1,0 +1,9 @@
+Quick Trimr sandbox Dashboard, after test hold cleanup
+Search by the PaymentIntent ID returned from five concurrent prepares
+Intent/account IDs omitted. Sandbox API also counted all intents tagged with the same request.
+
+159 heading Search results: Payments, Value: 1
+185 link Description: $45.03
+187 link Description: AUD
+189 link Description: ​ Canceled
+81 text Sandbox You're testing in a sandbox. Changes you make here don't affect real customers or payments.

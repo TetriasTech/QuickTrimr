@@ -6,17 +6,36 @@ import {
 import { invokeEdgeFunction } from '@/lib/api/invoke-edge-function';
 import { supabaseEdgeTransport } from '@/lib/api/supabase-edge-transport';
 
-import type { CreateBookingRequestRequest } from '@quicktrimr/validation';
+import type {
+  CreateBookingRequestRequest,
+  CreatePaymentAuthorisationRequest,
+} from '@quicktrimr/validation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export function bookingRequestApi(supabase: SupabaseClient, userId: string) {
-  async function session() {
-    const result = await supabase.auth.getSession();
-    if (result.error || result.data.session?.user.id !== userId)
-      throw new Error('Session changed.');
-    return result.data.session;
-  }
+async function readSession(supabase: SupabaseClient, userId: string) {
+  const result = await supabase.auth.getSession();
+  if (result.error || result.data.session?.user.id !== userId)
+    throw new Error('Session changed.');
+  return result.data.session;
+}
 
+export async function authoriseBookingRequest(
+  supabase: SupabaseClient,
+  userId: string,
+  input: CreatePaymentAuthorisationRequest,
+) {
+  const session = await readSession(supabase, userId);
+  const result = await invokeEdgeFunction(
+    supabaseEdgeTransport(supabase, session.access_token),
+    'create-payment-authorisation',
+    input,
+  );
+  await readSession(supabase, userId);
+  return result;
+}
+
+export function bookingRequestApi(supabase: SupabaseClient, userId: string) {
+  const session = () => readSession(supabase, userId);
   return {
     async review(input: CreateBookingRequestRequest, signal?: AbortSignal) {
       await session();

@@ -127,6 +127,9 @@ verify_jwt = true
 [functions.expire-booking-request]
 verify_jwt = true
 
+[functions.create-payment-authorisation]
+verify_jwt = true
+
 [functions.search-available-now-barbers]
 verify_jwt = true
 

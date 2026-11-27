@@ -4025,7 +4025,7 @@ priority: Highest
 jiraKey: TRIMR-60
 dependsOn: [P0-D02, P0-T18, P2-T08]
 affects: [P3-T02, P3-T03, P3-T06, P3-T07]
-knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-PAY-01, RULE-PAY-02, RULE-PAY-08, RULE-PAY-10, RULE-PAY-11, ENUM-PAYMENT-STATUS, CFG-COMMISSION-PCT]
+knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-PAY-01, RULE-PAY-02, RULE-PAY-04, RULE-PAY-06, RULE-PAY-08, RULE-PAY-09, RULE-PAY-10, RULE-PAY-11, RULE-PAY-12, RULE-PAY-14, ENUM-PAYMENT-STATUS, CFG-COMMISSION-PCT]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe, security]
 ```
@@ -4042,11 +4042,11 @@ labels: [quicktrimr, phase-3, backend, stripe, security]
 
 `create-payment-authorisation` Edge Function.
 
-Read the amount from the booking request snapshot. Create a **manual-capture** PaymentIntent for that amount against the client's payment method. `RULE-PAY-11` forbids a client card-processing surcharge: do not inflate the amount with an estimated Stripe fee.
+Read the amount from the booking request snapshot. Create a **manual-capture** PaymentIntent for that amount bound to the client's request. `RULE-PAY-11` forbids a client card-processing surcharge: do not inflate the amount with an estimated Stripe fee.
 
 A `payments` row keyed to the request, statuses through `ENUM-PAYMENT-STATUS`, all amounts integer cents (`ADR-009`).
 
-Payment method collection via Stripe's SDK — QuickTrimr never handles card numbers, and no card data reaches a QuickTrimr server or log.
+Collect the card for this request using Stripe’s mobile SDK. Use the owning client’s request-bound PaymentIntent for 3D Secure and retries, verify the hold with Stripe, and reconcile late or unusable holds under `RULE-PAY-14`. QuickTrimr never handles card numbers.
 
 **A deterministic, server-derived idempotency key** — derived from the request id, never client-supplied (`RULE-PAY-04`). A client-chosen key can be varied and defeats the guard entirely.
 
@@ -4059,8 +4059,15 @@ Audit log. Never log a card number, a full payload, or a secret (`RULE-PAY-10`).
 **Contract example** — `create-payment-authorisation`
 
 ```jsonc
-// request — no amount. It comes from the request snapshot.
-{ "bookingRequestId": "d5e1...", "paymentMethodId": "pm_1..." }
+// prepare — return the owning client's SDK credential for the single request-bound intent
+{ "bookingRequestId": "d5e1...", "operation": "prepare" }
+
+// 200 — ready for the SDK, or resume its authentication via the same intent
+{ "paymentId": "p820...", "status": "requires_authorisation",
+  "clientSecret": "<Stripe intent client secret>", "authenticationRequired": false }
+
+// verify — provider state is retrieved using the stored intent
+{ "bookingRequestId": "d5e1...", "operation": "verify" }
 
 // 200
 { "paymentId": "p820...", "status": "authorised", "amountCents": 4500,
@@ -4075,8 +4082,9 @@ Audit log. Never log a card number, a full payload, or a secret (`RULE-PAY-10`).
 // 402 — SCA
 { "error": "authentication_required" }
 
-// 409 — already authorised
-{ "error": "already_authorised" }
+// 409 — the request cannot be authorised or the verified hold cannot cover it
+{ "error": "request_not_pending" }
+{ "error": "authorisation_window_unavailable" }
 
 // 502
 { "error": "stripe_unavailable" }
@@ -4099,7 +4107,7 @@ Audit log. Never log a card number, a full payload, or a secret (`RULE-PAY-10`).
 
 **Out of scope** — capture (`P3-T02`); wiring into request creation (`P3-T06`); refunds (`P3-T07`).
 
-**Sync notes** — `P3-T02` captures what this authorises and `P3-T07` refunds it. The `payments` row shape defined here is read by all of Phase 3 and by admin.
+**Sync notes** — `P3-T02` captures what this authorises and `P3-T07` refunds it. The request-keyed `payments` row and Stripe intent identity feed capture (`P3-T02`), verified events (`P3-T03`) and refunds (`P3-T07`). `P3-T06` embeds the SDK flow, gates unpaid requests from the barber and reconciles holds on request lifecycle transitions.
 
 ---
 

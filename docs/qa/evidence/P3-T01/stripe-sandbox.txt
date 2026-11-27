@@ -1,0 +1,7 @@
+PASS Live API denies anonymous, barber, foreign client and direct RPC access. Malformed input returns a field error.
+PASS Direct payment API denies provider-ID reads and status writes for all tested client and barber roles.
+PASS Five parallel prepares and verifies converge on one Stripe PaymentIntent, one local payment and one authorisation audit. Snapshot 4503 cents and the provider hold deadline matched. Zero capture.
+PASS Sandbox provider outcome card_declined returned the distinct safe API error and preserved the intent.
+PASS Sandbox provider outcome insufficient_funds returned the distinct safe API error and preserved the intent.
+PASS Sandbox provider outcome authentication_required returned the distinct safe API error and preserved the intent.
+PASS Late sandbox hold was released with no capture and no authorised audit.

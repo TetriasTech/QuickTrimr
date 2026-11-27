@@ -23,6 +23,7 @@
     "@quicktrimr/shared": "workspace:*",
     "@quicktrimr/ui": "workspace:*",
     "@quicktrimr/validation": "workspace:*",
+    "@stripe/stripe-react-native": "0.64.0",
     "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.104.0",
     "expo": "~57.0.24",
