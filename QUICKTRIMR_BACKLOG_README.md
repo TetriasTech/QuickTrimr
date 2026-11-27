@@ -48,7 +48,7 @@ Ownership is **vertical** (`ADR-012`). Each ticket has exactly one named owner w
 
 There is no "Shared" owner. The previous backlog's `Owner stream: Shared` produced tickets nobody owned; foundation tickets have one owner too, they are just sequenced first.
 
-**Phase handovers:** Andrew owns every Phase 1 ticket (`RULE-DEV-PHASE1-OWNERSHIP`) and every Phase 2 ticket, including request acceptance and expiry (`RULE-DEV-PHASE2-OWNERSHIP`). Their Jira epics are also assigned to Andrew. Other phases retain their recorded owners.
+**Phase handovers:** Andrew owns every ticket and Jira epic in Phases 1–3 (`RULE-DEV-PHASE1-OWNERSHIP`, `RULE-DEV-PHASE2-OWNERSHIP`, `RULE-DEV-PHASE3-OWNERSHIP`).
 
 ---
 
@@ -4003,6 +4003,8 @@ idempotent authorisation release and provider reconciliation to this path.
 ---
 ## Phase 3 — Payments, Earnings, Cancellations & Payouts
 
+**Ownership:** Andrew owns all 12 Phase 3 tickets under `RULE-DEV-PHASE3-OWNERSHIP`. [Phase 3 Jira epic (TRIMR-59)](https://tetrias-tech.atlassian.net/browse/TRIMR-59).
+
 **Goal:** an accepted request captures money, creates an earning, can be refunded under the cancellation rules, and can be batched for payout.
 
 **This is the phase where mistakes cost money and some of them are irreversible.** A Stripe transfer to a barber's bank cannot be recalled. Every ticket here is idempotent on a server-derived key, and no ticket holds a database lock across a Stripe call.
@@ -4017,10 +4019,10 @@ idempotent authorisation release and provider reconciliation to this path.
 id: P3-T01
 title: "Payment authorisation"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-60
 dependsOn: [P0-D02, P0-T18, P2-T08]
 affects: [P3-T02, P3-T03, P3-T06, P3-T07]
 knowledgeBase: [ADR-006, ADR-009, ADR-013, RULE-PAY-01, RULE-PAY-02, RULE-PAY-08, RULE-PAY-10, RULE-PAY-11, ENUM-PAYMENT-STATUS, CFG-COMMISSION-PCT]
@@ -4107,10 +4109,10 @@ Audit log. Never log a card number, a full payload, or a secret (`RULE-PAY-10`).
 id: P3-T02
 title: "Payment capture"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-61
 dependsOn: [P0-D02, P2-T12, P3-T01]
 affects: [P3-T04, P3-T06, P5-T04, P5-T09]
 knowledgeBase: [ADR-006, ADR-009, ADR-010, ADR-013, RULE-PAY-03, RULE-PAY-04, RULE-PAY-05, RULE-PAY-06, RULE-PAY-09, RULE-PAY-11, RULE-PAY-13, ENUM-PAYMENT-STATUS, ENUM-BOOKING-STATUS]
@@ -4192,10 +4194,10 @@ Stripe is the source of truth (`RULE-PAY-06`). The webhook in `P3-T03` reconcile
 id: P3-T03
 title: "Stripe webhook router"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-62
 dependsOn: [P0-D05, P0-T18, P1-T09, P3-T01]
 affects: [P3-T04, P3-T07, P3-T11, P5-T09]
 knowledgeBase: [ADR-013, RULE-PAY-06, RULE-PAY-07, RULE-PAY-10, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, ENUM-PAYMENT-STATUS]
@@ -4256,10 +4258,10 @@ Safe logging: event type and id only (`RULE-PAY-10`).
 id: P3-T04
 title: "Barber earnings"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: High
-jiraKey: null
+jiraKey: TRIMR-63
 dependsOn: [P0-D02, P0-D03, P0-T10, P3-T02, P3-T03]
 affects: [P3-T05, P3-T07, P3-T10, P4-T09, P4-T11, P5-T09]
 knowledgeBase: [ADR-009, ADR-013, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-CANCEL-07, RULE-PAY-08, RULE-PAY-11, ENUM-EARNING-STATUS, CFG-COMMISSION-PCT]
@@ -4331,10 +4333,10 @@ Audit log on creation and on every status change.
 id: P3-T05
 title: "Barber earnings and balance screen"
 issueType: Story
-owner: Tony
+owner: Andrew
 phase: 3
 priority: Medium
-jiraKey: null
+jiraKey: TRIMR-64
 dependsOn: [P0-D05, P0-T14, P1-T08, P3-T04, P3-T11]
 affects: []
 knowledgeBase: [RULE-EARN-02, RULE-EARN-04, RULE-EARN-05, RULE-EARN-07, RULE-CANCEL-07, RULE-COPY-01, ENUM-EARNING-STATUS]
@@ -4390,10 +4392,10 @@ RLS: a barber sees only their own earnings.
 id: P3-T06
 title: "Wire payments into the request lifecycle"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-65
 dependsOn: [P2-T08, P2-T09, P2-T12, P2-T13, P2-T15, P3-T01, P3-T02]
 affects: [P4-T01, P4-T02, P5-T04]
 knowledgeBase: [ADR-006, ADR-010, RULE-AVAIL-07, RULE-PAY-02, RULE-PAY-03, RULE-PAY-05, RULE-REQUEST-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS]
@@ -4455,10 +4457,10 @@ Authorisation cancellation on decline and expiry is idempotent — an already-ca
 id: P3-T07
 title: "Cancellation and refund rules"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: Highest
-jiraKey: null
+jiraKey: TRIMR-66
 dependsOn: [P0-D02, P0-D03, P0-D04, P3-T02, P3-T03, P3-T04, P3-T06]
 affects: [P3-T08, P3-T09, P3-T12, P5-T07, P5-T09]
 knowledgeBase: [ADR-009, ADR-013, RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-04, RULE-CANCEL-05, RULE-CANCEL-07, RULE-PAY-11, RULE-EARN-01, RULE-EARN-02, RULE-EARN-03, RULE-RELY-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT, CFG-INCONVENIENCE-FEE]
@@ -4561,10 +4563,10 @@ The following amounts implement `RULE-CANCEL-07` for a 4500-cent captured servic
 id: P3-T08
 title: "Client cancellation"
 issueType: Story
-owner: Tony
+owner: Andrew
 phase: 3
 priority: High
-jiraKey: null
+jiraKey: TRIMR-67
 dependsOn: [P0-D03, P0-T14, P2-T09, P3-T07]
 affects: []
 knowledgeBase: [RULE-CANCEL-01, RULE-CANCEL-02, RULE-CANCEL-03, RULE-CANCEL-06, RULE-CANCEL-07, RULE-COPY-01, CFG-LATE-CANCEL-WINDOW-HOURS, CFG-CANCEL-REFUND-PCT]
@@ -4616,10 +4618,10 @@ Handle a booking that became non-cancellable while the client was deciding — a
 id: P3-T09
 title: "Barber cancellation"
 issueType: Story
-owner: Tony
+owner: Andrew
 phase: 3
 priority: High
-jiraKey: null
+jiraKey: TRIMR-68
 dependsOn: [P0-D03, P0-D04, P0-T14, P3-T07, P3-T12]
 affects: []
 knowledgeBase: [RULE-CANCEL-02, RULE-CANCEL-04, RULE-CANCEL-06, RULE-CANCEL-07, RULE-RELY-01, RULE-RELY-03, RULE-RELY-06, RULE-COPY-01]
@@ -4672,10 +4674,10 @@ Handle a booking that became non-cancellable mid-decision.
 id: P3-T10
 title: "Payout batch model and queueing"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: Medium
-jiraKey: null
+jiraKey: TRIMR-69
 dependsOn: [P0-D02, P0-D03, P0-D05, P3-T04, P3-T07]
 affects: [P3-T11, P5-T10]
 knowledgeBase: [ADR-009, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-CANCEL-07, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE, CFG-PAYOUT-MIN-CENTS]
@@ -4737,10 +4739,10 @@ Audit log per batch and per item.
 id: P3-T11
 title: "Payout batch processing"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: Medium
-jiraKey: null
+jiraKey: TRIMR-70
 dependsOn: [P0-D05, P0-D07, P0-T18, P1-T07, P3-T03, P3-T10]
 affects: [P3-T05, P5-T10, P6-T02]
 knowledgeBase: [ADR-011, ADR-013, RULE-EARN-02, RULE-EARN-03, RULE-EARN-04, RULE-EARN-05, RULE-EARN-06, RULE-EARN-07, RULE-PAY-04, RULE-PAY-06, RULE-PAY-09, RULE-ONBOARD-04, RULE-NOTIF-01, RULE-NOTIF-03, ENUM-EARNING-STATUS, ENUM-PAYOUT-STATUS, CFG-PAYOUT-SCHEDULE]
@@ -4810,10 +4812,10 @@ Append-only audit log per item/attempt and correction, recording safe transfer/p
 id: P3-T12
 title: "Barber reliability engine"
 issueType: Task
-owner: Tony
+owner: Andrew
 phase: 3
 priority: High
-jiraKey: null
+jiraKey: TRIMR-71
 dependsOn: [P0-D04, P0-D07, P0-T10, P2-T01, P2-T02, P2-T04, P3-T07]
 affects: [P2-T01, P2-T02, P2-T04, P2-T08, P2-T12, P2-T14, P3-T09, P5-T03, P5-T13]
 knowledgeBase: [ADR-011, ADR-013, RULE-RELY-01, RULE-RELY-02, RULE-RELY-03, RULE-RELY-04, RULE-RELY-05, RULE-RELY-06, ENUM-RELIABILITY-LEVEL, CFG-RELIABILITY-WINDOW-DAYS, CFG-RELIABILITY-RESET-DAYS, CFG-RELIABILITY-COOLDOWN-MIN, CFG-RELIABILITY-THRESHOLDS, CFG-RELIABILITY-SEARCH-PENALTY]
