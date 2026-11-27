@@ -7412,6 +7412,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `RULE-OPS-DEV-PLACEHOLDERS` | `P0-T18`, `P0-T20` |
 | `RULE-OPS-GOOGLE-DEV-DEFERRAL` | `P0-T18`, `P0-T20`, `P2-T07`, `P4-T05`, `P6-T09`, `P6-T11` |
 | `RULE-OPS-PROVIDER-OWNERSHIP` | `P0-T18`, `P0-T20`, `P2-T03` |
+| `RULE-OPS-REQUEST-EXPIRY-VERIFICATION` | `P2-T15` |
 | `RULE-OPS-STRIPE-SANDBOX-ACK` | `P0-T18` |
 | `RULE-OPS-STRIPE-TEST-ONBOARDING` | `P0-T18` |
 | `RULE-PAY-01` | `P0-D02`, `P0-T07`, `P0-T08`, `P3-T01` |
@@ -7494,6 +7495,7 @@ ticket listed is either still correct or needs a follow-up. Record which, in the
 | `CFG-RELIABILITY-SEARCH-PENALTY` | `P0-D04`, `P2-T04`, `P3-T12` |
 | `CFG-RELIABILITY-THRESHOLDS` | `P0-D04`, `P3-T12` |
 | `CFG-RELIABILITY-WINDOW-DAYS` | `P0-D04`, `P3-T12`, `P5-T13` |
+| `CFG-REQUEST-EXPIRY-WORKER-OPERATIONS` | `P2-T15` |
 | `CFG-REVIEW-DEADLINE-DAYS` | `P0-D08`, `P4-T14`, `P4-T15` |
 | `CFG-SCHED-EXPIRY-HOURS` | `P0-T18`, `P2-T08`, `P2-T09`, `P2-T15` |
 | `CFG-SCHED-MAX-HORIZON-DAYS` | `P0-D08`, `P2-T05`, `P2-T08`, `P2-T09` |
