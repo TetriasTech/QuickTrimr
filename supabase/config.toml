@@ -133,6 +133,12 @@ verify_jwt = true
 [functions.capture-authorised-payment]
 verify_jwt = true
 
+[functions.create-barber-earning]
+verify_jwt = true
+
+[functions.release-barber-earning]
+verify_jwt = true
+
 [functions.search-available-now-barbers]
 verify_jwt = true
 

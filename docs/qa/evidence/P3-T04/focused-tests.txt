@@ -1,0 +1,13 @@
+✔ RULE-PAY-11 reconciles the worked examples and keeps fees with the platform (0.336958ms)
+✔ RULE-CANCEL-07 rounds refunds up and fully reverses commission (0.075708ms)
+✔ rejects fractional or impossible cents and preserves unknown fees (0.118417ms)
+✔ create sends only the booking reference and the original caller JWT (9.449834ms)
+✔ release exposes only recognized transition conflicts and strips database detail (0.863208ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.263625

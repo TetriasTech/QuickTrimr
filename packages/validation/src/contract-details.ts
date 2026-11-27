@@ -582,14 +582,15 @@ export const CONTRACT_DETAILS = {
   'create-barber-earning': server(
     'P3-T04',
     ['RULE-EARN-01', 'RULE-PAY-11', 'RULE-CANCEL-07'],
-    `${moneyNotes} One earning per booking, initially pending after capture. Replay returns the full current record; never create a second entitlement or reapply current pricing.`,
-    [transition],
+    'Create one pending earning in the verified capture transaction. A service replay by booking ID returns the full current record. Copy the booking snapshots and keep Stripe processing fees with QuickTrimr.',
+    [error(401, 'unauthorized', 'Missing internal credential.'), transition],
   ),
   'release-barber-earning': server(
     'P3-T04',
     ['RULE-EARN-02', 'RULE-EARN-03'],
-    `${workerNotes} Require eligible completion, successful cancellation/refund exception, or eligible admin resolution. Never release during an open dispute; cancelled is not completed.`,
+    'Release a pending earning using persisted completion, verified cancellation refund, or an eligible admin resolution. Record the first availability time and append an audit entry. A retry returns the existing status with applied=false.',
     [
+      error(401, 'unauthorized', 'Missing internal credential.'),
       error(409, 'dispute_open', 'An open dispute prevents earning release.'),
       transition,
     ],

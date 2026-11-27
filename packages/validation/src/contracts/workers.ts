@@ -148,7 +148,7 @@ export const createBarberEarningResponseSchema = z.strictObject({
   grossCents: integerCentsSchema,
   commissionCents: integerCentsSchema,
   barberNetCents: integerCentsSchema,
-  commissionPctSnapshot: z.number().finite().nonnegative(),
+  commissionPctSnapshot: z.number().int().min(0).max(100),
   idempotent: z.boolean().optional(),
 });
 export type CreateBarberEarningResponse = z.infer<
