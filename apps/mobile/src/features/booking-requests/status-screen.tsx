@@ -13,6 +13,7 @@ import { focusManager, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { PaymentCaptureNotice } from '@/features/payment-authorisation/payment-capture-notice';
 import { queryKeys } from '@/lib/query/query-keys';
 
 import type { BookingRequestApi } from './booking-request-api';
@@ -190,7 +191,21 @@ export function BookingRequestStatusScreen({
             <Text style={typography.body}>
               {terminal[request.status].message}
             </Text>
+            {request.captureNotice ? (
+              <PaymentCaptureNotice
+                outcome={request.captureNotice}
+                audience="client"
+              />
+            ) : null}
           </Card>
+          {request.status === REQUEST_STATUS_VALUE.ACCEPTED &&
+          !request.captureNotice ? (
+            <Button
+              label="Check status"
+              loading={query.isFetching}
+              onPress={() => refetch().catch(() => undefined)}
+            />
+          ) : null}
           <Button
             label={terminal[request.status].action}
             onPress={onDiscovery}

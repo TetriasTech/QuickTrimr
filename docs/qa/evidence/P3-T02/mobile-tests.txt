@@ -1,0 +1,8 @@
+PASS test/booking-request-flow.test.tsx
+PASS test/barber-inbox.test.tsx
+
+Test Suites: 2 passed, 2 total
+Tests:       34 passed, 34 total
+Snapshots:   0 total
+Time:        2.558 s
+Ran all test suites matching /test\/booking-request-flow.test.tsx|test\/barber-inbox.test.tsx/i.

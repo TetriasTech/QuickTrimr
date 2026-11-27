@@ -420,8 +420,8 @@ export const CONTRACT_DETAILS = {
   ),
   'capture-authorised-payment': server(
     'P3-T02',
-    ['RULE-PAY-03', 'RULE-PAY-04', 'RULE-PAY-05', 'RULE-PAY-09'],
-    `${moneyNotes} Capture only after valid acceptance; failure keeps accepted_pending_payment. A successful duplicate returns the same captured record with idempotent=true.`,
+    ['RULE-PAY-03', 'RULE-PAY-04', 'RULE-PAY-05', 'RULE-PAY-09', 'RULE-PAY-15'],
+    `${moneyNotes} Capture only after valid acceptance. A verified outcome writes one in-app notice for both booking participants. Uncertain outcomes remain pending and are reconciled against Stripe. A successful duplicate returns the same captured record with idempotent=true.`,
     [
       error(
         402,

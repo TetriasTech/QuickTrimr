@@ -17,6 +17,7 @@ import {
 import { requestObject } from '../request-object.ts';
 
 import { savedAddressSchema } from './client-addresses.ts';
+import { paymentCaptureNoticeSchema } from './payments.ts';
 
 const reviewTokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
 
@@ -141,6 +142,7 @@ export const clientBookingRequestSchema = z.strictObject({
   status: requestStatusSchema,
   expiresAt: timestampSchema,
   serverNow: timestampSchema,
+  captureNotice: paymentCaptureNoticeSchema.optional(),
 });
 export type ClientBookingRequestStatus = z.infer<
   typeof clientBookingRequestSchema

@@ -1,0 +1,6 @@
+Quick Trimr sandbox Dashboard for the synthetic payment used in the native test.
+Payment and account identifiers omitted. The verifier independently enumerated one captured charge for this intent.
+
+Title: "Transactions – Quick Trimr sandbox – Stripe [Test]"
+10 heading $45.03 AUD ​ Succeeded, Value: 1
+24 text $45.03 captured

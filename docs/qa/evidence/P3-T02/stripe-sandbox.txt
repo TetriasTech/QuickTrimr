@@ -1,0 +1,5 @@
+PASS Capture and event writes deny anonymous, participant and foreign callers. Field validation and unaccepted-booking rejection passed.
+PASS Run 1: eight concurrent calls and a replay produced one Stripe charge for 4503 cents, one booking transition, one audit and one participant notice event.
+PASS Run 2: eight concurrent calls and a replay produced one Stripe charge for 4503 cents, one booking transition, one audit and one participant notice event.
+PASS Expired hold returned its distinct 409 and produced zero capture.
+PASS Injected provider rejection left booking pending, wrote one audit and notice, and 32 parallel reads plus all three row locks succeeded during suspended provider I/O.

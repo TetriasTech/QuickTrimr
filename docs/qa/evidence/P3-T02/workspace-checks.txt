@@ -1,0 +1,8 @@
+PASS pnpm typecheck
+PASS pnpm lint
+PASS pnpm test (workspace suites and 218 root tests)
+PASS pnpm format:check
+PASS pnpm check:client-env
+PASS node scripts/api/contracts.mjs --check (52 contracts)
+PASS node scripts/jira/generate-indexes.mjs --check (108 tickets, zero open decisions)
+PASS git diff --check

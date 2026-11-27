@@ -1,0 +1,18 @@
+Local Edge runtime — 9 lines scanned
+  Stripe API or webhook secret: 0 matches
+  PaymentIntent client secret: 0 matches
+  full synthetic Visa card number: 0 matches
+  full provider charge or PaymentIntent marker: 0 matches
+  Supabase service credential: 0 matches
+Local iPhone Metro — 2546 lines scanned
+  Stripe API or webhook secret: 0 matches
+  PaymentIntent client secret: 0 matches
+  full synthetic Visa card number: 0 matches
+  full provider charge or PaymentIntent marker: 0 matches
+  Supabase service credential: 0 matches
+Local Edge serve — 52 lines scanned
+  Stripe API or webhook secret: 0 matches
+  PaymentIntent client secret: 0 matches
+  full synthetic Visa card number: 0 matches
+  full provider charge or PaymentIntent marker: 0 matches
+  Supabase service credential: 0 matches

@@ -13,6 +13,7 @@ import {
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { Text } from 'react-native';
 
+import { PaymentCaptureNotice } from '@/features/payment-authorisation/payment-capture-notice';
 import { queryKeys } from '@/lib/query/query-keys';
 
 import type { BarberInboxApi } from './barber-inbox-api';
@@ -54,8 +55,13 @@ export function BarberBookingStatusScreen({
       {query.data ? (
         <Card style={{ gap: spacing.md }}>
           <StatusBadge status={query.data.status} />
-          {query.data.status ===
-          BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT ? (
+          {query.data.captureNotice ? (
+            <PaymentCaptureNotice
+              outcome={query.data.captureNotice}
+              audience="barber"
+            />
+          ) : query.data.status ===
+            BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT ? (
             <Text style={typography.body}>
               You accepted this request. Wait for booking confirmation before
               travelling.
@@ -66,6 +72,14 @@ export function BarberBookingStatusScreen({
             {query.data.id}
           </Text>
         </Card>
+      ) : null}
+      {query.data?.status === BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT &&
+      !query.data.captureNotice ? (
+        <Button
+          label="Check status"
+          loading={query.isFetching}
+          onPress={() => query.refetch().catch(() => undefined)}
+        />
       ) : null}
       <Button label="Back to requests" variant="secondary" onPress={onInbox} />
     </Screen>

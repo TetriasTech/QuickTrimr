@@ -54,6 +54,12 @@ export type CaptureAuthorisedPaymentResponse = z.infer<
   typeof captureAuthorisedPaymentResponseSchema
 >;
 
+export const paymentCaptureNoticeSchema = z.union([
+  z.literal(paymentStatusSchema.enum.captured),
+  z.literal(paymentStatusSchema.enum.capture_failed),
+]);
+export type PaymentCaptureNotice = z.infer<typeof paymentCaptureNoticeSchema>;
+
 export const cancelPaymentAuthorisationRequestSchema = requestObject({
   paymentId: postgresUuidSchema,
 });

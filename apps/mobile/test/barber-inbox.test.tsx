@@ -602,3 +602,39 @@ test('checks the persisted booking status, retries errors and handles an unavail
   ).toBeOnTheScreen();
   expect(screen.queryByText(/client was charged|payment received/i)).toBeNull();
 });
+
+test.each([
+  ['captured', 'paid_confirmed', 'Payment was received for this booking.'],
+  [
+    'capture_failed',
+    'accepted_pending_payment',
+    'Payment could not be collected. Wait for booking confirmation before travelling.',
+  ],
+] as const)(
+  'shows the accepting barber notice for %s',
+  async (captureNotice, status, message) => {
+    const api = mockApi();
+    api.readBookingStatus.mockResolvedValue({
+      id: bookingId,
+      status,
+      captureNotice,
+    });
+    const cache = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    await render(
+      <QueryClientProvider client={cache}>
+        <BarberBookingStatusScreen
+          read={api.readBookingStatus}
+          bookingId={bookingId}
+          userId={userId}
+          focused
+          onInbox={jest.fn()}
+        />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText(message)).toBeOnTheScreen();
+    if (captureNotice === 'capture_failed')
+      expect(screen.getByText('Payment pending')).toBeOnTheScreen();
+  },
+);
