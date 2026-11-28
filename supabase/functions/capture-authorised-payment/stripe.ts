@@ -100,7 +100,9 @@ export function createCaptureProvider(key: string, sandboxAccount: string) {
         attempt,
       );
     },
-    async capture(attempt: IntentIdentity & { paymentId: string }) {
+    async capture(
+      attempt: IntentIdentity & { paymentId: string; captureAttempt?: number },
+    ) {
       await verifyPlatform();
       try {
         return project(
@@ -110,7 +112,12 @@ export function createCaptureProvider(key: string, sandboxAccount: string) {
               amount_to_capture: attempt.amountCents,
               expand,
             },
-            { idempotencyKey: 'quicktrimr:capture:' + attempt.paymentId },
+            {
+              idempotencyKey:
+                'quicktrimr:capture:' +
+                attempt.paymentId +
+                (attempt.captureAttempt ? ':' + attempt.captureAttempt : ''),
+            },
           ),
           attempt,
         );

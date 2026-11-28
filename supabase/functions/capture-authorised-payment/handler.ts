@@ -23,6 +23,7 @@ const operationSchema = z.strictObject({
   expired: z.boolean(),
   failureReason: z.enum(['capture_failed', 'authorisation_expired']).nullable(),
   idempotent: z.boolean(),
+  captureAttempt: z.number().int().nonnegative().default(0),
 });
 const gatewayErrorSchema = z.object({
   message: z.enum(['invalid_status_transition', 'authorisation_expired']),
@@ -131,15 +132,17 @@ export function createCaptureHandler({
                 result.expiresAt,
                 Date.parse(operation.authorisationExpiresAt),
               )
-          )
-            return json({ error: 'authorisation_expired' }, 409);
-          const attempt = await provider.capture(operation);
-          result =
-            attempt.status === 'unknown'
-              ? await provider.read(operation)
-              : attempt;
+          ) {
+            result = { status: 'expired' };
+          } else {
+            const attempt = await provider.capture(operation);
+            result =
+              attempt.status === 'unknown'
+                ? await provider.read(operation)
+                : attempt;
+          }
         } else if (result.status === 'failed' && operation.expired) {
-          return json({ error: 'authorisation_expired' }, 409);
+          result = { status: 'expired' };
         }
       } catch {
         log.error('payment_capture.provider_unavailable');
@@ -153,6 +156,7 @@ export function createCaptureHandler({
       const complete = result.status === 'captured';
       const final = await apply(complete ? 'complete' : 'fail', {
         p_intent_id: operation.intentId,
+        p_capture_attempt: operation.captureAttempt,
         ...(result.status === 'captured'
           ? {
               p_captured_cents: operation.amountCents,

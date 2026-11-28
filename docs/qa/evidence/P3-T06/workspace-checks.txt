@@ -1,0 +1,11 @@
+TRIMR-65 QuickTrimr workspace checks
+PASS pnpm db:migrate — local payment lifecycle schema applied
+PASS pnpm typecheck
+PASS pnpm lint
+PASS pnpm test — 561 passing tests
+PASS pnpm format:check
+PASS pnpm check:client-env
+PASS node scripts/api/contracts.mjs --check — 52 documented functions
+PASS node scripts/jira/generate-indexes.mjs --check — 108 tickets, 0 open decisions
+PASS git diff --check
+PASS iPhone 17, iOS 26.5 — native card entry, verified authorisation, confirmation and same-booking recovery

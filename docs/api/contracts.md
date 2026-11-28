@@ -15,7 +15,7 @@ then use scripts/api/contracts.mjs to render and --check to detect drift.
 - Money is integer AUD cents. Snapshots, current eligibility, configured bounds and cumulative refunds are server-owned. The admin partial-refund intent exception does not allow an admin to choose charged/net/commission amounts. Do not use illustrative fixture numbers as operational config.
 - Worker clocks, keys and deadlines are server-derived; early/stale/duplicate delivery rechecks persisted state. Payout paid means verified bank payout, not transfer success. An open dispute blocks release. Never hold a database lock across a provider call.
 - SAL mapPoint is an area representative point, never the barber position. Public responses reject address/contact, exact origin/distance and routing payload additions.
-- Existing Phase 2 acceptance returns accepted_pending_payment. Later capture wiring must coordinate schema/example/docs changes rather than silently reporting paid confirmation.
+- TRIMR-65 creates an owner-only draft. Stripe-verified authorisation publishes it; acceptance returns paid_confirmed only after verified capture.
 - mark-on-the-way accepts both coordinates or neither to support denied permission; it does not start location reads before consent. Errors are normalized to the P0-T07 envelope (see affected backlog examples).
 
 ## Development fixtures
@@ -41,7 +41,7 @@ Owner ticket: P2-T12. Caller: **user**. Roles: barber.
 
 Rules: `RULE-REQUEST-05`, `RULE-AVAIL-05`, `RULE-PAY-05`, `RULE-RELY-06`.
 
-Target barber only. First valid acceptance wins under real concurrency. Existing Phase 2 contract reports accepted_pending_payment, NOT paid confirmation; P3-T06 owns capture integration and any coordinated contract change.
+Target barber only. First valid acceptance with a verified hold wins. Return paid_confirmed after verified capture, or accepted_pending_payment while capture or recovery is unresolved.
 
 Shared request schema: `acceptBookingRequestRequestSchema`.
 Shared response schema: `acceptBookingRequestResponseSchema`.
@@ -1000,7 +1000,8 @@ Request (decoded envelope only for Stripe):
   "commissionCents": 900,
   "barberNetCents": 3600,
   "expiresAt": "2026-08-05T04:16:22Z",
-  "createdAt": "2026-08-05T04:11:22Z"
+  "createdAt": "2026-08-05T04:11:22Z",
+  "paymentRequired": true
 }
 ```
 
@@ -1060,7 +1061,7 @@ Owner ticket: P3-T01. Caller: **user**. Roles: client.
 
 Rules: `ADR-006`, `RULE-PAY-01`, `RULE-PAY-02`, `RULE-PAY-04`, `RULE-PAY-14`.
 
-Owner only. Prepare returns the request-bound intent client secret with Cache-Control: no-store. The SDK collects card details and handles authentication. Verify reads Stripe before recording authorisation and uses the provider deadline. The amount always comes from the immutable snapshot.
+Owner only. Prepare returns the request-bound intent client secret with Cache-Control: no-store. Verify reads Stripe and publishes the request after confirming the hold. With recovery=true, use the same accepted booking and price within the approved payment recovery window.
 
 Shared request schema: `createPaymentAuthorisationRequestSchema`.
 Shared response schema: `createPaymentAuthorisationResponseSchema`.
@@ -1097,6 +1098,7 @@ Request (decoded envelope only for Stripe):
 | 402 | `{"error":"authentication_required"}` | Customer authentication is required through the owning SDK flow; never log a client secret. |
 | 409 | `{"error":"request_not_pending"}` | The request can no longer be authorised. |
 | 409 | `{"error":"payment_method_required"}` | The SDK must collect or verify the card. |
+| 409 | `{"error":"payment_reconciliation_pending"}` | The server is verifying the existing capture before a new payment can start. |
 | 409 | `{"error":"authorisation_window_unavailable"}` | The original hold could not cover the request. |
 | 502 | `{"error":"stripe_unavailable"}` | Provider unavailable; do not report a money effect as successful. Reconcile unknown outcomes before retrying. |
 

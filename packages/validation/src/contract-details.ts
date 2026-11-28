@@ -353,7 +353,7 @@ export const CONTRACT_DETAILS = {
     'P2-T12',
     [b],
     ['RULE-REQUEST-05', 'RULE-AVAIL-05', 'RULE-PAY-05', 'RULE-RELY-06'],
-    'Target barber only. First valid acceptance wins under real concurrency. Existing Phase 2 contract reports accepted_pending_payment, NOT paid confirmation; P3-T06 owns capture integration and any coordinated contract change.',
+    'Target barber only. First valid acceptance with a verified hold wins. Return paid_confirmed after verified capture, or accepted_pending_payment while capture or recovery is unresolved.',
     [
       pending,
       error(
@@ -387,7 +387,7 @@ export const CONTRACT_DETAILS = {
     'P3-T01',
     [c],
     ['ADR-006', 'RULE-PAY-01', 'RULE-PAY-02', 'RULE-PAY-04', 'RULE-PAY-14'],
-    'Owner only. Prepare returns the request-bound intent client secret with Cache-Control: no-store. The SDK collects card details and handles authentication. Verify reads Stripe before recording authorisation and uses the provider deadline. The amount always comes from the immutable snapshot.',
+    'Owner only. Prepare returns the request-bound intent client secret with Cache-Control: no-store. Verify reads Stripe and publishes the request after confirming the hold. With recovery=true, use the same accepted booking and price within the approved payment recovery window.',
     [
       error(402, 'card_declined', 'Provider declines the authorization.'),
       error(
@@ -409,6 +409,11 @@ export const CONTRACT_DETAILS = {
         409,
         'payment_method_required',
         'The SDK must collect or verify the card.',
+      ),
+      error(
+        409,
+        'payment_reconciliation_pending',
+        'The server is verifying the existing capture before a new payment can start.',
       ),
       error(
         409,

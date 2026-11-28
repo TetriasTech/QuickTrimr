@@ -199,6 +199,7 @@ export const CONTRACT_EXAMPLES = {
       barberNetCents: 3_600,
       expiresAt: EXPIRES_AT,
       createdAt: CREATED_AT,
+      paymentRequired: true,
     },
     [
       ['status', 'waiting'],

@@ -349,7 +349,10 @@ export function BarberInboxScreen({
       if (action === 'accept') {
         const accepted = await api.accept(id);
         setFeedback({
-          message: 'Request accepted. Payment pending.',
+          message:
+            accepted.bookingStatus === 'paid_confirmed'
+              ? 'Payment received. Booking confirmed.'
+              : 'Request accepted. Payment pending.',
           bookingId: accepted.bookingId,
         });
       } else {

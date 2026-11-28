@@ -103,13 +103,14 @@ export function BookingRequestReviewScreen({
         if (cause.status === 409 && code === 'active_request_exists') {
           setShowExisting(true);
           setError(
-            'You already have an Available Now request waiting for a reply.',
+            'You already have an Available Now request. Open it to continue.',
           );
           return;
         }
         if (cause.status === 409 && code === 'duplicate_request_intent') {
+          setShowExisting(true);
           setError(
-            'You already requested this barber and service for that time.',
+            'You already started this request. Open your requests to continue.',
           );
           return;
         }
@@ -219,9 +220,8 @@ export function BookingRequestReviewScreen({
           Payment and cancellation
         </Text>
         <Text style={typography.body}>
-          No payment is collected for this request. When card payments are
-          enabled, QuickTrimr will place a hold when you send a request and
-          charge only after the barber accepts.
+          Authorising your card places a temporary hold and sends the request.
+          QuickTrimr collects payment after the barber accepts.
         </Text>
         <Text style={typography.body}>
           If you cancel before acceptance, any card hold will be released.
@@ -247,7 +247,7 @@ export function BookingRequestReviewScreen({
         <Button label="View existing request" onPress={onExisting} />
       ) : null}
       <Button
-        label="Send request"
+        label="Continue to payment"
         disabled={
           busy || !!issue || showExisting || query.isError || query.isFetching
         }

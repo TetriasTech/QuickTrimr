@@ -73,8 +73,7 @@ export function BarberBookingStatusScreen({
           </Text>
         </Card>
       ) : null}
-      {query.data?.status === BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT &&
-      !query.data.captureNotice ? (
+      {query.data?.status === BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT ? (
         <Button
           label="Check status"
           loading={query.isFetching}

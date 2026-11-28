@@ -3,7 +3,9 @@
 `POST /functions/v1/create-booking-request` accepts the shared
 `createBookingRequestRequestSchema`. A verified client JWT supplies identity;
 current stored role, complete client profile and owned active resolved address
-are required. The response and documented 409 conflicts are unchanged.
+are required. The documented 409 conflicts still apply. Since P3-T06,
+creation returns `paymentRequired: true` on the owner-only draft. The barber
+sees the request after the server verifies its Stripe authorisation.
 
 The transaction rechecks Connect eligibility, the shared reliability policy,
 active service/category and inclusive category price bounds. Available Now uses

@@ -1,0 +1,18 @@
+PASS Anonymous, wrong persisted roles, foreign IDs, malformed input and direct RPC denial.
+PASS Scheduled acceptance preserves the Available Now queue and session.
+PASS Available Now acceptance copies immutable cents, writes history/audit, uses the session hook and closes only the correct requests.
+PASS Five rounds of eight simultaneous API accepts with database lock contention. One booking, line item, history row and acceptance audit per request.
+PASS Five two-request Available Now races each leave one active job. A separate still-pending request receives active_job_exists while the slot is occupied.
+PASS Terminal and legacy deadlines rejected. At one microsecond before, exactly at and one after, the SQL comparator matches the domain rule. Live request elapsed while waiting and was rejected.
+PASS A conflicting historical booking rolls back request acceptance with no duplicate row or audit.
+PASS Suspension blocks both types. A live cooldown blocks only Available Now. Exact cooldown boundary and restricted outside cooldown pass. No acceptance effects on rejection.
+PASS Both request types serialized in both real lock orders against a restriction writer. Existing acceptance survives a later suspension.
+PASS Existing booking RLS denies a foreign barber. No payment row exists under any success or rejection. The controller transport test allows only Auth, profile and the local acceptance RPC.
+PASS Decline verified JWT, stored role, ownership, field errors, direct RPC denial and a database reason-code guard.
+PASS Available Now decline reset its source misses through one response receipt. The client sees only the declined state. Suspension state is preserved.
+PASS The four codes and omitted reason round-tripped to the internal audit. Scheduled declines did not affect availability. Bulk closure could not be declined again.
+PASS Expired, terminal, undated, and lock-delayed declines returned the exact conflict envelope with no effects.
+booking_request.decline_internal_error
+PASS A fixture session-hook failure rolled back the request update and produced only a safe error.
+PASS Six accept–decline races in both lock orders and three duplicate-decline races. The first writer won, the loser received 409, and booking, audit and session effects applied once.
+PASS Synthetic fixture logins soft-deleted and test supply archived.

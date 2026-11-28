@@ -129,8 +129,8 @@ test('review renders the current price, service, barber, own address, payment di
   expect(screen.getByText('with QA Barber')).toBeOnTheScreen();
   expect(screen.getByText(/45.03/)).toBeOnTheScreen();
   expect(screen.getByText(/1 Synthetic Road/)).toBeOnTheScreen();
-  expect(screen.getByText(/No payment is collected/)).toHaveTextContent(
-    /charge only after the barber accepts/,
+  expect(screen.getByText(/places a temporary hold/)).toHaveTextContent(
+    /collects payment after the barber accepts/,
   );
   expect(
     screen.getByText('You cannot edit a request after you send it.'),
@@ -155,7 +155,9 @@ test('Scheduled quote shows requested time and current terms, and preserves inpu
   await render(<BookingRequestReviewScreen {...p} />, { wrapper: wrap() });
   expect(await screen.findByText('Requested time')).toBeOnTheScreen();
   expect(screen.getByText(/12 hours or less.*75% refund/)).toBeOnTheScreen();
-  await fireEvent.press(screen.getByRole('button', { name: 'Send request' }));
+  await fireEvent.press(
+    screen.getByRole('button', { name: 'Continue to payment' }),
+  );
   expect(await screen.findByText(message)).toBeOnTheScreen();
   expect(screen.getByText('Requested time')).toBeOnTheScreen();
   expect(api.submit).not.toHaveBeenCalled();
@@ -175,7 +177,9 @@ test('concurrent taps send one request with the server comparison token', async 
       }),
   );
   await render(<BookingRequestReviewScreen {...p} />, { wrapper: wrap() });
-  const button = await screen.findByRole('button', { name: 'Send request' });
+  const button = await screen.findByRole('button', {
+    name: 'Continue to payment',
+  });
   await act(async () => {
     await fireEvent.press(button);
     await fireEvent.press(button);
@@ -206,13 +210,17 @@ test('changed price requires review again; backend Scheduled field error and fai
   );
   await render(<BookingRequestReviewScreen {...p} />, { wrapper: wrap() });
   await fireEvent.press(
-    await screen.findByRole('button', { name: 'Send request' }),
+    await screen.findByRole('button', { name: 'Continue to payment' }),
   );
   expect(await screen.findByText(/details changed/)).toBeOnTheScreen();
   expect(api.submit).not.toHaveBeenCalled();
-  await fireEvent.press(screen.getByRole('button', { name: 'Send request' }));
+  await fireEvent.press(
+    screen.getByRole('button', { name: 'Continue to payment' }),
+  );
   expect(await screen.findByText(/Could not send/)).toBeOnTheScreen();
-  await fireEvent.press(screen.getByRole('button', { name: 'Send request' }));
+  await fireEvent.press(
+    screen.getByRole('button', { name: 'Continue to payment' }),
+  );
   expect(
     await screen.findByText('Choose a later requested time.'),
   ).toBeOnTheScreen();
@@ -228,7 +236,7 @@ test('Available Now conflict points to the existing request', async () => {
   );
   await render(<BookingRequestReviewScreen {...p} />, { wrapper: wrap() });
   await fireEvent.press(
-    await screen.findByRole('button', { name: 'Send request' }),
+    await screen.findByRole('button', { name: 'Continue to payment' }),
   );
   expect(
     await screen.findByText(/already have an Available Now request/),

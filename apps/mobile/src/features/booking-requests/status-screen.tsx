@@ -9,7 +9,7 @@ import {
   spacing,
   useTheme,
 } from '@quicktrimr/ui';
-import { focusManager, useQuery } from '@tanstack/react-query';
+import { focusManager, useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
@@ -54,6 +54,8 @@ export function BookingRequestStatusScreen({
   focused,
   onDiscovery,
   onResolvedId,
+  onPayment,
+  onCancel,
 }: {
   api: BookingRequestApi;
   userId: string;
@@ -62,6 +64,8 @@ export function BookingRequestStatusScreen({
   focused: boolean;
   onDiscovery: () => void;
   onResolvedId: (id: string) => void;
+  onPayment?: (id: string, recovery: boolean) => void;
+  onCancel?: (id: string) => Promise<unknown>;
 }) {
   const { typography } = useTheme();
   const query = useQuery({
@@ -95,6 +99,10 @@ export function BookingRequestStatusScreen({
         )
       : 0;
   const { refetch } = query;
+  const cancellation = useMutation({
+    mutationFn: async (id: string) => onCancel?.(id),
+    onSuccess: () => refetch(),
+  });
   const deadlineReached = remaining === 0;
 
   useEffect(() => {
@@ -152,9 +160,16 @@ export function BookingRequestStatusScreen({
         <>
           <Card style={{ gap: spacing.md }}>
             <Text style={typography.editorial} accessibilityRole="header">
-              Waiting for a reply
+              {request.paymentRequired
+                ? 'Authorise payment to send your request'
+                : 'Waiting for a reply'}
             </Text>
-            {remaining > 0 ? (
+            {request.paymentRequired && remaining > 0 ? (
+              <Text style={typography.body}>
+                Your barber will see this request after your card hold is
+                verified.
+              </Text>
+            ) : remaining > 0 ? (
               <View style={{ gap: spacing.compact }}>
                 <Text style={typography.caption}>Time left to respond</Text>
                 <Text
@@ -170,6 +185,26 @@ export function BookingRequestStatusScreen({
               </Text>
             )}
           </Card>
+          {request.paymentRequired && onPayment && remaining > 0 ? (
+            <Button
+              label="Continue to payment"
+              onPress={() => onPayment(request.id, false)}
+            />
+          ) : null}
+          {cancellation.isError ? (
+            <Text accessibilityRole="alert" style={typography.body}>
+              Could not cancel the request. Check its status and try again.
+            </Text>
+          ) : null}
+          {onCancel ? (
+            <Button
+              label="Cancel request"
+              variant="secondary"
+              loading={cancellation.isPending}
+              disabled={cancellation.isPending}
+              onPress={() => cancellation.mutate(request.id)}
+            />
+          ) : null}
           <Button
             label="Check status"
             loading={query.isFetching}
@@ -197,9 +232,29 @@ export function BookingRequestStatusScreen({
                 audience="client"
               />
             ) : null}
+            {request.captureNotice === 'capture_failed' &&
+            request.paymentRecoveryDeadline &&
+            Date.parse(request.serverNow) >=
+              Date.parse(request.paymentRecoveryDeadline) ? (
+              <Text style={typography.body}>
+                The payment recovery window ended. We’re checking the final
+                payment status.
+              </Text>
+            ) : null}
           </Card>
           {request.status === REQUEST_STATUS_VALUE.ACCEPTED &&
-          !request.captureNotice ? (
+          request.captureNotice === 'capture_failed' &&
+          request.paymentRecoveryDeadline &&
+          onPayment &&
+          Date.parse(request.serverNow) <
+            Date.parse(request.paymentRecoveryDeadline) ? (
+            <Button
+              label="Retry payment"
+              onPress={() => onPayment(request.id, true)}
+            />
+          ) : null}
+          {request.status === REQUEST_STATUS_VALUE.ACCEPTED &&
+          request.captureNotice !== 'captured' ? (
             <Button
               label="Check status"
               loading={query.isFetching}

@@ -36,12 +36,14 @@ export function createBookingRequestActionHandler(
     serviceRoleKey,
     fetcher = fetch,
     log = console,
+    reconcilePayment,
   }: {
     supabaseUrl: string;
     anonKey: string;
     serviceRoleKey: string;
     fetcher?: typeof fetch;
     log?: Pick<Console, 'error'>;
+    reconcilePayment?: (requestId: string) => Promise<boolean>;
   },
 ) {
   const baseUrl = new URL(supabaseUrl);
@@ -88,7 +90,17 @@ export function createBookingRequestActionHandler(
         signal: AbortSignal.timeout(10_000),
       });
       const raw: unknown = await response.json();
-      if (response.ok) return json(action.output.parse(raw), 200);
+      if (response.ok) {
+        const result = action.output.parse(raw);
+        if (reconcilePayment) {
+          const captured = await reconcilePayment(parsed.data.requestId).catch(
+            () => false,
+          );
+          if (captured && 'bookingStatus' in result)
+            return json({ ...result, bookingStatus: 'paid_confirmed' }, 200);
+        }
+        return json(result, 200);
+      }
       const { message } = rpcFailure.parse(raw);
       if (response.status === 403 && message === 'forbidden')
         return json({ error: 'forbidden' }, 403);

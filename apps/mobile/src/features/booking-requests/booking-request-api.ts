@@ -1,5 +1,6 @@
 import {
   bookingRequestReviewSchema,
+  cancelBookingRequestResponseSchema,
   clientBookingRequestSchema,
 } from '@quicktrimr/validation';
 
@@ -32,6 +33,20 @@ export async function authoriseBookingRequest(
   );
   await readSession(supabase, userId);
   return result;
+}
+
+export async function cancelPendingBookingRequest(
+  supabase: SupabaseClient,
+  userId: string,
+  requestId: string,
+) {
+  await readSession(supabase, userId);
+  const result = await supabase.rpc('cancel_booking_request', {
+    p_request_id: requestId,
+  });
+  if (result.error) throw new Error('Could not cancel request.');
+  await readSession(supabase, userId);
+  return cancelBookingRequestResponseSchema.parse(result.data);
 }
 
 export function bookingRequestApi(supabase: SupabaseClient, userId: string) {

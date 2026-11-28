@@ -4410,7 +4410,7 @@ priority: Highest
 jiraKey: TRIMR-65
 dependsOn: [P2-T08, P2-T09, P2-T12, P2-T13, P2-T15, P3-T01, P3-T02]
 affects: [P4-T01, P4-T02, P5-T04]
-knowledgeBase: [ADR-006, ADR-010, RULE-AVAIL-07, RULE-PAY-02, RULE-PAY-03, RULE-PAY-05, RULE-PAY-15, RULE-REQUEST-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS]
+knowledgeBase: [ADR-006, ADR-010, RULE-AVAIL-07, RULE-PAY-02, RULE-PAY-03, RULE-PAY-05, RULE-PAY-14, RULE-PAY-15, RULE-PAY-17, RULE-REQUEST-06, ENUM-BOOKING-STATUS, ENUM-PAYMENT-STATUS, CFG-ACCEPTED-PAYMENT-RECOVERY-WINDOW]
 blockedByTbc: []
 labels: [quicktrimr, phase-3, backend, stripe]
 ```
@@ -4436,7 +4436,7 @@ Request creation is **not confirmed until authorisation succeeds**. A request cr
 
 Acceptance retains its concurrency guarantees from `P2-T12` and still holds **no lock across the Stripe call** (`RULE-PAY-09`).
 
-Capture failure keeps the booking at `accepted_pending_payment` (`RULE-PAY-05`), notifies both parties, and offers a defined recovery.
+Capture failure keeps the booking at `accepted_pending_payment` (`RULE-PAY-05`), notifies both parties, and offers the owning client recovery on the same booking and price. Apply the deadline, provider reconciliation, one permitted replacement and guarded unpaid closure in `RULE-PAY-17`.
 
 Authorisation cancellation on decline and expiry is idempotent — an already-cancelled authorisation is not an error. Include the `RULE-AVAIL-07` requests closed in bulk by `P2-T12`, even when the accept request is retried or the caller disconnects after commit.
 
@@ -4459,7 +4459,7 @@ Authorisation cancellation on decline and expiry is idempotent — an already-ca
 
 **Out of scope** — refunds (`P3-T07`); earnings creation, which `P3-T04` triggers from capture.
 
-**Sync notes** — this ticket changes the behaviour of five Phase 2 tickets. Their tests must still pass afterwards, and any that do not indicate the wiring changed a guarantee it should not have.
+**Sync notes** — this ticket changes the behaviour of five Phase 2 tickets. Retest the original eligibility and concurrency guarantees with verified authorisations. `P4-T01`, `P4-T02` and `P5-T04` must distinguish accepted payment recovery, confirmed capture and unpaid closure. `P3-T03` must reconcile the current intent and retain prior identities safely. `P3-T07` continues to own refunds of captured funds.
 
 ---
 

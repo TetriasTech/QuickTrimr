@@ -83,10 +83,9 @@ function setup({
         assert.equal(id, intent.id);
         return incoming;
       },
-      async cancel(id, request) {
+      async cancel(id) {
         calls.push('stripe.cancel');
         assert.equal(id, intent.id);
-        assert.equal(request, requestId);
         return { ...incoming, status: 'canceled' };
       },
     },

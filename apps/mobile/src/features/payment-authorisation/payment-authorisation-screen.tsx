@@ -26,20 +26,26 @@ const feedback: Readonly<Record<string, string>> = {
     'The card hold could not cover this request and was released.',
   stripe_unavailable:
     'Stripe is temporarily unavailable. Check the authorisation status before retrying.',
+  payment_reconciliation_pending:
+    'We’re checking the payment. Check its status before trying again.',
 };
-type Authorised = Extract<
+type PaymentResult = Extract<
   CreatePaymentAuthorisationResponse,
-  { status: 'authorised' }
+  { status: 'authorised' | 'captured' }
 >;
 
 export function PaymentAuthorisationScreen({
   requestId,
   authorise,
+  recovery = false,
+  onDone,
 }: {
   requestId: string;
   authorise: (
     input: CreatePaymentAuthorisationRequest,
   ) => Promise<CreatePaymentAuthorisationResponse>;
+  recovery?: boolean;
+  onDone?: () => void;
 }) {
   const { typography } = useTheme();
   const {
@@ -52,7 +58,7 @@ export function PaymentAuthorisationScreen({
   const inFlight = useRef(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const [hold, setHold] = useState<Authorised | null>(null);
+  const [hold, setHold] = useState<PaymentResult | null>(null);
   useEffect(() => {
     active.current = true;
     const subscription = Linking.addEventListener('url', ({ url }) => {
@@ -70,7 +76,11 @@ export function PaymentAuthorisationScreen({
     setBusy(true);
     setMessage('');
     try {
-      let result = await authorise({ bookingRequestId: requestId, operation });
+      const input = {
+        bookingRequestId: requestId,
+        ...(recovery ? { recovery: true as const } : {}),
+      };
+      let result = await authorise({ ...input, operation });
       if (result.status === paymentStatusSchema.enum.requires_authorisation) {
         if (!active.current) return;
         if (result.authenticationRequired) {
@@ -88,13 +98,13 @@ export function PaymentAuthorisationScreen({
           await presentPaymentSheet();
         }
         result = await authorise({
-          bookingRequestId: requestId,
+          ...input,
           operation: 'verify',
         });
       }
       if (
         active.current &&
-        result.status === paymentStatusSchema.enum.authorised
+        result.status !== paymentStatusSchema.enum.requires_authorisation
       )
         setHold(result);
     } catch (error) {
@@ -115,7 +125,13 @@ export function PaymentAuthorisationScreen({
     <Screen scroll>
       <Card style={{ gap: spacing.md }}>
         <Text accessibilityRole="header" style={typography.title}>
-          {hold ? 'Card authorised' : 'Authorise your card'}
+          {hold?.status === 'captured'
+            ? 'Payment received'
+            : hold
+              ? 'Card authorised'
+              : recovery
+                ? 'Retry your payment'
+                : 'Authorise your card'}
         </Text>
         {hold ? (
           <>
@@ -123,13 +139,22 @@ export function PaymentAuthorisationScreen({
               {formatAudCents(hold.amountCents)}
             </Text>
             <Text style={typography.body}>
-              This is a temporary hold. Payment is captured after acceptance.
+              {hold.status === 'captured'
+                ? 'Your booking payment has been confirmed.'
+                : recovery
+                  ? 'Card authorised. Check your booking for payment confirmation.'
+                  : 'Your request has been sent. This is a temporary hold until the barber accepts.'}
             </Text>
+            {onDone ? (
+              <Button label="View request status" onPress={onDone} />
+            ) : null}
           </>
         ) : (
           <>
             <Text style={typography.body}>
-              Stripe securely collects your card details for this request.
+              {recovery
+                ? 'Use a card to pay the original price for this booking.'
+                : 'Stripe securely collects your card details. Your request is sent after the card hold is verified.'}
             </Text>
             {message ? (
               <Text accessibilityLiveRegion="polite" style={typography.body}>

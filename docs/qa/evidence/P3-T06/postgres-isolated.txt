@@ -1,0 +1,6 @@
+Isolated PostgreSQL check with minimal synthetic tables and the repository migration SQL.
+PostgreSQL 17.5
+PASS Deadline SQL matches the shared domain for Available Now, Scheduled and the appointment cap.
+PASS The payment trigger schedules the capped first deadline and preserves it on another capture failure.
+PASS Retired intents use RLS and reject direct reads and writes under all API roles. Append-only triggers reject owner changes.
+PASS Verified release closes the unpaid booking and writes exactly one cancellation history row across repeats.

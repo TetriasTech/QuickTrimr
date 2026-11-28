@@ -23,12 +23,21 @@ const contextSchema = z.strictObject({
     .regex(/^pi_[A-Za-z0-9]+$/)
     .nullable(),
   authorisationExpiresAt: timestampSchema.nullable(),
+  replacement: z.boolean().optional(),
   releaseReason: z
     .enum(['request_not_pending', 'authorisation_window_unavailable'])
     .nullable(),
 });
 type PaymentContext = z.infer<typeof contextSchema>;
-type Step = 'prepare' | 'read' | 'bind' | 'record' | 'release' | 'cancelled';
+type Step =
+  | 'prepare'
+  | 'read'
+  | 'bind'
+  | 'record'
+  | 'release'
+  | 'cancelled'
+  | 'resume'
+  | 'retire';
 
 class RequestNotPending extends Error {}
 class ForbiddenRequest extends Error {}
@@ -92,6 +101,10 @@ export function createPaymentAuthorisationHandler({
     '/rest/v1/rpc/request_payment_authorisation',
     baseUrl,
   );
+  const recoveryEndpoint = new URL(
+    '/rest/v1/rpc/recover_request_payment',
+    baseUrl,
+  );
 
   return async (request: Request): Promise<Response> => {
     if (request.method !== 'POST')
@@ -113,9 +126,9 @@ export function createPaymentAuthorisationHandler({
           fields[String(issue.path[0] ?? '_request')] ??= issue.message;
         return json({ error: 'validation_failed', fields }, 422);
       }
-      const { bookingRequestId, operation } = parsed.data;
+      const { bookingRequestId, operation, recovery } = parsed.data;
       async function run(step: Step, intent?: SandboxIntent) {
-        const result = await fetcher(endpoint, {
+        const result = await fetcher(recovery ? recoveryEndpoint : endpoint, {
           method: 'POST',
           headers: {
             apikey: serviceRoleKey,
@@ -140,7 +153,54 @@ export function createPaymentAuthorisationHandler({
       }
       const load = async (step: Step, intent?: SandboxIntent) =>
         contextSchema.parse(await run(step, intent));
-      let context = await run(operation === 'prepare' ? 'prepare' : 'read');
+      let context = await run(
+        !recovery && operation === 'prepare' ? 'prepare' : 'read',
+      );
+      if (recovery && context?.status === 'captured') {
+        return successful({
+          paymentId: context.paymentId,
+          status: 'captured',
+          amountCents: context.amountCents,
+        });
+      }
+      if (recovery && !context?.eligible) throw new RequestNotPending();
+      if (recovery && context?.status === 'capture_pending')
+        return json({ error: 'payment_reconciliation_pending' }, 409);
+      if (context?.status === 'authorised') return authorised(context);
+
+      let recoveredIntent: SandboxIntent | undefined;
+      if (
+        recovery &&
+        context?.intentId &&
+        ['capture_failed', 'requires_authorisation'].includes(context.status)
+      ) {
+        const originalId = context.intentId;
+        recoveredIntent = await providerCall(() => provider.read(originalId));
+        verifyProviderIdentity(recoveredIntent, bookingRequestId, context);
+        if (
+          context.status === 'capture_failed' &&
+          recoveredIntent.status === 'requires_capture'
+        ) {
+          recoveredIntent = await providerCall(() =>
+            provider.cancel(originalId),
+          );
+          verifyProviderIdentity(recoveredIntent, bookingRequestId, context);
+          if (recoveredIntent.status !== 'canceled')
+            throw new ProviderUnavailable();
+        }
+        if (recoveredIntent.status === 'canceled') {
+          context = await load('retire', recoveredIntent);
+          recoveredIntent = undefined;
+          if (!context.eligible) throw new RequestNotPending();
+        } else if (context.status === 'capture_failed') {
+          if (
+            recoveredIntent.status !== 'requires_payment_method' &&
+            recoveredIntent.status !== 'requires_action'
+          )
+            throw new ProviderUnavailable();
+          context = await load('resume', recoveredIntent);
+        }
+      }
       if (context?.status === 'authorised') return authorised(context);
       if (context && !context.eligible && !context.intentId)
         throw new RequestNotPending();
@@ -153,14 +213,19 @@ export function createPaymentAuthorisationHandler({
         );
 
       let intent: SandboxIntent;
-      if (context.intentId) {
+      if (recoveredIntent) {
+        intent = recoveredIntent;
+      } else if (context.intentId) {
         const intentId = context.intentId;
         intent = await providerCall(() => provider.read(intentId));
       } else {
         if (!context.eligible) throw new RequestNotPending();
         const amountCents = context.amountCents;
+        const replacement = context.replacement;
         intent = await providerCall(() =>
-          provider.create(bookingRequestId, amountCents),
+          replacement
+            ? provider.create(bookingRequestId, amountCents, true)
+            : provider.create(bookingRequestId, amountCents),
         );
         verifyProviderIdentity(intent, bookingRequestId, context);
         // Bind the durable identity before the owning app can confirm it.
@@ -168,7 +233,7 @@ export function createPaymentAuthorisationHandler({
       }
       verifyProviderIdentity(intent, bookingRequestId, context);
       if (intent.status === 'canceled') {
-        context = await load('cancelled', intent);
+        context = await load(recovery ? 'retire' : 'cancelled', intent);
         return json(
           { error: context.releaseReason ?? 'request_not_pending' },
           409,
@@ -177,14 +242,18 @@ export function createPaymentAuthorisationHandler({
       // These transactions recheck eligibility after Stripe I/O. An intent
       // can change while the client is completing the bank's challenge.
       context = await load(
-        intent.status === 'requires_capture' ? 'record' : 'release',
+        intent.status === 'requires_capture'
+          ? 'record'
+          : recovery
+            ? 'read'
+            : 'release',
         intent,
       );
       if (context.status === 'authorised') return authorised(context);
       if (context.releaseReason) {
         if (context.status === 'requires_authorisation') {
           const cancelled = await providerCall(() =>
-            provider.cancel(intent.id, bookingRequestId),
+            provider.cancel(intent.id),
           );
           verifyProviderIdentity(cancelled, bookingRequestId, context);
           if (cancelled.status !== 'canceled') throw new ProviderUnavailable();

@@ -42,14 +42,19 @@ export default function RequestReviewRoute() {
           onSent={(requestId) => {
             draft.patchDraft({ selectedBarberId: null });
             router.replace({
-              pathname: '/requests/[requestId]',
+              pathname: '/sandbox-payment/[requestId]',
               params: { requestId },
             });
           }}
           onExisting={() =>
             router.push({
               pathname: '/requests/[requestId]',
-              params: { requestId: 'active' },
+              params: {
+                requestId:
+                  draft.selectedBookingType === 'available_now'
+                    ? 'active'
+                    : 'latest',
+              },
             })
           }
         />

@@ -1,0 +1,8 @@
+TRIMR-65 local runtime and verification log scan. Only counts were retained.
+Exact Stripe API credential: 0
+Stripe API and signing secret patterns: 0
+Stripe client secret: 0
+Full Stripe test card numbers: 0
+Raw Stripe objects: 0
+Synthetic address or telephone fields: 0
+PASS
