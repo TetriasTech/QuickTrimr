@@ -33,6 +33,7 @@ export {
 export { discoveryMapAreas, type DiscoveryMapArea } from './discovery-map.ts';
 export { requestSnapshot, type RequestPolicy } from './request-snapshot.ts';
 export { requestDeadlineReached } from './request-deadline.ts';
+export { paymentRecoveryDeadline } from './payment-recovery.ts';
 export {
   cancellationRefundCents,
   earningAllocation,

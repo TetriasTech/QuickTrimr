@@ -111,6 +111,7 @@ test('uses server-derived identity and full integer cents and returns one safe r
     p_payment_id: paymentId,
     p_step: 'complete',
     p_intent_id: intentId,
+    p_capture_attempt: 0,
     p_captured_cents: 4503,
     p_charge_id: charged.chargeId,
     p_balance_transaction_id: charged.balanceTransactionId,

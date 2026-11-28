@@ -26,7 +26,7 @@ export function renderContracts() {
     '- Money is integer AUD cents. Snapshots, current eligibility, configured bounds and cumulative refunds are server-owned. The admin partial-refund intent exception does not allow an admin to choose charged/net/commission amounts. Do not use illustrative fixture numbers as operational config.',
     '- Worker clocks, keys and deadlines are server-derived; early/stale/duplicate delivery rechecks persisted state. Payout paid means verified bank payout, not transfer success. An open dispute blocks release. Never hold a database lock across a provider call.',
     '- SAL mapPoint is an area representative point, never the barber position. Public responses reject address/contact, exact origin/distance and routing payload additions.',
-    '- Existing Phase 2 acceptance returns accepted_pending_payment. Later capture wiring must coordinate schema/example/docs changes rather than silently reporting paid confirmation.',
+    '- TRIMR-65 creates an owner-only draft. Stripe-verified authorisation publishes it; acceptance returns paid_confirmed only after verified capture.',
     '- mark-on-the-way accepts both coordinates or neither to support denied permission; it does not start location reads before consent. Errors are normalized to the P0-T07 envelope (see affected backlog examples).',
     '',
     '## Development fixtures',

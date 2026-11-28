@@ -1,0 +1,12 @@
+PASS Capture and event writes deny anonymous, participant and foreign callers. Field validation and unaccepted-booking rejection passed.
+PASS Run 1: eight concurrent calls and a replay produced one Stripe charge for 4503 cents, one booking transition, one audit and one participant notice event.
+PASS Run 2: eight concurrent calls and a replay produced one Stripe charge for 4503 cents, one booking transition, one audit and one participant notice event.
+PASS Expired hold returned its distinct 409, wrote a recovery notice and produced zero capture.
+PASS Injected provider rejection left booking pending, wrote one audit and notice, and 32 parallel reads plus all three row locks succeeded during suspended provider I/O.
+PASS Only the owning client recovered the same booking and price. Stripe confirmed release of the old hold, one replacement capture under parallel sweeps and both original failure and success notices.
+PASS A real test card decline left an owner-only draft. It was absent from the inbox and raw barber API, could not be accepted and could not trigger a worker call.
+PASS Eight requests through the actual accept endpoint yielded a single winner, one verified charge and paid confirmation.
+PASS Decline, expiry and client cancellation all released Stripe holds with zero capture. Repeat sweeps remained safe no-ops.
+PASS When the recovery window ended, the worker verified release and closed the unpaid booking without recording a paid confirmation.
+PASS Available Now accepted and captured only the winning request. Bulk decline and expiry released both other holds without adding miss or response receipts.
+PASS The installed versioned pg_cron job released the remaining hold after the client disconnected, without a manual payment sweep.

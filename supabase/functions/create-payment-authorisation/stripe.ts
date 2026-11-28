@@ -63,7 +63,7 @@ export function createAuthorisationProvider(
     platformAccountId,
   );
   return {
-    async create(requestId: string, amountCents: number) {
+    async create(requestId: string, amountCents: number, replacement = false) {
       await verifyPlatform();
       return project(
         await stripe.paymentIntents.create(
@@ -74,7 +74,11 @@ export function createAuthorisationProvider(
             allowed_payment_method_types: ['card'],
             metadata: { quicktrimr_request_id: requestId },
           },
-          { idempotencyKey: `quicktrimr:payment-authorisation:${requestId}` },
+          {
+            idempotencyKey:
+              `quicktrimr:payment-authorisation:${requestId}` +
+              (replacement ? ':recovery' : ''),
+          },
         ),
       );
     },
@@ -86,14 +90,14 @@ export function createAuthorisationProvider(
         }),
       );
     },
-    async cancel(intentId: string, requestId: string) {
+    async cancel(intentId: string) {
       await verifyPlatform();
       return project(
         await stripe.paymentIntents.cancel(
           intentId,
           {},
           {
-            idempotencyKey: `quicktrimr:release-unusable-authorisation:${requestId}`,
+            idempotencyKey: `quicktrimr:release-unusable-authorisation:${intentId}`,
           },
         ),
       );

@@ -10,6 +10,7 @@ import {
   clientBookingRequestSchema,
   declineBookingRequestResponseSchema,
 } from '../../packages/validation/src/index.ts';
+import { createBookingRequestActionHandler } from '../../supabase/functions/_shared/requests/action-handler.ts';
 
 import { apiJson, assertRawBody, makeUsers } from './api-test-helpers.mjs';
 import { sqlValue as q } from './core-fixtures.mjs';
@@ -37,10 +38,30 @@ const post = (path, token, input) =>
   apiJson(stack, path, token, { method: 'POST', body: JSON.stringify(input) });
 const edge = (name, token, input) =>
   post('/functions/v1/' + name, token, input);
+const action = (operation) =>
+  createBookingRequestActionHandler(operation, {
+    supabaseUrl: stack.API_URL,
+    anonKey: stack.ANON_KEY,
+    serviceRoleKey: stack.SERVICE_ROLE_KEY,
+  });
+const acceptHandler = action('accept');
+const declineHandler = action('decline');
+// The original Phase 2 regression checks isolate the transactional controller.
+// The Stripe verifier covers the deployed controller with provider I/O enabled.
+async function call(handler, token, body) {
+  const response = await handler(
+    new Request('http://local.test', {
+      method: 'POST',
+      headers: { ...(token ? { authorization: 'Bearer ' + token } : {}) },
+      body: JSON.stringify(body),
+    }),
+  );
+  return { status: response.status, body: await response.json() };
+}
 const accept = (id, token = tokens.barberA, fields = {}) =>
-  edge('accept-booking-request', token, { requestId: id, ...fields });
+  call(acceptHandler, token, { requestId: id, ...fields });
 const decline = (id, reason, token = tokens.barberA) =>
-  edge('decline-booking-request', token, { requestId: id, reason });
+  call(declineHandler, token, { requestId: id, reason });
 const read = (statement) => JSON.parse(sql(statement));
 const pass = (message) => console.log(`PASS ${message}`);
 const expectedWinner = (requestId, bookingId) => ({
@@ -75,7 +96,15 @@ async function submit(bookingType, client = 'clientA') {
       : {}),
   });
   assert.equal(result.status, 200, 'Live fixture request creation failed.');
+  authoriseFixture(result.body.id);
   return result.body.id;
+}
+function authoriseFixture(id) {
+  sql(`insert into public.payments(booking_request_id,status,gross_cents,commission_cents,barber_net_cents,
+    refunded_cents,stripe_payment_intent_id,authorisation_expires_at,request_authorised_at)
+    select request_id,'authorised',gross_cents,commission_cents,barber_net_cents,
+      0,${q('pi_QA65' + id.replaceAll('-', ''))},clock_timestamp()+interval '1 day',clock_timestamp()
+    from private.booking_request_snapshots where request_id=${q(id)};`);
 }
 async function clientRequest(client, id) {
   const result = await post(
@@ -158,6 +187,7 @@ function cloneRequest(
   ) select count(*) from saved;`),
     '1',
   );
+  if (requestStatus === 'pending') authoriseFixture(id);
   return id;
 }
 
@@ -473,8 +503,14 @@ async function verifyDecline(scheduled, bulkClosed) {
   );
 
   const broken = randomUUID();
-  sql(`insert into public.booking_requests(id,client_id,barber_id,booking_type,status,service_category_id,expires_at)
-    values(${q(broken)},${q(users.clientA)},${barber},'available_now','pending',${q(category)},clock_timestamp()+interval '5 minutes')`);
+  sql(`begin;
+    insert into public.booking_requests(id,client_id,barber_id,booking_type,status,service_category_id,expires_at)
+      values(${q(broken)},${q(users.clientA)},${barber},'available_now','pending',${q(category)},clock_timestamp()+interval '5 minutes');
+    insert into public.payments(booking_request_id,status,gross_cents,commission_cents,barber_net_cents,
+      refunded_cents,stripe_payment_intent_id,authorisation_expires_at,request_authorised_at)
+      values(${q(broken)},'authorised',4503,900,3603,0,${q('pi_QA65' + broken.replaceAll('-', ''))},
+        clock_timestamp()+interval '1 day',clock_timestamp());
+    commit;`);
   assertError(await decline(broken, 'too_far'), 500, 'internal_error');
   assertNoAcceptance(broken);
   assertRawBody(
@@ -882,7 +918,7 @@ try {
     '0',
   );
   pass(
-    'Existing booking RLS denies a foreign barber. No payment row exists under any success or rejection. The controller transport test allows only Auth, profile and the local acceptance RPC.',
+    'Existing booking RLS denies a foreign barber. Authorisation fixtures remained request-bound until the separate capture step. The original controller checks isolate Auth, profile and the acceptance RPC.',
   );
   if (args.includes('--with-decline')) await verifyDecline(scheduled, other);
 } finally {

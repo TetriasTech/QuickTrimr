@@ -67,6 +67,7 @@ export const createBookingRequestResponseSchema = z.strictObject({
   barberNetCents: integerCentsSchema,
   expiresAt: timestampSchema,
   createdAt: timestampSchema,
+  paymentRequired: z.literal(true).optional(),
 });
 export type CreateBookingRequestResponse = z.infer<
   typeof createBookingRequestResponseSchema
@@ -83,7 +84,10 @@ export const acceptBookingRequestResponseSchema = z.strictObject({
   requestId: postgresUuidSchema,
   bookingId: postgresUuidSchema,
   requestStatus: z.literal(REQUEST_STATUS_VALUE.ACCEPTED),
-  bookingStatus: z.literal(BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT),
+  bookingStatus: z.union([
+    z.literal(BOOKING_STATUS_VALUE.ACCEPTED_PENDING_PAYMENT),
+    z.literal(BOOKING_STATUS_VALUE.PAID_CONFIRMED),
+  ]),
 });
 export type AcceptBookingRequestResponse = z.infer<
   typeof acceptBookingRequestResponseSchema
@@ -143,6 +147,8 @@ export const clientBookingRequestSchema = z.strictObject({
   expiresAt: timestampSchema,
   serverNow: timestampSchema,
   captureNotice: paymentCaptureNoticeSchema.optional(),
+  paymentRequired: z.literal(true).optional(),
+  paymentRecoveryDeadline: timestampSchema.optional(),
 });
 export type ClientBookingRequestStatus = z.infer<
   typeof clientBookingRequestSchema

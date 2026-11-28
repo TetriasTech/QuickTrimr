@@ -4,7 +4,10 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useIsFocused } from 'expo-router/react-navigation';
 import { useCallback, useMemo } from 'react';
 
-import { bookingRequestApi } from '@/features/booking-requests/booking-request-api';
+import {
+  bookingRequestApi,
+  cancelPendingBookingRequest,
+} from '@/features/booking-requests/booking-request-api';
 import { BookingRequestStatusScreen } from '@/features/booking-requests/status-screen';
 import { useMobileSession } from '@/features/session/session-provider';
 
@@ -48,6 +51,16 @@ export default function RequestStatusRoute() {
           focused={focused}
           onDiscovery={discovery}
           onResolvedId={resolvedId}
+          onPayment={(id, recovery) =>
+            router.push({
+              pathname: '/sandbox-payment/[requestId]',
+              params: {
+                requestId: id,
+                ...(recovery ? { recovery: 'yes' } : {}),
+              },
+            })
+          }
+          onCancel={(id) => cancelPendingBookingRequest(supabase, userId, id)}
         />
       ) : (
         <Screen edges={['right', 'bottom', 'left']}>

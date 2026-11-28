@@ -13,6 +13,7 @@ import { requestObject } from '../request-object.ts';
 export const createPaymentAuthorisationRequestSchema = requestObject({
   bookingRequestId: postgresUuidSchema,
   operation: z.union([z.literal('prepare'), z.literal('verify')]),
+  recovery: z.literal(true).optional(),
 });
 export type CreatePaymentAuthorisationRequest = z.infer<
   typeof createPaymentAuthorisationRequestSchema
@@ -29,9 +30,18 @@ const authorisedPaymentSchema = z.strictObject({
   amountCents: integerCentsSchema,
   authorisationExpiresAt: timestampSchema,
 });
+const recoveredCaptureSchema = z.strictObject({
+  paymentId: postgresUuidSchema,
+  status: z.literal(paymentStatusSchema.enum.captured),
+  amountCents: integerCentsSchema,
+});
 export const createPaymentAuthorisationResponseSchema = z.discriminatedUnion(
   'status',
-  [preparedAuthorisationSchema, authorisedPaymentSchema],
+  [
+    preparedAuthorisationSchema,
+    authorisedPaymentSchema,
+    recoveredCaptureSchema,
+  ],
 );
 export type CreatePaymentAuthorisationResponse = z.infer<
   typeof createPaymentAuthorisationResponseSchema
